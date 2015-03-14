@@ -6,6 +6,16 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	cmake_modules
 	roslib
+	message_generation
+)
+
+add_message_files(FILES
+	NodeState.msg
+	State.msg
+)
+
+generate_messages(DEPENDENCIES
+	std_msgs
 )
 
 catkin_package()
@@ -20,10 +30,14 @@ add_executable(rosmon
 	src/launch_config.cpp
 	src/ui.cpp
 	src/husl/husl.c
+	src/ros_interface.cpp
 )
 target_link_libraries(rosmon
 	${catkin_LIBRARIES}
 	${TinyXML_LIBRARIES}
 	yaml-cpp
 	util
+)
+add_dependencies(rosmon
+	${PROJECT_NAME}_generate_messages_cpp
 )

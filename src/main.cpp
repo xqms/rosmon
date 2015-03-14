@@ -8,6 +8,7 @@
 
 #include "launch_config.h"
 #include "ui.h"
+#include "ros_interface.h"
 
 int main(int argc, char** argv)
 {
@@ -41,6 +42,9 @@ int main(int argc, char** argv)
 
 	// Start the ncurses UI
 	rosmon::UI ui(&config);
+
+	// ROS interface
+	rosmon::ROSInterface rosInterface(&config);
 
 	ros::NodeHandle nh;
 
