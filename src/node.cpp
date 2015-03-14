@@ -185,9 +185,9 @@ void Node::communicate()
 		}
 
 		if(WIFEXITED(status))
-			log("%20s: Exited with status %d\n", m_name.c_str(), WEXITSTATUS(status));
+			log("%s exited with status %d", m_name.c_str(), WEXITSTATUS(status));
 		else if(WIFSIGNALED(status))
-			log("%20s: Exited with status %d\n", m_name.c_str(), WTERMSIG(status));
+			log("%s exited with status %d", m_name.c_str(), WTERMSIG(status));
 
 		m_pid = -1;
 		return;

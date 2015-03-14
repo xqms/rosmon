@@ -8,6 +8,8 @@
 
 #include <ros/wall_timer.h>
 
+#include <map>
+
 namespace rosmon
 {
 
@@ -22,11 +24,14 @@ public:
 private:
 	void drawStatusLine();
 	void checkWindowSize();
+	void setupColors();
 
 	LaunchConfig* m_config;
 
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
+
+	std::map<std::string, unsigned int> m_nodeColorMap;
 };
 
 }

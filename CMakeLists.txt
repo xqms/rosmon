@@ -19,6 +19,7 @@ add_executable(rosmon
 	src/node.cpp
 	src/launch_config.cpp
 	src/ui.cpp
+	src/husl/husl.c
 )
 target_link_libraries(rosmon
 	${catkin_LIBRARIES}

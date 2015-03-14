@@ -2,6 +2,7 @@
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
 #include "ui.h"
+#include "husl/husl.h"
 
 #include <cstdlib>
 #include <ros/node_handle.h>
@@ -28,10 +29,38 @@ UI::UI(LaunchConfig* config)
 	m_sizeTimer.start();
 
 	checkWindowSize();
+	setupColors();
 }
 
 UI::~UI()
 {
+}
+
+void UI::setupColors()
+{
+	// Sample colors from the HUSL space
+	int n = m_config->nodes().size();
+
+	for(int i = 0; i < n; ++i)
+	{
+		float hue = i * 360 / n;
+		float sat = 100;
+		float lum = 20;
+
+		float r, g, b;
+		HUSLtoRGB(&r, &g, &b, hue, sat, lum);
+
+		r *= 255.0;
+		g *= 255.0;
+		b *= 255.0;
+
+		unsigned int color =
+			std::min(255, std::max<int>(0, r))
+			| (std::min(255, std::max<int>(0, g)) << 8)
+			| (std::min(255, std::max<int>(0, b)) << 16);
+
+		m_nodeColorMap[m_config->nodes()[i]->name()] = color;
+	}
 }
 
 void UI::drawStatusLine()
@@ -62,16 +91,58 @@ void UI::drawStatusLine()
 	printf("RUNNING");
 }
 
+static void replaceAll(std::string& subject, const std::string& search,
+                          const std::string& replace)
+{
+	size_t pos = 0;
+	while ((pos = subject.find(search, pos)) != std::string::npos)
+	{
+		subject.replace(pos, search.length(), replace);
+		pos += replace.length();
+	}
+}
+
+// static void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+// 	if(from.empty())
+// 		return;
+// 	std::string wsRet;
+// 	wsRet.reserve(str.length());
+// 	size_t start_pos = 0, pos;
+// 	while((pos = str.find(from, start_pos)) != std::string::npos) {
+// 		wsRet += str.substr(start_pos, pos - start_pos);
+// 		wsRet += to;
+// 		pos += from.length();
+// 		start_pos = pos;
+// 	}
+// 	wsRet += str.substr(start_pos);
+// 	str.swap(wsRet); // faster than str = wsRet;
+// }
+
+
 void UI::log(const std::string& channel, const std::string& log)
 {
-	printf("\033[K%20s: ", channel.c_str());
+	std::string clean = log;
 
-	unsigned int len = log.length();
-	while(len != 0 && (log[len-1] == '\n' || log[len-1] == '\r'))
+	auto it = m_nodeColorMap.find(channel);
+	if(it != m_nodeColorMap.end())
+	{
+		char buf[256];
+
+		unsigned int color = it->second;
+		snprintf(buf, sizeof(buf), "\033[48;2;%d;%d;%dm", color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF);
+		fputs(buf, stdout);
+
+// 		replaceAll(clean, "\033[0m", "\033[0m" + std::string(buf));
+	}
+
+	printf("\033[K%20s:\033[0m ", channel.c_str());
+
+	unsigned int len = clean.length();
+	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
 		len--;
 
-	fwrite(log.c_str(), 1, len, stdout);
-	printf("\033[K\n\033[K");
+	fwrite(clean.c_str(), 1, len, stdout);
+	printf("\033[K\n\033[0m\033[K");
 	fflush(stdout);
 }
 
