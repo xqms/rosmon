@@ -34,6 +34,9 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	// Setup a sane ROSCONSOLE_FORMAT if the user isn't able to
+	setenv("ROSCONSOLE_FORMAT", "[${function}]: ${message}", 0);
+
 	rosmon::LaunchConfig config;
 	config.parse(argv[1]);
 	config.setParameters();
