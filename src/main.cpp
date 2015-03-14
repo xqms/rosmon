@@ -7,10 +7,12 @@
 #include <ros/node_handle.h>
 
 #include "launch_config.h"
+#include "ui.h"
 
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "rosmon");
+	setlocale(LC_ALL, "");
 
 	printf("ROS_MASTER_URI: '%s'\n", ros::master::getURI().c_str());
 
@@ -37,12 +39,16 @@ int main(int argc, char** argv)
 
 	config.start();
 
+	// Start the ncurses UI
+	rosmon::UI ui(&config);
+
 	ros::NodeHandle nh;
 
 	while(ros::ok())
 	{
 		ros::spinOnce();
 		config.communicate();
+		ui.update();
 	}
 
 	printf("Shutting down...\n");
@@ -53,6 +59,7 @@ int main(int argc, char** argv)
 	while(ros::WallTime::now() - start < ros::WallDuration(5.0))
 	{
 		config.communicate();
+		ui.update();
 
 		if(config.allShutdown())
 			return 0;
@@ -63,6 +70,7 @@ int main(int argc, char** argv)
 	while(1)
 	{
 		config.communicate();
+		ui.update();
 
 		if(config.allShutdown())
 			return 0;

@@ -138,10 +138,10 @@ void LaunchConfig::parse(const std::string& filename)
 
 	for(auto it : m_params)
 	{
-		printf("parameter: %s\n", it.first.c_str());
+		log("parameter: %s\n", it.first.c_str());
 	}
 
-	printf("\n==================================\nNodes:\n");
+	log("\n==================================\nNodes:\n");
 	for(auto node : m_nodes)
 	{
 		std::vector<std::string> cmd = node->composeCommand();
@@ -149,7 +149,7 @@ void LaunchConfig::parse(const std::string& filename)
 		for(auto part : cmd)
 			ss << part << " ";
 
-		printf(" - %s\n", ss.str().c_str());
+		log(" - %s\n", ss.str().c_str());
 	}
 }
 
@@ -265,6 +265,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 			node->addRemapping(ctx.evaluate(from), ctx.evaluate(to));
 		}
 	}
+
+	node->logMessageSignal.connect(logMessageSignal);
 
 	m_nodes.push_back(node);
 }
@@ -607,12 +609,12 @@ void LaunchConfig::shutdown()
 
 void LaunchConfig::forceExit()
 {
-	printf("Killing the following nodes, which are refusing to exit:\n");
+	log("Killing the following nodes, which are refusing to exit:\n");
 	for(auto node : m_nodes)
 	{
 		if(node->running())
 		{
-			printf(" - %s\n", node->name().c_str());
+			log(" - %s\n", node->name().c_str());
 			node->forceExit();
 		}
 	}
@@ -628,6 +630,20 @@ bool LaunchConfig::allShutdown()
 	}
 
 	return allShutdown;
+}
+
+void LaunchConfig::log(const char* fmt, ...)
+{
+	static char buf[512];
+
+	va_list v;
+	va_start(v, fmt);
+
+	vsnprintf(buf, sizeof(buf), fmt, v);
+
+	va_end(v);
+
+	logMessageSignal("[rosmon]", buf);
 }
 
 }

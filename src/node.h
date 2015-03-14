@@ -9,6 +9,7 @@
 #include <map>
 
 #include <boost/circular_buffer.hpp>
+#include <boost/signals2.hpp>
 
 namespace rosmon
 {
@@ -40,7 +41,11 @@ public:
 
 	inline const std::string& name() const
 	{ return m_name; }
+
+	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 private:
+	void log(const char* fmt, ...) __attribute__ (( format (printf, 2, 3) ));
+
 	std::string m_name;
 	std::string m_package;
 	std::string m_type;

@@ -18,6 +18,7 @@ add_executable(rosmon
 	src/main.cpp
 	src/node.cpp
 	src/launch_config.cpp
+	src/ui.cpp
 )
 target_link_libraries(rosmon
 	${catkin_LIBRARIES}

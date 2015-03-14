@@ -126,10 +126,7 @@ void Node::start()
 		ptrs.push_back(nullptr);
 
 		if(!m_namespace.empty())
-		{
-			printf("ROS_NAMESPACE='%s'\n", m_namespace.c_str());
 			setenv("ROS_NAMESPACE", m_namespace.c_str(), 1);
-		}
 
 		if(execvp(path, ptrs.data()) != 0)
 		{
@@ -137,7 +134,7 @@ void Node::start()
 			for(auto part : cmd)
 				ss << part << " ";
 
-			fprintf(stderr, "Could not execute '%s': %s\n", ss.str().c_str(), strerror(errno));
+			log("Could not execute '%s': %s\n", ss.str().c_str(), strerror(errno));
 		}
 		exit(1);
 	}
@@ -188,9 +185,9 @@ void Node::communicate()
 		}
 
 		if(WIFEXITED(status))
-			printf("%20s: Exited with status %d\n", m_name.c_str(), WEXITSTATUS(status));
+			log("%20s: Exited with status %d\n", m_name.c_str(), WEXITSTATUS(status));
 		else if(WIFSIGNALED(status))
-			printf("%20s: Exited with status %d\n", m_name.c_str(), WTERMSIG(status));
+			log("%20s: Exited with status %d\n", m_name.c_str(), WTERMSIG(status));
 
 		m_pid = -1;
 		return;
@@ -204,17 +201,29 @@ void Node::communicate()
 		m_rxBuffer.push_back(buf[i]);
 		if(buf[i] == '\n')
 		{
-			printf("%20s: ", m_name.c_str());
+			m_rxBuffer.push_back(0);
+			m_rxBuffer.linearize();
 
 			auto one = m_rxBuffer.array_one();
-			fwrite(one.first, 1, one.second, stdout);
-
-			auto two = m_rxBuffer.array_two();
-			fwrite(two.first, 1, two.second, stdout);
+			logMessageSignal(m_name, one.first);
 
 			m_rxBuffer.clear();
 		}
 	}
+}
+
+void Node::log(const char* fmt, ...)
+{
+	static char buf[512];
+
+	va_list v;
+	va_start(v, fmt);
+
+	vsnprintf(buf, sizeof(buf), fmt, v);
+
+	va_end(v);
+
+	logMessageSignal(m_name, buf);
 }
 
 }

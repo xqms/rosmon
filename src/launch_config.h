@@ -14,6 +14,8 @@
 #include <tinyxml.h>
 #include <yaml-cpp/yaml.h>
 
+#include <boost/signals2.hpp>
+
 namespace rosmon
 {
 
@@ -47,6 +49,11 @@ public:
 	void shutdown();
 	void forceExit();
 	bool allShutdown();
+
+	inline const std::vector<Node::Ptr>& nodes() const
+	{ return m_nodes; }
+
+	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 private:
 	class ParseContext
 	{
@@ -104,6 +111,8 @@ private:
 
 	std::vector<Node::Ptr> m_nodes;
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
+
+	void log(const char* fmt, ...) __attribute__((format (printf, 2, 3)));
 };
 
 }
