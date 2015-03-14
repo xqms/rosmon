@@ -5,6 +5,8 @@
 
 #include <rosmon/State.h>
 
+#include <algorithm>
+
 namespace rosmon
 {
 
@@ -15,6 +17,8 @@ ROSInterface::ROSInterface(LaunchConfig* config)
 	m_updateTimer = m_nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&ROSInterface::update, this));
 
 	m_pub_state = m_nh.advertise<rosmon::State>("state", 10, true);
+
+	m_srv_startStop = m_nh.advertiseService("start_stop", &ROSInterface::handleStartStop, this);
 }
 
 ROSInterface::~ROSInterface()
@@ -54,6 +58,32 @@ void ROSInterface::update()
 	}
 
 	m_pub_state.publish(state);
+}
+
+bool ROSInterface::handleStartStop(StartStopRequest& req, StartStopResponse& resp)
+{
+	auto it = std::find_if(
+		m_config->nodes().begin(), m_config->nodes().end(),
+		[&](const Node::Ptr& n){ return n->name() == req.node; }
+	);
+
+	if(it == m_config->nodes().end())
+		return false;
+
+	switch(req.action)
+	{
+		case StartStopRequest::START:
+			(*it)->start();
+			break;
+		case StartStopRequest::STOP:
+			(*it)->stop();
+			break;
+		case StartStopRequest::RESTART:
+			(*it)->restart();
+			break;
+	}
+
+	return true;
 }
 
 }

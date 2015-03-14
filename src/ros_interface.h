@@ -8,6 +8,8 @@
 
 #include <ros/node_handle.h>
 
+#include <rosmon/StartStop.h>
+
 namespace rosmon
 {
 
@@ -18,6 +20,7 @@ public:
 	~ROSInterface();
 private:
 	void update();
+	bool handleStartStop(StartStopRequest& req, StartStopResponse& resp);
 
 	LaunchConfig* m_config;
 
@@ -26,6 +29,8 @@ private:
 	ros::WallTimer m_updateTimer;
 
 	ros::Publisher m_pub_state;
+
+	ros::ServiceServer m_srv_startStop;
 };
 
 }

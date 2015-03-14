@@ -1,0 +1,7 @@
+uint8 START = 1
+uint8 STOP = 2
+uint8 RESTART = 3
+
+string node
+uint8 action
+---

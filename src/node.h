@@ -11,6 +11,8 @@
 #include <boost/circular_buffer.hpp>
 #include <boost/signals2.hpp>
 
+#include <ros/wall_timer.h>
+
 namespace rosmon
 {
 
@@ -37,6 +39,9 @@ public:
 	std::vector<std::string> composeCommand() const;
 
 	void start();
+	void stop();
+	void restart();
+
 	void shutdown();
 	void forceExit();
 
@@ -54,6 +59,7 @@ public:
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 private:
 	void log(const char* fmt, ...) __attribute__ (( format (printf, 2, 3) ));
+	void checkStop();
 
 	std::string m_name;
 	std::string m_package;
@@ -69,6 +75,12 @@ private:
 	int m_pid;
 	int m_fd;
 	int m_exitCode;
+
+	ros::WallTimer m_stopCheckTimer;
+	ros::WallTimer m_restartTimer;
+
+	bool m_wantOneRestart;
+	bool m_restarting;
 };
 
 }

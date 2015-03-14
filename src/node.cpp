@@ -18,6 +18,8 @@
 
 #include <boost/tokenizer.hpp>
 
+#include <ros/node_handle.h>
+
 static std::runtime_error error(const char* fmt, ...)
 {
 	va_list args;
@@ -42,7 +44,12 @@ Node::Node(const std::string& name, const std::string& package, const std::strin
  , m_rxBuffer(4096)
  , m_pid(-1)
  , m_exitCode(0)
+ , m_wantOneRestart(false)
+ , m_restarting(false)
 {
+	ros::NodeHandle nh;
+	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&Node::start, this));
+	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&Node::checkStop, this));
 }
 
 Node::~Node()
@@ -110,6 +117,13 @@ std::vector<std::string> Node::composeCommand() const
 
 void Node::start()
 {
+	m_stopCheckTimer.stop();
+	m_restartTimer.stop();
+	m_restarting = false;
+
+	if(running())
+		return;
+
 	int pid = forkpty(&m_fd, NULL, NULL, NULL);
 	if(pid < 0)
 		throw error("Could not fork with forkpty(): %s", strerror(errno));
@@ -144,6 +158,44 @@ void Node::start()
 	m_pid = pid;
 }
 
+void Node::stop()
+{
+	m_stopCheckTimer.stop();
+	m_restartTimer.stop();
+
+	if(!running())
+		return;
+
+	kill(m_pid, SIGINT);
+
+	m_stopCheckTimer.start();
+}
+
+void Node::checkStop()
+{
+	if(running())
+	{
+		log("required SIGKILL");
+		kill(m_pid, SIGKILL);
+	}
+
+	m_stopCheckTimer.stop();
+}
+
+void Node::restart()
+{
+	m_stopCheckTimer.stop();
+	m_restartTimer.stop();
+
+	if(running())
+	{
+		m_wantOneRestart = true;
+		stop();
+	}
+	else
+		start();
+}
+
 void Node::shutdown()
 {
 	if(m_pid != -1)
@@ -167,6 +219,8 @@ Node::State Node::state() const
 {
 	if(running())
 		return STATE_RUNNING;
+	else if(m_restarting)
+		return STATE_WAITING;
 	else if(m_exitCode == 0)
 		return STATE_IDLE;
 	else
@@ -207,6 +261,14 @@ void Node::communicate()
 		}
 
 		m_pid = -1;
+
+		if(m_wantOneRestart)
+		{
+			m_restartTimer.start();
+			m_restarting = true;
+			m_wantOneRestart = false;
+		}
+
 		return;
 	}
 
