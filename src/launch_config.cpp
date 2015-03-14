@@ -292,7 +292,71 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		fullName = ctx.prefix() + ctx.evaluate(name);
 
 	if(value)
-		m_params[fullName] = ctx.evaluate(value);
+	{
+		const char* type = element->Attribute("type");
+		std::string fullValue = ctx.evaluate(value);
+
+		if(type)
+		{
+			// Fixed type.
+
+			try
+			{
+				if(strcmp(type, "int") == 0)
+					m_params[fullName] = boost::lexical_cast<int>(fullValue);
+				else if(strcmp(type, "double") == 0)
+					m_params[fullName] = boost::lexical_cast<double>(fullValue);
+				else if(strcmp(type, "bool") == 0)
+				{
+					if(fullValue == "true")
+						m_params[fullName] = true;
+					else if(fullValue == "false")
+						m_params[fullName] = false;
+					else
+					{
+						throw error("%s:%d: invalid boolean value '%s'",
+							ctx.filename().c_str(), element->Row(), fullValue.c_str()
+						);
+					}
+				}
+				else if(strcmp(type, "str") == 0)
+					m_params[fullName] = fullValue;
+				else
+				{
+					throw error("%s:%d: invalid param type '%s'",
+						ctx.filename().c_str(), element->Row(), type
+					);
+				}
+			}
+			catch(boost::bad_lexical_cast& e)
+			{
+				throw error("%s:%d: could not convert param value '%s' to type '%s'",
+					ctx.filename().c_str(), element->Row(), fullValue.c_str(), type
+				);
+			}
+		}
+		else
+		{
+			// Try to determine the type automatically.
+
+			if(fullValue == "true")
+				m_params[fullName] = XmlRpc::XmlRpcValue(true);
+			else if(fullValue == "false")
+				m_params[fullName] = XmlRpc::XmlRpcValue(false);
+			else
+			{
+				try { m_params[fullName] = boost::lexical_cast<int>(fullValue); return; }
+				catch(boost::bad_lexical_cast&) {}
+
+				try { m_params[fullName] = boost::lexical_cast<float>(fullValue); return; }
+				catch(boost::bad_lexical_cast&) {}
+
+				m_params[fullName] = fullValue;
+			}
+
+			printf("Auto-Type: %s '%s' -> %d\n", fullName.c_str(), fullValue.c_str(), m_params[fullName].getType());
+		}
+	}
 	else if(command)
 	{
 		std::string fullCommand = ctx.evaluate(command);
