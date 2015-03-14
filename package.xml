@@ -1,0 +1,10 @@
+<package format="2">
+	<name>rosmon</name>
+	<description>Node launcher and monitor for ROS</description>
+	<version>0.0.1</version>
+	<license>BSD</license>
+	<maintainer email="max.schwarz@uni-bonn.de">Max Schwarz</maintainer>
+
+	<buildtool_depend>catkin</buildtool_depend>
+	<depend>roscpp</depend>
+</package>
