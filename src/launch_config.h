@@ -45,6 +45,7 @@ public:
 	void start();
 	void communicate();
 	void shutdown();
+	void forceExit();
 	bool allShutdown();
 private:
 	class ParseContext

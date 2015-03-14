@@ -171,6 +171,9 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
 		if(!e)
 			continue;
 
+		if(ctx.shouldSkip(e))
+			continue;
+
 		if(e->ValueStr() == "arg")
 			parseArgument(e, ctx);
 	}
@@ -212,6 +215,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* name = element->Attribute("name");
 	const char* pkg = element->Attribute("pkg");
 	const char* type = element->Attribute("type");
+	const char* args = element->Attribute("args");
+	const char* ns = element->Attribute("ns");
 
 	if(!name || !pkg || !type)
 	{
@@ -220,10 +225,21 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		);
 	}
 
+	if(ns)
+		ctx = ctx.enterScope(ctx.evaluate(ns));
+
+	std::string fullNamespace = ctx.prefix().substr(0, ctx.prefix().length()-1);
+
 	// Enter scope
 	ctx = ctx.enterScope(ctx.evaluate(name));
 
 	Node::Ptr node = boost::make_shared<Node>(ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type));
+
+	if(args)
+		node->addExtraArguments(ctx.evaluate(args));
+
+	if(!fullNamespace.empty())
+		node->setNamespace(fullNamespace);
 
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
 	{
@@ -587,6 +603,19 @@ void LaunchConfig::shutdown()
 {
 	for(auto node : m_nodes)
 		node->shutdown();
+}
+
+void LaunchConfig::forceExit()
+{
+	printf("Killing the following nodes, which are refusing to exit:\n");
+	for(auto node : m_nodes)
+	{
+		if(node->running())
+		{
+			printf(" - %s\n", node->name().c_str());
+			node->forceExit();
+		}
+	}
 }
 
 bool LaunchConfig::allShutdown()

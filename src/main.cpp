@@ -49,14 +49,23 @@ int main(int argc, char** argv)
 	config.shutdown();
 
 	ros::WallRate rate(10.0);
+	ros::WallTime start = ros::WallTime::now();
+	while(ros::WallTime::now() - start < ros::WallDuration(5.0))
+	{
+		config.communicate();
+
+		if(config.allShutdown())
+			return 0;
+	}
+
+	config.forceExit();
+
 	while(1)
 	{
 		config.communicate();
 
 		if(config.allShutdown())
-			break;
-
-		rate.sleep();
+			return 0;
 	}
 
 	return 0;

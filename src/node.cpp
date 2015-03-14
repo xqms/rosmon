@@ -12,8 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <pty.h>
+#include <wordexp.h>
 
 #include <sstream>
+
+#include <boost/tokenizer.hpp>
 
 static std::runtime_error error(const char* fmt, ...)
 {
@@ -54,14 +57,47 @@ void Node::addRemapping(const std::string& from, const std::string& to)
 	m_remappings[from] = to;
 }
 
+void Node::addExtraArguments(const std::string& argString)
+{
+	wordexp_t tokens;
+
+	// Get rid of newlines since this confuses wordexp
+	std::string clean = argString;
+	for(unsigned int i = 0; i < clean.length(); ++i)
+	{
+		if(clean[i] == '\n' || clean[i] == '\r')
+			clean[i] = ' ';
+	}
+
+	// NOTE: This also does full shell expansion (things like $PATH)
+	//   But since we trust the user here (and modifying PATH etc dooms us in
+	//   any case), I think we can use wordexp here.
+	int ret = wordexp(clean.c_str(), &tokens, WRDE_NOCMD);
+	if(ret != 0)
+		throw error("You're supplying something strange in 'args': '%s' (wordexp ret %d)", clean.c_str(), ret);
+
+	for(unsigned int i = 0; i < tokens.we_wordc; ++i)
+		m_extraArgs.push_back(tokens.we_wordv[i]);
+
+	wordfree(&tokens);
+}
+
+void Node::setNamespace(const std::string& ns)
+{
+	m_namespace = ns;
+}
+
 std::vector<std::string> Node::composeCommand() const
 {
 	std::vector<std::string> cmd{
 		"rosrun",
 		m_package,
 		m_type,
-		"__name:=" + m_name
 	};
+
+	std::copy(m_extraArgs.begin(), m_extraArgs.end(), std::back_inserter(cmd));
+
+	cmd.push_back("__name:=" + m_name);
 
 	for(auto map : m_remappings)
 	{
@@ -89,6 +125,12 @@ void Node::start()
 			ptrs[i] = strdup(cmd[i].data());
 		ptrs.push_back(nullptr);
 
+		if(!m_namespace.empty())
+		{
+			printf("ROS_NAMESPACE='%s'\n", m_namespace.c_str());
+			setenv("ROS_NAMESPACE", m_namespace.c_str(), 1);
+		}
+
 		if(execvp(path, ptrs.data()) != 0)
 		{
 			std::stringstream ss;
@@ -108,6 +150,14 @@ void Node::shutdown()
 {
 	if(m_pid != -1)
 		kill(m_pid, SIGINT);
+}
+
+void Node::forceExit()
+{
+	if(m_pid != -1)
+	{
+		kill(m_pid, SIGKILL);
+	}
 }
 
 bool Node::running() const
