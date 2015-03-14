@@ -19,6 +19,14 @@ class Node
 public:
 	typedef boost::shared_ptr<Node> Ptr;
 
+	enum State
+	{
+		STATE_IDLE,
+		STATE_RUNNING,
+		STATE_CRASHED,
+		STATE_WAITING
+	};
+
 	Node(const std::string& name, const std::string& package, const std::string& type);
 	~Node();
 
@@ -33,6 +41,7 @@ public:
 	void forceExit();
 
 	bool running() const;
+	State state() const;
 
 	void communicate();
 
@@ -59,6 +68,7 @@ private:
 
 	int m_pid;
 	int m_fd;
+	int m_exitCode;
 };
 
 }

@@ -30,7 +30,25 @@ void ROSInterface::update()
 	{
 		rosmon::NodeState nstate;
 		nstate.name = node->name();
-		nstate.state = node->running() ? (int)nstate.RUNNING : (int)nstate.CRASHED;
+
+		switch(node->state())
+		{
+			case Node::STATE_RUNNING:
+				nstate.state = nstate.RUNNING;
+				break;
+			case Node::STATE_CRASHED:
+				nstate.state = nstate.CRASHED;
+				break;
+			case Node::STATE_IDLE:
+				nstate.state = nstate.IDLE;
+				break;
+			case Node::STATE_WAITING:
+				nstate.state = nstate.WAITING;
+				break;
+			default:
+				nstate.state = nstate.IDLE;
+				break;
+		}
 
 		state.nodes.push_back(nstate);
 	}

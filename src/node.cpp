@@ -41,6 +41,7 @@ Node::Node(const std::string& name, const std::string& package, const std::strin
  , m_type(type)
  , m_rxBuffer(4096)
  , m_pid(-1)
+ , m_exitCode(0)
 {
 }
 
@@ -162,6 +163,16 @@ bool Node::running() const
 	return m_pid != -1;
 }
 
+Node::State Node::state() const
+{
+	if(running())
+		return STATE_RUNNING;
+	else if(m_exitCode == 0)
+		return STATE_IDLE;
+	else
+		return STATE_CRASHED;
+}
+
 void Node::communicate()
 {
 	char buf[1024];
@@ -185,9 +196,15 @@ void Node::communicate()
 		}
 
 		if(WIFEXITED(status))
+		{
 			log("%s exited with status %d", m_name.c_str(), WEXITSTATUS(status));
+			m_exitCode = WEXITSTATUS(status);
+		}
 		else if(WIFSIGNALED(status))
-			log("%s exited with status %d", m_name.c_str(), WTERMSIG(status));
+		{
+			log("%s died from signal %d", m_name.c_str(), WTERMSIG(status));
+			m_exitCode = 255;
+		}
 
 		m_pid = -1;
 		return;

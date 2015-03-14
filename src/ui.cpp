@@ -79,10 +79,20 @@ void UI::drawStatusLine()
 			label[i] = ' ';
 		label[NODE_WIDTH] = 0;
 
-		if(node->running())
-			printf("\033[42;30m");
-		else
-			printf("\033[41;30m");
+		switch(node->state())
+		{
+			case Node::STATE_RUNNING:
+				printf("\033[42;30m");
+				break;
+			case Node::STATE_IDLE:
+				break;
+			case Node::STATE_CRASHED:
+				printf("\033[41;30m");
+				break;
+			case Node::STATE_WAITING:
+				printf("\033[43;30m");
+				break;
+		}
 		printf(" %s ", label);
 		printf("\033[0m");
 		printf(" ");
