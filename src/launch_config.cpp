@@ -50,18 +50,18 @@ std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
 		{
 			value = ros::package::getPath(args);
 			if(value.empty())
-				throw error("$(find %s): Could not find package\n", args.c_str());
+				throw error("%s: $(find %s): Could not find package\n", filename().c_str(), args.c_str());
 		}
 		else if(cmd == "arg")
 		{
 			auto it = m_args.find(args);
 			if(it == m_args.end())
-				throw error("$(arg %s): Unknown arg", args.c_str());
+				throw error("%s: $(arg %s): Unknown arg", filename().c_str(), args.c_str());
 
 			value = it->second;
 
 			if(value == UNSET_MARKER)
-				throw error("$(arg %s): Accessing unset argument", args.c_str());
+				throw error("%s: $(arg %s): Accessing unset argument", filename().c_str(), args.c_str());
 		}
 		else
 			throw error("Unsupported subst command '%s'", cmd.c_str());
@@ -104,6 +104,15 @@ bool LaunchConfig::ParseContext::shouldSkip(TiXmlElement* e)
 	return false;
 }
 
+void LaunchConfig::ParseContext::setArg(const std::string& name, const std::string& value, bool override)
+{
+	auto it = m_args.find(name);
+	if(it == m_args.end())
+		m_args[name] = value;
+	else if(override || it->second == UNSET_MARKER)
+		m_args[name] = value;
+}
+
 void LaunchConfig::parse(const std::string& filename)
 {
 	TiXmlDocument document(filename);
@@ -120,6 +129,17 @@ void LaunchConfig::parse(const std::string& filename)
 	for(auto it : m_params)
 	{
 		printf("parameter: %s\n", it.first.c_str());
+	}
+
+	printf("\n==================================\nNodes:\n");
+	for(auto node : m_nodes)
+	{
+		std::vector<std::string> cmd = node->composeCommand();
+		std::stringstream ss;
+		for(auto part : cmd)
+			ss << part << " ";
+
+		printf(" - %s\n", ss.str().c_str());
 	}
 }
 
@@ -193,17 +213,34 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	// Enter scope
 	ctx = ctx.enterScope(ctx.evaluate(name));
 
+	Node::Ptr node = boost::make_shared<Node>(ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type));
+
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
 	{
 		TiXmlElement* e = n->ToElement();
 		if(!e)
 			continue;
 
+		if(ctx.shouldSkip(e))
+			continue;
+
 		if(e->ValueStr() == "param")
 			parseParam(e, ctx);
 		else if(e->ValueStr() == "rosparam")
 			parseROSParam(e, ctx);
+		else if(e->ValueStr() == "remap")
+		{
+			const char* from = e->Attribute("from");
+			const char* to = e->Attribute("to");
+
+			if(!from || !to)
+				throw error("%s:%d: remap needs 'from' and 'to' arguments", ctx.filename().c_str(), e->Row());
+
+			node->addRemapping(ctx.evaluate(from), ctx.evaluate(to));
+		}
 	}
+
+	m_nodes.push_back(node);
 }
 
 void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
@@ -238,7 +275,8 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		while(!feof(f))
 		{
 			char buf[1024];
-			fread(buf, 1, sizeof(buf), f);
+			if(fread(buf, 1, sizeof(buf), f) == 0)
+				throw error("Could not read: %s", strerror(errno));
 			buffer << buf;
 		}
 		pclose(f);
@@ -446,7 +484,7 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 			if(!name || !value)
 				throw error("%s:%d: <arg> inside include needs name and value", ctx.filename().c_str(), element->Row());
 
-			childCtx.setArg(ctx.evaluate(name), ctx.evaluate(value));
+			childCtx.setArg(ctx.evaluate(name), ctx.evaluate(value), true);
 		}
 	}
 
@@ -470,16 +508,16 @@ void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
 	if(value)
 	{
 		std::string fullValue = ctx.evaluate(value);
-		ctx.setArg(name, fullValue);
+		ctx.setArg(name, fullValue, true);
 	}
 	else if(def)
 	{
 		std::string fullValue = ctx.evaluate(def);
-		ctx.setArg(name, fullValue);
+		ctx.setArg(name, fullValue, false);
 	}
 	else
 	{
-		ctx.setArg(name, UNSET_MARKER);
+		ctx.setArg(name, UNSET_MARKER, false);
 	}
 }
 

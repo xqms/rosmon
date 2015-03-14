@@ -75,10 +75,7 @@ private:
 			m_args.clear();
 		}
 
-		void setArg(const std::string& name, const std::string& argument)
-		{
-			m_args[name] = argument;
-		}
+		void setArg(const std::string& name, const std::string& argument, bool override);
 
 		bool shouldSkip(TiXmlElement* element);
 	private:
