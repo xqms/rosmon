@@ -12,7 +12,7 @@
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "rosmon");
+	ros::init(argc, argv, "rosmon", ros::init_options::AnonymousName);
 	setlocale(LC_ALL, "");
 
 	printf("ROS_MASTER_URI: '%s'\n", ros::master::getURI().c_str());
