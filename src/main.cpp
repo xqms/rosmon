@@ -3,6 +3,8 @@
 
 #include <ros/init.h>
 #include <ros/master.h>
+#include <ros/rate.h>
+#include <ros/node_handle.h>
 
 #include "launch_config.h"
 
@@ -32,6 +34,30 @@ int main(int argc, char** argv)
 	rosmon::LaunchConfig config;
 	config.parse(argv[1]);
 	config.setParameters();
+
+	config.start();
+
+	ros::NodeHandle nh;
+
+	while(ros::ok())
+	{
+		ros::spinOnce();
+		config.communicate();
+	}
+
+	printf("Shutting down...\n");
+	config.shutdown();
+
+	ros::WallRate rate(10.0);
+	while(1)
+	{
+		config.communicate();
+
+		if(config.allShutdown())
+			break;
+
+		rate.sleep();
+	}
 
 	return 0;
 }

@@ -36,10 +36,16 @@ public:
 		std::string m_msg;
 	};
 
+	LaunchConfig();
+	~LaunchConfig();
+
 	void parse(const std::string& filename);
 
 	void setParameters();
-
+	void start();
+	void communicate();
+	void shutdown();
+	bool allShutdown();
 private:
 	class ParseContext
 	{

@@ -23,4 +23,5 @@ target_link_libraries(rosmon
 	${catkin_LIBRARIES}
 	${TinyXML_LIBRARIES}
 	yaml-cpp
+	util
 )

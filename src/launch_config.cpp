@@ -13,6 +13,8 @@
 
 #include <boost/regex.hpp>
 
+#include <sys/select.h>
+
 #include <yaml-cpp/yaml.h>
 
 static const char* UNSET_MARKER = "~~~~~ ROSMON-UNSET ~~~~~";
@@ -111,6 +113,14 @@ void LaunchConfig::ParseContext::setArg(const std::string& name, const std::stri
 		m_args[name] = value;
 	else if(override || it->second == UNSET_MARKER)
 		m_args[name] = value;
+}
+
+LaunchConfig::LaunchConfig()
+{
+}
+
+LaunchConfig::~LaunchConfig()
+{
 }
 
 void LaunchConfig::parse(const std::string& filename)
@@ -264,7 +274,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		fullName = ctx.prefix() + ctx.evaluate(name);
 
 	if(value)
-		m_params[fullName] = value;
+		m_params[fullName] = ctx.evaluate(value);
 	else if(command)
 	{
 		std::string fullCommand = ctx.evaluate(command);
@@ -275,8 +285,11 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		while(!feof(f))
 		{
 			char buf[1024];
-			if(fread(buf, 1, sizeof(buf), f) == 0)
+			int ret = fread(buf, 1, sizeof(buf)-1, f);
+			if(ret <= 0)
 				throw error("Could not read: %s", strerror(errno));
+
+			buf[ret] = 0;
 			buffer << buf;
 		}
 		pclose(f);
@@ -519,6 +532,73 @@ void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
 	{
 		ctx.setArg(name, UNSET_MARKER, false);
 	}
+}
+
+void LaunchConfig::start()
+{
+	for(auto node : m_nodes)
+	{
+		node->start();
+	}
+}
+
+void LaunchConfig::communicate()
+{
+	fd_set fds;
+	FD_ZERO(&fds);
+
+	int maxfd = 0;
+
+	for(auto node : m_nodes)
+	{
+		if(!node->running())
+			continue;
+
+		FD_SET(node->fd(), &fds);
+		maxfd = std::max(node->fd(), maxfd);
+	}
+
+	timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100 * 1000;
+
+	int ret = select(maxfd+1, &fds, nullptr, nullptr, &timeout);
+	if(ret < 0)
+	{
+		if(errno == EINTR || errno == EAGAIN)
+			return;
+
+		throw error("Could not select: %s", strerror(errno));
+	}
+	if(ret == 0)
+		return;
+
+	for(auto node : m_nodes)
+	{
+		if(!node->running())
+			continue;
+
+		if(FD_ISSET(node->fd(), &fds))
+			node->communicate();
+	}
+}
+
+void LaunchConfig::shutdown()
+{
+	for(auto node : m_nodes)
+		node->shutdown();
+}
+
+bool LaunchConfig::allShutdown()
+{
+	bool allShutdown = true;
+	for(auto node : m_nodes)
+	{
+		if(node->running())
+			allShutdown = false;
+	}
+
+	return allShutdown;
 }
 
 }
