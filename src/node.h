@@ -29,7 +29,7 @@ public:
 		STATE_WAITING
 	};
 
-	Node(const std::string& name, const std::string& package, const std::string& type);
+	Node(ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type);
 	~Node();
 
 	void addRemapping(const std::string& from, const std::string& to);

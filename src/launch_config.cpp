@@ -51,6 +51,14 @@ std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
 
 		if(cmd == "find")
 		{
+			// This command is actually very hard to resolve. It dates back
+			// to the rosbuild days, where all products from a package where
+			// contained in the package directory.
+			// Under catkin, this is not the case anymore. So we actually
+			// have to look at the package directory in src, devel, install
+			// spaces.
+
+			// => FIXME: This is not enough!
 			value = PackageRegistry::getPath(args);
 			if(value.empty())
 				throw error("%s: $(find %s): Could not find package\n", filename().c_str(), args.c_str());
@@ -135,7 +143,9 @@ void LaunchConfig::parse(const std::string& filename)
 		throw error("Could not load launch file '%s'. Exiting...\n", filename.c_str());
 	}
 
+	ros::WallTime start = ros::WallTime::now();
 	parse(document.RootElement(), ParseContext(filename));
+	printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
 
 	for(auto it : m_params)
 	{
@@ -234,7 +244,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	// Enter scope
 	ctx = ctx.enterScope(ctx.evaluate(name));
 
-	Node::Ptr node = boost::make_shared<Node>(ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type));
+	Node::Ptr node = boost::make_shared<Node>(m_nh, ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type));
 
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));
@@ -587,6 +597,7 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 		throw error("Could not load launch file '%s'. Exiting...\n", fullFile.c_str());
 
 	childCtx.setFilename(fullFile);
+
 	parse(document.RootElement(), childCtx);
 }
 

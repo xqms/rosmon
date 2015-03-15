@@ -12,6 +12,7 @@ namespace rosmon
 class PackageRegistry
 {
 public:
+	static void init();
 	static std::string getPath(const std::string& package);
 };
 

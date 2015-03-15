@@ -14,6 +14,8 @@
 #include <tinyxml.h>
 #include <yaml-cpp/yaml.h>
 
+#include <ros/node_handle.h>
+
 #include <boost/signals2.hpp>
 
 namespace rosmon
@@ -108,6 +110,8 @@ private:
 	void loadYAMLParams(const YAML::Node& n, const std::string& prefix);
 
 	XmlRpc::XmlRpcValue yamlToXmlRpc(const YAML::Node& n);
+
+	ros::NodeHandle m_nh;
 
 	std::vector<Node::Ptr> m_nodes;
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;

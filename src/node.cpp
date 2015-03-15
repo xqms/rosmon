@@ -37,7 +37,7 @@ static std::runtime_error error(const char* fmt, ...)
 namespace rosmon
 {
 
-Node::Node(const std::string& name, const std::string& package, const std::string& type)
+Node::Node(ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type)
  : m_name(name)
  , m_package(package)
  , m_type(type)
@@ -47,7 +47,6 @@ Node::Node(const std::string& name, const std::string& package, const std::strin
  , m_wantOneRestart(false)
  , m_restarting(false)
 {
-	ros::NodeHandle nh;
 	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&Node::start, this));
 	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&Node::checkStop, this));
 }

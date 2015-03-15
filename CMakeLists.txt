@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
 	cmake_modules
 	roslib
 	message_generation
+	rospack
 )
 
 add_message_files(FILES

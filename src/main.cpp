@@ -36,7 +36,7 @@ fs::path findFile(const fs::path& base, const std::string name)
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "rosmon", ros::init_options::AnonymousName);
-	setlocale(LC_ALL, "");
+	rosmon::PackageRegistry::init();
 
 	std::string launchFileName;
 	if(argc == 2)
