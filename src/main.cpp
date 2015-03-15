@@ -10,6 +10,7 @@
 #include "launch_config.h"
 #include "ui.h"
 #include "ros_interface.h"
+#include "package_registry.h"
 
 #include <boost/filesystem.hpp>
 
@@ -42,7 +43,7 @@ int main(int argc, char** argv)
 		launchFileName = argv[1];
 	else if(argc == 3)
 	{
-		std::string package = ros::package::getPath(argv[1]);
+		std::string package = rosmon::PackageRegistry::getPath(argv[1]);
 		if(package.empty())
 		{
 			fprintf(stderr, "Could not find path of package '%s'\n", package.c_str());

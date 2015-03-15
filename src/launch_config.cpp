@@ -2,6 +2,7 @@
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
 #include "launch_config.h"
+#include "package_registry.h"
 
 #include <ros/package.h>
 #include <ros/node_handle.h>
@@ -50,7 +51,7 @@ std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
 
 		if(cmd == "find")
 		{
-			value = ros::package::getPath(args);
+			value = PackageRegistry::getPath(args);
 			if(value.empty())
 				throw error("%s: $(find %s): Could not find package\n", filename().c_str(), args.c_str());
 		}

@@ -35,6 +35,7 @@ add_executable(rosmon
 	src/ui.cpp
 	src/husl/husl.c
 	src/ros_interface.cpp
+	src/package_registry.cpp
 )
 target_link_libraries(rosmon
 	${catkin_LIBRARIES}
