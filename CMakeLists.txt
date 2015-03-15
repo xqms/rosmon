@@ -45,3 +45,7 @@ target_link_libraries(rosmon
 add_dependencies(rosmon
 	${PROJECT_NAME}_generate_messages_cpp
 )
+
+# Version 1.1 (increment this comment to trigger a CMake update)
+catkin_add_env_hooks(50-rosmon SHELLS bash DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
+
