@@ -353,8 +353,6 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 				m_params[fullName] = fullValue;
 			}
-
-			printf("Auto-Type: %s '%s' -> %d\n", fullName.c_str(), fullValue.c_str(), m_params[fullName].getType());
 		}
 	}
 	else if(command)
