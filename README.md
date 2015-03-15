@@ -30,6 +30,13 @@ file is no longer a problem.
 That said, `rosmon` is very much work-in-progress right now. The sketched
 features are all present, but have not been tested thoroughly.
 
+**WARNING**: `rosmon` is not yet `roslaunch` compliant. For example, the
+`$(find PACKAGE)` substitution performs a simple search using `rospack` and
+always returns the path to the package in the source tree. `roslaunch` may
+choose to return the corresponding devel or install path if the file is found
+there. Other inconsistencies and unsupported features may exist. Use at your
+own risk.
+
 ## License
 
 `rosmon` is licensed under BSD-3.
