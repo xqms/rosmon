@@ -37,8 +37,9 @@ static std::runtime_error error(const char* fmt, ...)
 namespace rosmon
 {
 
-Node::Node(ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type)
- : m_name(name)
+Node::Node(const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type)
+ : m_fdWatcher(fdWatcher)
+ , m_name(name)
  , m_package(package)
  , m_type(type)
  , m_rxBuffer(4096)
@@ -155,6 +156,7 @@ void Node::start()
 
 	// Parent
 	m_pid = pid;
+	m_fdWatcher->registerFD(m_fd, boost::bind(&Node::communicate, this));
 }
 
 void Node::stop()
@@ -260,6 +262,9 @@ void Node::communicate()
 		}
 
 		m_pid = -1;
+		m_fdWatcher->removeFD(m_fd);
+		close(m_fd);
+		m_fd = -1;
 
 		if(m_wantOneRestart)
 		{

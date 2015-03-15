@@ -37,6 +37,7 @@ add_executable(rosmon
 	src/husl/husl.c
 	src/ros_interface.cpp
 	src/package_registry.cpp
+	src/fd_watcher.cpp
 )
 target_link_libraries(rosmon
 	${catkin_LIBRARIES}

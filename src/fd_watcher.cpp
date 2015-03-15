@@ -1,0 +1,76 @@
+// Watches a set of file descriptors for changes
+// Author: Max Schwarz <max.schwarz@uni-bonn.de>
+
+#include "fd_watcher.h"
+
+#include <sys/types.h>
+#include <sys/select.h>
+
+#include <stdarg.h>
+
+static std::runtime_error error(const char* fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	char str[1024];
+
+	vsnprintf(str, sizeof(str), fmt, args);
+
+	va_end(args);
+
+	return std::runtime_error(str);
+}
+
+namespace rosmon
+{
+
+FDWatcher::FDWatcher()
+{
+}
+
+FDWatcher::~FDWatcher()
+{
+}
+
+void FDWatcher::registerFD(int fd, const boost::function<void (int)>& cb)
+{
+	m_fds[fd] = cb;
+}
+
+void FDWatcher::removeFD(int fd)
+{
+	m_fds.erase(fd);
+}
+
+void FDWatcher::wait(const ros::WallDuration& duration)
+{
+	timeval timeout;
+	timeout.tv_sec = duration.toNSec() / 1000 / 1000 / 1000;
+	timeout.tv_usec = duration.toNSec() % 1000;
+
+	fd_set fds;
+	FD_ZERO(&fds);
+
+	int maxfd = 0;
+	for(auto pair : m_fds)
+	{
+		FD_SET(pair.first, &fds);
+		maxfd = std::max(pair.first, maxfd);
+	}
+
+	int ret = select(maxfd+1, &fds, 0, 0, &timeout);
+	if(ret < 0)
+		throw error("Could not select(): %s", strerror(errno));
+
+	if(ret != 0)
+	{
+		for(auto pair : m_fds)
+		{
+			if(FD_ISSET(pair.first, &fds))
+				pair.second(pair.first);
+		}
+	}
+}
+
+}

@@ -14,8 +14,6 @@
 
 #include <boost/regex.hpp>
 
-#include <sys/select.h>
-
 #include <yaml-cpp/yaml.h>
 
 static const char* UNSET_MARKER = "~~~~~ ROSMON-UNSET ~~~~~";
@@ -124,7 +122,8 @@ void LaunchConfig::ParseContext::setArg(const std::string& name, const std::stri
 		m_args[name] = value;
 }
 
-LaunchConfig::LaunchConfig()
+LaunchConfig::LaunchConfig(const FDWatcher::Ptr& watcher)
+ : m_fdWatcher(watcher)
 {
 }
 
@@ -244,7 +243,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	// Enter scope
 	ctx = ctx.enterScope(ctx.evaluate(name));
 
-	Node::Ptr node = boost::make_shared<Node>(m_nh, ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type));
+	Node::Ptr node = boost::make_shared<Node>(m_fdWatcher, m_nh, ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type));
 
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));
@@ -631,47 +630,6 @@ void LaunchConfig::start()
 	for(auto node : m_nodes)
 	{
 		node->start();
-	}
-}
-
-void LaunchConfig::communicate()
-{
-	fd_set fds;
-	FD_ZERO(&fds);
-
-	int maxfd = 0;
-
-	for(auto node : m_nodes)
-	{
-		if(!node->running())
-			continue;
-
-		FD_SET(node->fd(), &fds);
-		maxfd = std::max(node->fd(), maxfd);
-	}
-
-	timeval timeout;
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 100 * 1000;
-
-	int ret = select(maxfd+1, &fds, nullptr, nullptr, &timeout);
-	if(ret < 0)
-	{
-		if(errno == EINTR || errno == EAGAIN)
-			return;
-
-		throw error("Could not select: %s", strerror(errno));
-	}
-	if(ret == 0)
-		return;
-
-	for(auto node : m_nodes)
-	{
-		if(!node->running())
-			continue;
-
-		if(FD_ISSET(node->fd(), &fds))
-			node->communicate();
 	}
 }
 

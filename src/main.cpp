@@ -11,6 +11,7 @@
 #include "ui.h"
 #include "ros_interface.h"
 #include "package_registry.h"
+#include "fd_watcher.h"
 
 #include <boost/filesystem.hpp>
 
@@ -81,7 +82,9 @@ int main(int argc, char** argv)
 	// Setup a sane ROSCONSOLE_FORMAT if the user did not already
 	setenv("ROSCONSOLE_FORMAT", "[${function}]: ${message}", 0);
 
-	rosmon::LaunchConfig config;
+	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
+
+	rosmon::LaunchConfig config(watcher);
 	config.parse(launchFileName);
 	config.setParameters();
 
@@ -94,22 +97,22 @@ int main(int argc, char** argv)
 	rosmon::ROSInterface rosInterface(&config);
 
 	ros::NodeHandle nh;
+	ros::WallDuration waitDuration(0.1);
 
 	while(ros::ok())
 	{
 		ros::spinOnce();
-		config.communicate();
+		watcher->wait(waitDuration);
 		ui.update();
 	}
 
-	printf("Shutting down...\n");
+	ui.log("[rosmon]", "Shutting down...");
 	config.shutdown();
 
-	ros::WallRate rate(10.0);
 	ros::WallTime start = ros::WallTime::now();
 	while(ros::WallTime::now() - start < ros::WallDuration(5.0))
 	{
-		config.communicate();
+		watcher->wait(waitDuration);
 		ui.update();
 
 		if(config.allShutdown())
@@ -120,7 +123,7 @@ int main(int argc, char** argv)
 
 	while(1)
 	{
-		config.communicate();
+		watcher->wait(waitDuration);
 		ui.update();
 
 		if(config.allShutdown())

@@ -13,6 +13,8 @@
 
 #include <ros/wall_timer.h>
 
+#include "fd_watcher.h"
+
 namespace rosmon
 {
 
@@ -29,7 +31,7 @@ public:
 		STATE_WAITING
 	};
 
-	Node(ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type);
+	Node(const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type);
 	~Node();
 
 	void addRemapping(const std::string& from, const std::string& to);
@@ -60,6 +62,8 @@ public:
 private:
 	void log(const char* fmt, ...) __attribute__ (( format (printf, 2, 3) ));
 	void checkStop();
+
+	FDWatcher::Ptr m_fdWatcher;
 
 	std::string m_name;
 	std::string m_package;

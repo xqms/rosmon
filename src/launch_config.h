@@ -5,6 +5,7 @@
 #define LAUNCH_CONFIG_H
 
 #include "node.h"
+#include "fd_watcher.h"
 
 #include <map>
 #include <vector>
@@ -40,14 +41,13 @@ public:
 		std::string m_msg;
 	};
 
-	LaunchConfig();
+	explicit LaunchConfig(const FDWatcher::Ptr& watcher);
 	~LaunchConfig();
 
 	void parse(const std::string& filename);
 
 	void setParameters();
 	void start();
-	void communicate();
 	void shutdown();
 	void forceExit();
 	bool allShutdown();
@@ -112,6 +112,7 @@ private:
 	XmlRpc::XmlRpcValue yamlToXmlRpc(const YAML::Node& n);
 
 	ros::NodeHandle m_nh;
+	FDWatcher::Ptr m_fdWatcher;
 
 	std::vector<Node::Ptr> m_nodes;
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
