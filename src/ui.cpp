@@ -13,6 +13,9 @@
 void cleanup()
 {
 	printf("\n\n\n");
+
+	// Switch cursor back on
+	printf("\033[?25h");
 }
 
 namespace rosmon
@@ -30,6 +33,9 @@ UI::UI(LaunchConfig* config)
 
 	checkWindowSize();
 	setupColors();
+
+	// Switch cursor off
+	printf("\033[?25l");
 }
 
 UI::~UI()
