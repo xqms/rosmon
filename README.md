@@ -37,6 +37,15 @@ choose to return the corresponding devel or install path if the file is found
 there. Other inconsistencies and unsupported features may exist. Use at your
 own risk.
 
+## Building
+
+Simple include this repository in your catkin workspace. After a build
+(tested with `catkin_tools`) and re-sourcing of the `devel/setup.bash` you will
+have the `mon` command in your environment.
+
+`mon` supports the same argument style as `roslaunch` (either
+`mon launch path/to/file.launch` or `mon launch package file.launch`).
+
 ## License
 
 `rosmon` is licensed under BSD-3.
