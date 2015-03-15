@@ -61,7 +61,12 @@ void FDWatcher::wait(const ros::WallDuration& duration)
 
 	int ret = select(maxfd+1, &fds, 0, 0, &timeout);
 	if(ret < 0)
+	{
+		if(errno == EINTR || errno == EAGAIN)
+			return;
+
 		throw error("Could not select(): %s", strerror(errno));
+	}
 
 	if(ret != 0)
 	{
