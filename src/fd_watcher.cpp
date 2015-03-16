@@ -46,8 +46,8 @@ void FDWatcher::removeFD(int fd)
 void FDWatcher::wait(const ros::WallDuration& duration)
 {
 	timeval timeout;
-	timeout.tv_sec = duration.toNSec() / 1000 / 1000 / 1000;
-	timeout.tv_usec = duration.toNSec() % 1000;
+	timeout.tv_sec = duration.toNSec() / 1000LL / 1000LL / 1000LL;
+	timeout.tv_usec = (duration.toNSec() / 1000LL) % (1000LL * 1000LL * 1000LL);
 
 	fd_set fds;
 	FD_ZERO(&fds);
