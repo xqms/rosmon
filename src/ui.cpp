@@ -73,6 +73,9 @@ void UI::drawStatusLine()
 {
 	const int NODE_WIDTH = 13;
 
+	int lines = 1;
+	int col = 0;
+
 	for(auto node : m_config->nodes())
 	{
 		char label[NODE_WIDTH+2];
@@ -101,10 +104,27 @@ void UI::drawStatusLine()
 		}
 		printf(" %s ", label);
 		printf("\033[0m");
-		printf(" ");
+
+		// Primitive wrapping control
+		col += NODE_WIDTH + 2;
+
+		if(col + 1 + NODE_WIDTH < m_columns)
+			printf(" ");
+		else if(col == m_columns)
+		{
+			col = 0;
+			lines++;
+		}
+		else if(col + 1 + NODE_WIDTH > m_columns)
+		{
+			col = 0;
+			lines++;
+			printf("\n");
+		}
 	}
-	printf("\n");
-	printf("RUNNING");
+
+	for(int i = lines; i < 2; ++i)
+		printf("\n");
 }
 
 void UI::log(const std::string& channel, const std::string& log)
