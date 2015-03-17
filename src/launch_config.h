@@ -44,6 +44,8 @@ public:
 	explicit LaunchConfig(const FDWatcher::Ptr& watcher);
 	~LaunchConfig();
 
+	void setArgument(const std::string& name, const std::string& value);
+
 	void parse(const std::string& filename);
 
 	void setParameters();
@@ -60,9 +62,8 @@ private:
 	class ParseContext
 	{
 	public:
-		ParseContext(const std::string& filename)
+		ParseContext()
 		 : m_prefix("/")
-		 , m_filename(filename)
 		{}
 
 		const std::string& prefix() const
@@ -113,6 +114,8 @@ private:
 
 	ros::NodeHandle m_nh;
 	FDWatcher::Ptr m_fdWatcher;
+
+	ParseContext m_rootContext;
 
 	std::vector<Node::Ptr> m_nodes;
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;

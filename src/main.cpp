@@ -36,13 +36,30 @@ fs::path findFile(const fs::path& base, const std::string name)
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "rosmon", ros::init_options::AnonymousName);
+	// FIXME: We can't pass the whole argv to ros::init() because it interprets
+	// the launch arguments (arg1:=v1) as remappings...
+	int dummyArgc = 1;
+	ros::init(dummyArgc, argv, "rosmon", ros::init_options::AnonymousName);
+
 	rosmon::PackageRegistry::init();
 
+	if(argc == 1 || (argc >= 2 && strcmp(argv[1], "--help") == 0))
+	{
+		fprintf(stderr, "Usage: rosmon (<launchfile> or <package> <launchfile>) arg1:=v1 arg2:=v2...\n");
+		return 1;
+	}
+
+	int firstArg = 1;
+	for(; firstArg < argc; ++firstArg)
+	{
+		if(strstr(argv[firstArg], ":="))
+			break;
+	}
+
 	std::string launchFileName;
-	if(argc == 2)
+	if(firstArg == 2)
 		launchFileName = argv[1];
-	else if(argc == 3)
+	else if(firstArg == 3)
 	{
 		std::string package = rosmon::PackageRegistry::getPath(argv[1]);
 		if(package.empty())
@@ -62,7 +79,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		fprintf(stderr, "Usage: rosmon <launchfile>\n");
+		fprintf(stderr, "Usage: rosmon (<launchfile> or <package> <launchfile>) arg1:=v1 arg2:=v2...\n");
 		return 1;
 	}
 
@@ -79,12 +96,34 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	ros::NodeHandle nh;
+
 	// Setup a sane ROSCONSOLE_FORMAT if the user did not already
 	setenv("ROSCONSOLE_FORMAT", "[${function}]: ${message}", 0);
 
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
 
 	rosmon::LaunchConfig config(watcher);
+
+	for(int i = firstArg; i < argc; ++i)
+	{
+		char* arg = strstr(argv[i], ":=");
+
+		if(!arg)
+		{
+			fprintf(stderr, "You specified a non-argument after an argument\n");
+			return 1;
+		}
+
+		char* name = argv[i];
+
+		*arg = 0;
+
+		char* value = arg + 2;
+
+		config.setArgument(name, value);
+	}
+
 	config.parse(launchFileName);
 	config.setParameters();
 
@@ -96,7 +135,6 @@ int main(int argc, char** argv)
 	// ROS interface
 	rosmon::ROSInterface rosInterface(&config);
 
-	ros::NodeHandle nh;
 	ros::WallDuration waitDuration(0.1);
 
 	while(ros::ok())

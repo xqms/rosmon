@@ -131,6 +131,11 @@ LaunchConfig::~LaunchConfig()
 {
 }
 
+void LaunchConfig::setArgument(const std::string& name, const std::string& value)
+{
+	m_rootContext.setArg(name, value, true);
+}
+
 void LaunchConfig::parse(const std::string& filename)
 {
 	TiXmlDocument document(filename);
@@ -143,7 +148,8 @@ void LaunchConfig::parse(const std::string& filename)
 	}
 
 	ros::WallTime start = ros::WallTime::now();
-	parse(document.RootElement(), ParseContext(filename));
+	m_rootContext.setFilename(filename);
+	parse(document.RootElement(), m_rootContext);
 	printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
 
 	for(auto it : m_params)
