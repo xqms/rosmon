@@ -107,34 +107,6 @@ void UI::drawStatusLine()
 	printf("RUNNING");
 }
 
-static void replaceAll(std::string& subject, const std::string& search,
-                          const std::string& replace)
-{
-	size_t pos = 0;
-	while ((pos = subject.find(search, pos)) != std::string::npos)
-	{
-		subject.replace(pos, search.length(), replace);
-		pos += replace.length();
-	}
-}
-
-// static void replaceAll(std::string& str, const std::string& from, const std::string& to) {
-// 	if(from.empty())
-// 		return;
-// 	std::string wsRet;
-// 	wsRet.reserve(str.length());
-// 	size_t start_pos = 0, pos;
-// 	while((pos = str.find(from, start_pos)) != std::string::npos) {
-// 		wsRet += str.substr(start_pos, pos - start_pos);
-// 		wsRet += to;
-// 		pos += from.length();
-// 		start_pos = pos;
-// 	}
-// 	wsRet += str.substr(start_pos);
-// 	str.swap(wsRet); // faster than str = wsRet;
-// }
-
-
 void UI::log(const std::string& channel, const std::string& log)
 {
 	std::string clean = log;
@@ -147,8 +119,6 @@ void UI::log(const std::string& channel, const std::string& log)
 		unsigned int color = it->second;
 		snprintf(buf, sizeof(buf), "\033[48;2;%d;%d;%dm", color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF);
 		fputs(buf, stdout);
-
-// 		replaceAll(clean, "\033[0m", "\033[0m" + std::string(buf));
 	}
 
 	printf("\033[K%20s:\033[0m ", channel.c_str());
