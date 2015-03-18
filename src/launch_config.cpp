@@ -72,6 +72,30 @@ std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
 			if(value == UNSET_MARKER)
 				throw error("%s: $(arg %s): Accessing unset argument", filename().c_str(), args.c_str());
 		}
+		else if(cmd == "env")
+		{
+			const char* envval = getenv(args.c_str());
+			if(!envval)
+				throw error("%s: $(env %s): Environment variable not set!", filename().c_str(), args.c_str());
+
+			value = envval;
+		}
+		else if(cmd == "optenv")
+		{
+			auto pos = args.find(" ");
+			std::string defaultValue;
+			if(pos != std::string::npos)
+			{
+				defaultValue = args.substr(pos + 1);
+				args = args.substr(0, pos);
+			}
+
+			const char* envval = getenv(args.c_str());
+			if(envval)
+				value = envval;
+			else
+				value = defaultValue;
+		}
 		else
 			throw error("Unsupported subst command '%s'", cmd.c_str());
 
@@ -223,6 +247,8 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
 		}
 		else if(e->ValueStr() == "include")
 			parseInclude(e, ctx);
+		else if(e->ValueStr() == "env")
+			parseEnv(e, ctx);
 	}
 }
 
@@ -629,6 +655,17 @@ void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
 	{
 		ctx.setArg(name, UNSET_MARKER, false);
 	}
+}
+
+void LaunchConfig::parseEnv(TiXmlElement* element, ParseContext& ctx)
+{
+	const char* name = element->Attribute("name");
+	const char* value = element->Attribute("value");
+
+	if(!name || !value)
+		throw error("%s:%d: <env> needs name, value attributes", ctx.filename().c_str(), element->Row());
+
+	setenv(ctx.evaluate(name).c_str(), ctx.evaluate(value).c_str(), true);
 }
 
 void LaunchConfig::start()
