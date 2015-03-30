@@ -38,6 +38,9 @@ public:
 	void addExtraArguments(const std::string& argString);
 	void setNamespace(const std::string& ns);
 
+	void setRespawn(bool respawn);
+	void setRespawnDelay(const ros::WallDuration& respawnDelay);
+
 	std::vector<std::string> composeCommand() const;
 
 	void start();
@@ -85,6 +88,9 @@ private:
 
 	bool m_wantOneRestart;
 	bool m_restarting;
+
+	bool m_respawn;
+	ros::WallDuration m_respawnDelay;
 };
 
 }

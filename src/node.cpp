@@ -47,6 +47,11 @@ Node::Node(const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh, const std::stri
  , m_exitCode(0)
  , m_wantOneRestart(false)
  , m_restarting(false)
+
+ // NOTE: roslaunch documentation seems to suggest that this is true by default,
+ //  however, the source tells a different story...
+ , m_respawn(false)
+ , m_respawnDelay(1.0)
 {
 	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&Node::start, this));
 	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&Node::checkStop, this));
@@ -266,8 +271,13 @@ void Node::communicate()
 		close(m_fd);
 		m_fd = -1;
 
-		if(m_wantOneRestart)
+		if(m_wantOneRestart || m_respawn)
 		{
+			if(m_wantOneRestart)
+				m_restartTimer.setPeriod(ros::WallDuration(1.0));
+			else
+				m_restartTimer.setPeriod(m_respawnDelay);
+
 			m_restartTimer.start();
 			m_restarting = true;
 			m_wantOneRestart = false;
@@ -307,6 +317,16 @@ void Node::log(const char* fmt, ...)
 	va_end(v);
 
 	logMessageSignal(m_name, buf);
+}
+
+void Node::setRespawn(bool respawn)
+{
+	m_respawn = respawn;
+}
+
+void Node::setRespawnDelay(const ros::WallDuration& respawnDelay)
+{
+	m_respawnDelay = respawnDelay;
 }
 
 }

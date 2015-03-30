@@ -265,6 +265,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* type = element->Attribute("type");
 	const char* args = element->Attribute("args");
 	const char* ns = element->Attribute("ns");
+	const char* respawn = element->Attribute("respawn");
+	const char* respawnDelay = element->Attribute("respawn_delay");
 
 	if(!name || !pkg || !type)
 	{
@@ -288,6 +290,26 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	if(!fullNamespace.empty())
 		node->setNamespace(fullNamespace);
+
+	if(respawn)
+	{
+		node->setRespawn(ctx.parseBool(respawn, element->Row()));
+
+		if(respawnDelay)
+		{
+			double seconds;
+			try
+			{
+				seconds = boost::lexical_cast<double>(ctx.evaluate(respawnDelay));
+			}
+			catch(boost::bad_lexical_cast&)
+			{
+				throw error("%s:%d: bad respawn_delay value", ctx.filename().c_str(), element->Row());
+			}
+
+			node->setRespawnDelay(ros::WallDuration(seconds));
+		}
+	}
 
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
 	{
