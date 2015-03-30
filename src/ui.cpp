@@ -162,7 +162,7 @@ void UI::update()
 	drawStatusLine();
 
 	// Move back
-	printf("\033[2A\r");
+	printf("\033[K\033[2A\r");
 	fflush(stdout);
 }
 
