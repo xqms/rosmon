@@ -70,11 +70,19 @@ void FDWatcher::wait(const ros::WallDuration& duration)
 
 	if(ret != 0)
 	{
+		// Store the callbacks to be notified in a temporary list, as calling
+		// the callback might call removeFD(), which will confuse us...
+		std::vector<std::pair<int, boost::function<void(int)>>> toBeNotified;
+
 		for(auto pair : m_fds)
 		{
 			if(FD_ISSET(pair.first, &fds))
-				pair.second(pair.first);
+				toBeNotified.push_back(pair);
 		}
+
+		// Actually call the callbacks
+		for(auto pair : toBeNotified)
+			pair.second(pair.first);
 	}
 }
 
