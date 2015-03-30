@@ -122,12 +122,12 @@ void UI::drawStatusLine()
 		{
 			col = 0;
 			lines++;
-			printf("\n");
+			printf("\n\033[K");
 		}
 	}
 
 	for(int i = lines; i < 2; ++i)
-		printf("\n");
+		printf("\n\033[K");
 }
 
 void UI::log(const std::string& channel, const std::string& log)
@@ -158,7 +158,7 @@ void UI::log(const std::string& channel, const std::string& log)
 void UI::update()
 {
 	// We currently are at the beginning of the status line.
-	printf("\n");
+	printf("\n\033[K");
 	drawStatusLine();
 
 	// Move back
