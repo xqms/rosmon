@@ -108,30 +108,36 @@ std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
 		return tpl;
 }
 
+bool LaunchConfig::ParseContext::parseBool(const std::string& value, int line)
+{
+	std::string expansion = evaluate(value);
+
+	if(expansion == "1" || expansion == "true")
+		return true;
+	else if(expansion == "0" || expansion == "false")
+		return false;
+	else
+		throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), line, expansion.c_str());
+}
+
 bool LaunchConfig::ParseContext::shouldSkip(TiXmlElement* e)
 {
 	const char* if_cond = e->Attribute("if");
 	if(if_cond)
 	{
-		std::string expansion = evaluate(if_cond);
-		if(expansion == "0" || expansion == "false")
-			return true;
-		else if(expansion == "1" || expansion == "true")
+		if(parseBool(if_cond, e->Row()))
 			return false;
 		else
-			throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), e->Row(), expansion.c_str());
+			return true;
 	}
 
 	const char* unless_cond = e->Attribute("unless");
 	if(unless_cond)
 	{
-		std::string expansion = evaluate(unless_cond);
-		if(expansion == "1" || expansion == "true")
+		if(parseBool(unless_cond, e->Row()))
 			return true;
-		else if(expansion == "0" || expansion == "false")
-			return false;
 		else
-			throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), e->Row(), expansion.c_str());
+			return false;
 	}
 
 	return false;

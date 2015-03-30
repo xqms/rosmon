@@ -87,6 +87,8 @@ private:
 
 		std::string evaluate(const std::string& tpl);
 
+		bool parseBool(const std::string& input, int line);
+
 		void clearArguments()
 		{
 			m_args.clear();
@@ -110,6 +112,8 @@ private:
 	void parseEnv(TiXmlElement* element, ParseContext& context);
 
 	void loadYAMLParams(const YAML::Node& n, const std::string& prefix);
+
+	bool parseBool(const std::string& value);
 
 	XmlRpc::XmlRpcValue yamlToXmlRpc(const YAML::Node& n);
 
