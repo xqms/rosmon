@@ -109,7 +109,10 @@ void UI::drawStatusLine()
 		col += NODE_WIDTH + 2;
 
 		if(col + 1 + NODE_WIDTH < m_columns)
+		{
 			printf(" ");
+			col += 1;
+		}
 		else if(col == m_columns)
 		{
 			col = 0;
