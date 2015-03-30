@@ -117,6 +117,10 @@ private:
 
 	XmlRpc::XmlRpcValue yamlToXmlRpc(const YAML::Node& n);
 
+	void log(const char* fmt, ...) __attribute__((format (printf, 2, 3)));
+
+	void handleRequiredNodeExit(const std::string& name);
+
 	ros::NodeHandle m_nh;
 	FDWatcher::Ptr m_fdWatcher;
 
@@ -124,8 +128,6 @@ private:
 
 	std::vector<Node::Ptr> m_nodes;
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
-
-	void log(const char* fmt, ...) __attribute__((format (printf, 2, 3)));
 };
 
 }

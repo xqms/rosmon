@@ -267,6 +267,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* ns = element->Attribute("ns");
 	const char* respawn = element->Attribute("respawn");
 	const char* respawnDelay = element->Attribute("respawn_delay");
+	const char* required = element->Attribute("required");
 
 	if(!name || !pkg || !type)
 	{
@@ -309,6 +310,11 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 			node->setRespawnDelay(ros::WallDuration(seconds));
 		}
+	}
+
+	if(required && ctx.parseBool(required, element->Row()))
+	{
+		node->exitedSignal.connect(boost::bind(&LaunchConfig::handleRequiredNodeExit, this, _1));
 	}
 
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
@@ -733,6 +739,12 @@ bool LaunchConfig::allShutdown()
 	}
 
 	return allShutdown;
+}
+
+void LaunchConfig::handleRequiredNodeExit(const std::string& name)
+{
+	log("Required node '%s' exited, shutting down...", name.c_str());
+	ros::shutdown();
 }
 
 void LaunchConfig::log(const char* fmt, ...)

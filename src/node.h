@@ -62,6 +62,7 @@ public:
 	{ return m_name; }
 
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
+	boost::signals2::signal<void(std::string)> exitedSignal;
 private:
 	void log(const char* fmt, ...) __attribute__ (( format (printf, 2, 3) ));
 	void checkStop();

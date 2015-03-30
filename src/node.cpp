@@ -283,6 +283,8 @@ void Node::communicate()
 			m_wantOneRestart = false;
 		}
 
+		exitedSignal(m_name);
+
 		return;
 	}
 
