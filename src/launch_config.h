@@ -96,11 +96,17 @@ private:
 
 		void setArg(const std::string& name, const std::string& argument, bool override);
 
+		void setEnvironment(const std::string& name, const std::string& value);
+
+		inline const std::map<std::string, std::string> environment() const
+		{ return m_environment; }
+
 		bool shouldSkip(TiXmlElement* element);
 	private:
 		std::string m_prefix;
 		std::string m_filename;
 		std::map<std::string, std::string> m_args;
+		std::map<std::string, std::string> m_environment;
 	};
 
 	void parse(TiXmlElement* element, ParseContext context);

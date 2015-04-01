@@ -100,6 +100,11 @@ void Node::setNamespace(const std::string& ns)
 	m_namespace = ns;
 }
 
+void Node::setExtraEnvironment(const std::map<std::string, std::string>& env)
+{
+	m_extraEnvironment = env;
+}
+
 std::vector<std::string> Node::composeCommand() const
 {
 	std::vector<std::string> cmd{
@@ -147,6 +152,9 @@ void Node::start()
 
 		if(!m_namespace.empty())
 			setenv("ROS_NAMESPACE", m_namespace.c_str(), 1);
+
+		for(auto& pair : m_extraEnvironment)
+			setenv(pair.first.c_str(), pair.second.c_str(), 1);
 
 		if(execvp(path, ptrs.data()) != 0)
 		{

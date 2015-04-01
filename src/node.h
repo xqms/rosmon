@@ -37,6 +37,7 @@ public:
 	void addRemapping(const std::string& from, const std::string& to);
 	void addExtraArguments(const std::string& argString);
 	void setNamespace(const std::string& ns);
+	void setExtraEnvironment(const std::map<std::string, std::string>& env);
 
 	void setRespawn(bool respawn);
 	void setRespawnDelay(const ros::WallDuration& respawnDelay);
@@ -77,6 +78,8 @@ private:
 
 	std::map<std::string, std::string> m_remappings;
 	std::vector<std::string> m_extraArgs;
+
+	std::map<std::string, std::string> m_extraEnvironment;
 
 	boost::circular_buffer<char> m_rxBuffer;
 

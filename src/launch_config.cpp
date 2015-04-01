@@ -152,6 +152,11 @@ void LaunchConfig::ParseContext::setArg(const std::string& name, const std::stri
 		m_args[name] = value;
 }
 
+void LaunchConfig::ParseContext::setEnvironment(const std::string& name, const std::string& value)
+{
+	m_environment[name] = value;
+}
+
 LaunchConfig::LaunchConfig(const FDWatcher::Ptr& watcher)
  : m_fdWatcher(watcher)
 {
@@ -341,6 +346,9 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 			node->addRemapping(ctx.evaluate(from), ctx.evaluate(to));
 		}
 	}
+
+	// Set environment *after* parsing the node children (may contain env tags)
+	node->setExtraEnvironment(ctx.environment());
 
 	node->logMessageSignal.connect(logMessageSignal);
 
@@ -699,7 +707,7 @@ void LaunchConfig::parseEnv(TiXmlElement* element, ParseContext& ctx)
 	if(!name || !value)
 		throw error("%s:%d: <env> needs name, value attributes", ctx.filename().c_str(), element->Row());
 
-	setenv(ctx.evaluate(name).c_str(), ctx.evaluate(value).c_str(), true);
+	ctx.setEnvironment(ctx.evaluate(name), ctx.evaluate(value));
 }
 
 void LaunchConfig::start()
