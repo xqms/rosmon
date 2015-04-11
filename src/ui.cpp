@@ -106,9 +106,10 @@ void UI::drawStatusLine()
 		printf("\033[0m");
 
 		// Primitive wrapping control
-		col += NODE_WIDTH + 2;
+		const int BLOCK_WIDTH = NODE_WIDTH + 2;
+		col += BLOCK_WIDTH;
 
-		if(col + 1 + NODE_WIDTH < m_columns)
+		if(col + 1 + BLOCK_WIDTH < m_columns)
 		{
 			printf(" ");
 			col += 1;
@@ -118,7 +119,7 @@ void UI::drawStatusLine()
 			col = 0;
 			lines++;
 		}
-		else if(col + 1 + NODE_WIDTH > m_columns)
+		else if(col + 1 + BLOCK_WIDTH > m_columns)
 		{
 			col = 0;
 			lines++;
