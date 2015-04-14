@@ -1,0 +1,12 @@
+<library path="lib/librosmon_gui">
+	<class name="rosmon" type="rosmon::MonGUI" base_class_type="rqt_gui_cpp::Plugin">
+		<description>
+			rosmon
+		</description>
+		<qtgui>
+			<label>rosmon</label>
+			<icon type="theme">utilities-system-monitor</icon>
+			<statustip>rosmon GUI</statustip>
+		</qtgui>
+	</class>
+</library>

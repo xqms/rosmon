@@ -7,4 +7,9 @@
 
 	<buildtool_depend>catkin</buildtool_depend>
 	<depend>roscpp</depend>
+	<depend>rqt_gui</depend>
+
+	<export>
+		<rqt_gui plugin="${prefix}/rqt_plugin.xml" />
+	</export>
 </package>
