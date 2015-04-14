@@ -5,6 +5,13 @@
 
 #include <pluginlib/class_list_macros.h>
 
+#include <QMenu>
+#include <QMessageBox>
+
+#include <rosmon/StartStop.h>
+
+#include <ros/service.h>
+
 namespace rosmon
 {
 
@@ -29,6 +36,11 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 
 	m_ui.tableView->setModel(m_model);
 
+	m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)),
+		SLOT(showContextMenu(QPoint))
+	);
+
 	ctx.addWidget(m_w);
 }
 
@@ -44,6 +56,37 @@ void MonGUI::restoreSettings(const qt_gui_cpp::Settings& pluginSettings, const q
 void MonGUI::saveSettings(qt_gui_cpp::Settings& pluginSettings, qt_gui_cpp::Settings& instanceSettings) const
 {
 	instanceSettings.setValue("namespace", m_ui.nodeEdit->text());
+}
+
+void MonGUI::showContextMenu(const QPoint& point)
+{
+	QModelIndex index = m_ui.tableView->indexAt(point);
+
+	if(!index.isValid())
+		return;
+
+	QMenu menu(m_ui.tableView);
+
+	QAction* startAction = menu.addAction("Start");
+	startAction->setProperty("action", rosmon::StartStopRequest::START);
+
+	QAction* stopAction = menu.addAction("Stop");
+	stopAction->setProperty("action", rosmon::StartStopRequest::STOP);
+
+	QAction* restartAction = menu.addAction("Restart");
+	restartAction->setProperty("action", rosmon::StartStopRequest::RESTART);
+
+	QAction* triggered = menu.exec(m_ui.tableView->viewport()->mapToGlobal(point));
+
+	if(triggered)
+	{
+		rosmon::StartStop srv;
+		srv.request.node = m_model->nodeName(index.row()).toStdString();
+		srv.request.action = triggered->property("action").toInt();
+
+		if(!ros::service::call(m_ui.nodeEdit->text().toStdString() + "/start_stop", srv))
+			QMessageBox::critical(m_w, "Failure", "Could not call start_stop service");
+	}
 }
 
 }

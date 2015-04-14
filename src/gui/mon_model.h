@@ -29,6 +29,8 @@ public:
 
 	inline QString namespaceString() const
 	{ return m_namespace; }
+
+	QString nodeName(int row) const;
 public Q_SLOTS:
 	void setNamespace(const QString& ns);
 Q_SIGNALS:

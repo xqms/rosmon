@@ -162,5 +162,13 @@ QVariant MonModel::headerData(int section, Qt::Orientation orientation, int role
 	return QVariant();
 }
 
+QString MonModel::nodeName(int row) const
+{
+	if(row < 0 || row > (int)m_entries.size())
+		return QString();
+
+	return m_entries[row].name;
+}
+
 }
 

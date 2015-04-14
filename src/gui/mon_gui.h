@@ -26,6 +26,7 @@ public:
 	virtual void restoreSettings(const qt_gui_cpp::Settings& pluginSettings, const qt_gui_cpp::Settings& instanceSettings) override;
 private Q_SLOTS:
 	void updateTopic();
+	void showContextMenu(const QPoint& point);
 private:
 	Ui_MonGUI m_ui;
 	QWidget* m_w;
