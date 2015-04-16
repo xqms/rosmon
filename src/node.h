@@ -31,6 +31,13 @@ public:
 		STATE_WAITING
 	};
 
+	enum Command
+	{
+		CMD_RUN,
+		CMD_STOP,
+		CMD_RESTART
+	};
+
 	Node(const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type);
 	~Node();
 
@@ -45,7 +52,7 @@ public:
 	std::vector<std::string> composeCommand() const;
 
 	void start();
-	void stop();
+	void stop(bool restart = false);
 	void restart();
 
 	void shutdown();
@@ -90,7 +97,8 @@ private:
 	ros::WallTimer m_stopCheckTimer;
 	ros::WallTimer m_restartTimer;
 
-	bool m_wantOneRestart;
+	Command m_command;
+
 	bool m_restarting;
 
 	bool m_respawn;

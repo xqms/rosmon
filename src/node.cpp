@@ -45,7 +45,7 @@ Node::Node(const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh, const std::stri
  , m_rxBuffer(4096)
  , m_pid(-1)
  , m_exitCode(0)
- , m_wantOneRestart(false)
+ , m_command(CMD_STOP) // we start in stopped state
  , m_restarting(false)
 
  // NOTE: roslaunch documentation seems to suggest that this is true by default,
@@ -127,6 +127,8 @@ std::vector<std::string> Node::composeCommand() const
 
 void Node::start()
 {
+	m_command = CMD_RUN;
+
 	m_stopCheckTimer.stop();
 	m_restartTimer.stop();
 	m_restarting = false;
@@ -172,8 +174,13 @@ void Node::start()
 	m_fdWatcher->registerFD(m_fd, boost::bind(&Node::communicate, this));
 }
 
-void Node::stop()
+void Node::stop(bool restart)
 {
+	if(restart)
+		m_command = CMD_RESTART;
+	else
+		m_command = CMD_STOP;
+
 	m_stopCheckTimer.stop();
 	m_restartTimer.stop();
 
@@ -202,10 +209,7 @@ void Node::restart()
 	m_restartTimer.stop();
 
 	if(running())
-	{
-		m_wantOneRestart = true;
-		stop();
-	}
+		stop(true);
 	else
 		start();
 }
@@ -279,16 +283,15 @@ void Node::communicate()
 		close(m_fd);
 		m_fd = -1;
 
-		if(m_wantOneRestart || m_respawn)
+		if(m_command == CMD_RESTART || (m_command == CMD_RUN && m_respawn))
 		{
-			if(m_wantOneRestart)
+			if(m_command == CMD_RESTART)
 				m_restartTimer.setPeriod(ros::WallDuration(1.0));
 			else
 				m_restartTimer.setPeriod(m_respawnDelay);
 
 			m_restartTimer.start();
 			m_restarting = true;
-			m_wantOneRestart = false;
 		}
 
 		exitedSignal(m_name);
