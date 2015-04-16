@@ -6,6 +6,7 @@
 #include <ros/rate.h>
 #include <ros/node_handle.h>
 #include <ros/package.h>
+#include <ros/console_backend.h>
 
 #include "launch_config.h"
 #include "ui.h"
@@ -19,6 +20,8 @@
 #include <getopt.h>
 
 namespace fs = boost::filesystem;
+
+static ros::Publisher g_pub_rosout;
 
 static fs::path findFile(const fs::path& base, const std::string name)
 {
@@ -171,6 +174,9 @@ int main(int argc, char** argv)
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
 
 	rosmon::LaunchConfig config(watcher);
+
+	// Disable direct logging to stdout
+	ros::console::backend::function_print = nullptr;
 
 	for(int i = firstArg; i < argc; ++i)
 	{
