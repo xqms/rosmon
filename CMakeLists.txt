@@ -86,3 +86,7 @@ endif()
 # Version 1.1 (increment this comment to trigger a CMake update)
 catkin_add_env_hooks(50-rosmon SHELLS bash DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
 
+install(TARGETS rosmon
+	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
