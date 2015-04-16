@@ -3,7 +3,9 @@
 # CMakeLists.txt to trigger a CMake update.
 
 function mon() {
-	local workspace=$(roscd && cd .. && pwd)
+	local workspace="$(roscd && pwd)"
+	[[ "$(basename "$workspace")" == "devel" ]] && workspace="$(dirname "$workspace")"
+	
 	case $1 in
 		launch)
 			shift
@@ -21,7 +23,8 @@ function _mon() {
 			COMPREPLY=( $(compgen -W "launch" -- $cur) )
 			;;
 		2)
-			local workspace=$(roscd && cd .. && pwd)
+			local workspace="$(roscd && pwd)"
+			[[ "$(basename "$workspace")" == "devel" ]] && workspace="$(dirname "$workspace")"
 
 			case "${cmd}" in
 				launch)
