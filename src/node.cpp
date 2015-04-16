@@ -136,6 +136,8 @@ void Node::start()
 	if(running())
 		return;
 
+	ROS_INFO("rosmon: starting '%s'", m_name.c_str());
+
 	int pid = forkpty(&m_fd, NULL, NULL, NULL);
 	if(pid < 0)
 		throw error("Could not fork with forkpty(): %s", strerror(errno));
@@ -270,11 +272,13 @@ void Node::communicate()
 		if(WIFEXITED(status))
 		{
 			log("%s exited with status %d", m_name.c_str(), WEXITSTATUS(status));
+			ROS_INFO("rosmon: %s exited with status %d", m_name.c_str(), WEXITSTATUS(status));
 			m_exitCode = WEXITSTATUS(status);
 		}
 		else if(WIFSIGNALED(status))
 		{
 			log("%s died from signal %d", m_name.c_str(), WTERMSIG(status));
+			ROS_ERROR("rosmon: %s died from signal %d", m_name.c_str(), WTERMSIG(status));
 			m_exitCode = 255;
 		}
 
