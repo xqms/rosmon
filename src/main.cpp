@@ -15,9 +15,12 @@
 
 #include <boost/filesystem.hpp>
 
+#include <unistd.h>
+#include <getopt.h>
+
 namespace fs = boost::filesystem;
 
-fs::path findFile(const fs::path& base, const std::string name)
+static fs::path findFile(const fs::path& base, const std::string name)
 {
 	for(fs::directory_iterator it(base); it != fs::directory_iterator(); ++it)
 	{
@@ -34,52 +37,116 @@ fs::path findFile(const fs::path& base, const std::string name)
 	return fs::path();
 }
 
+void usage()
+{
+	fprintf(stderr,
+		"Usage:\n"
+		"  rosmon [options] some_package test.launch [arg1:=value1 ...]\n"
+		"  rosmon [options] path/to/test.launch [arg1:=value1 ...]\n"
+		"\n"
+		"Options:\n"
+		"  --help         This help screen\n"
+		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
+		"                 name is chosen.\n"
+		"\n"
+	);
+}
+
+// Options
+static const struct option OPTIONS[] = {
+	{"help", no_argument, NULL, 'h'},
+	{"name", required_argument, NULL, 'n'},
+	{NULL, 0, NULL, 0}
+};
+
 int main(int argc, char** argv)
 {
-	// FIXME: We can't pass the whole argv to ros::init() because it interprets
-	// the launch arguments (arg1:=v1) as remappings...
-	int dummyArgc = 1;
-	ros::init(dummyArgc, argv, "rosmon", ros::init_options::AnonymousName);
+	std::string name;
+	std::string launchFilePath;
 
-	rosmon::PackageRegistry::init();
-
-	if(argc == 1 || (argc >= 2 && strcmp(argv[1], "--help") == 0))
+	// Parse options
+	while(1)
 	{
-		fprintf(stderr, "Usage: rosmon (<launchfile> or <package> <launchfile>) arg1:=v1 arg2:=v2...\n");
+		int option_index;
+		int c = getopt_long(argc, argv, "h", OPTIONS, &option_index);
+
+		if(c == -1)
+			break;
+
+		switch(c)
+		{
+			case 'h':
+				usage();
+				return 0;
+			case 'n':
+				name = optarg;
+				break;
+		}
+	}
+
+	// Initialize the ROS node.
+	uint32_t init_options = 0;
+
+	if(name.empty())
+	{
+		name = "rosmon";
+		init_options |= ros::init_options::AnonymousName;
+	}
+
+	// prevent ros::init from parsing the launch file arguments as remappings
+	int dummyArgc = 1;
+	ros::init(dummyArgc, argv, name, init_options);
+
+	// Parse the positional arguments
+	if(optind == argc)
+	{
+		usage();
 		return 1;
 	}
 
-	int firstArg = 1;
+	// Find first argument (must contain ':=')
+	int firstArg = optind + 1;
 	for(; firstArg < argc; ++firstArg)
 	{
 		if(strstr(argv[firstArg], ":="))
 			break;
 	}
 
-	std::string launchFileName;
-	if(firstArg == 2)
-		launchFileName = argv[1];
-	else if(firstArg == 3)
+	// From the position of the argument (or the end-of-options), we know
+	// if we were called with a) package + filename or b) just a path.
+
+	rosmon::PackageRegistry::init();
+
+	if(firstArg - optind == 1)
 	{
-		std::string package = rosmon::PackageRegistry::getPath(argv[1]);
+		launchFilePath = argv[optind];
+	}
+	else if(firstArg - optind == 2)
+	{
+		const char* packageName = argv[optind];
+		const char* fileName = argv[optind + 1];
+
+		std::string package = rosmon::PackageRegistry::getPath(packageName);
 		if(package.empty())
 		{
-			fprintf(stderr, "Could not find path of package '%s'\n", package.c_str());
+			fprintf(stderr, "Could not find path of package '%s'\n", packageName);
 			return 1;
 		}
 
-		fs::path path = findFile(package, argv[2]);
+		fs::path path = findFile(package, fileName);
 		if(path.empty())
 		{
-			fprintf(stderr, "Could not find launch file '%s' in package '%s'\n", argv[2], argv[1]);
+			fprintf(stderr, "Could not find launch file '%s' in package '%s'\n",
+				fileName, packageName
+			);
 			return 1;
 		}
 
-		launchFileName = path.string();
+		launchFilePath = path.string();
 	}
 	else
 	{
-		fprintf(stderr, "Usage: rosmon (<launchfile> or <package> <launchfile>) arg1:=v1 arg2:=v2...\n");
+		usage();
 		return 1;
 	}
 
@@ -124,7 +191,7 @@ int main(int argc, char** argv)
 		config.setArgument(name, value);
 	}
 
-	config.parse(launchFileName);
+	config.parse(launchFilePath);
 	config.setParameters();
 
 	config.start();
