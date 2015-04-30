@@ -24,6 +24,7 @@ namespace rosmon
 UI::UI(LaunchConfig* config)
  : m_config(config)
  , m_columns(80)
+ , m_statusLines(2)
 {
 	std::atexit(cleanup);
 	m_config->logMessageSignal.connect(boost::bind(&UI::log, this, _1, _2));
@@ -73,7 +74,7 @@ void UI::drawStatusLine()
 {
 	const int NODE_WIDTH = 13;
 
-	int lines = 1;
+	unsigned int lines = 1;
 	int col = 0;
 
 	for(auto node : m_config->nodes())
@@ -127,8 +128,10 @@ void UI::drawStatusLine()
 		}
 	}
 
-	for(int i = lines; i < 2; ++i)
+	for(unsigned int i = lines; i < m_statusLines; ++i)
 		printf("\n\033[K");
+
+	m_statusLines = std::max(lines, m_statusLines);
 }
 
 void UI::log(const std::string& channel, const std::string& log)
@@ -163,7 +166,7 @@ void UI::update()
 	drawStatusLine();
 
 	// Move back
-	printf("\033[K\033[2A\r");
+	printf("\033[K\033[%uA\r", m_statusLines);
 	fflush(stdout);
 }
 

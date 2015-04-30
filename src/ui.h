@@ -32,6 +32,8 @@ private:
 	ros::WallTimer m_sizeTimer;
 
 	std::map<std::string, unsigned int> m_nodeColorMap;
+
+	unsigned int m_statusLines;
 };
 
 }
