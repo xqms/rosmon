@@ -33,6 +33,7 @@ public:
 	QString nodeName(int row) const;
 public Q_SLOTS:
 	void setNamespace(const QString& ns);
+	void unsubscribe();
 Q_SIGNALS:
 	void stateReceived(const rosmon::StateConstPtr& state);
 private Q_SLOTS:

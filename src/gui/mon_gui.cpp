@@ -44,6 +44,11 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 	ctx.addWidget(m_w);
 }
 
+void MonGUI::shutdownPlugin()
+{
+	m_model->unsubscribe();
+}
+
 void MonGUI::restoreSettings(const qt_gui_cpp::Settings& pluginSettings, const qt_gui_cpp::Settings& instanceSettings)
 {
 	if(instanceSettings.contains("namespace"))

@@ -48,6 +48,11 @@ void MonModel::setNamespace(const QString& ns)
 	endResetModel();
 }
 
+void MonModel::unsubscribe()
+{
+	m_sub_state.shutdown();
+}
+
 void MonModel::updateState(const rosmon::StateConstPtr& state)
 {
 	std::vector<bool> covered(m_entries.size(), false);

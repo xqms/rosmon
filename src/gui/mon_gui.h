@@ -21,6 +21,7 @@ public:
 	virtual ~MonGUI();
 
 	virtual void initPlugin(qt_gui_cpp::PluginContext &ctx) override;
+	virtual void shutdownPlugin() override;
 
 	virtual void saveSettings(qt_gui_cpp::Settings& pluginSettings, qt_gui_cpp::Settings& instanceSettings) const override;
 	virtual void restoreSettings(const qt_gui_cpp::Settings& pluginSettings, const qt_gui_cpp::Settings& instanceSettings) override;
