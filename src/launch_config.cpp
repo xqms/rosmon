@@ -159,6 +159,7 @@ void LaunchConfig::ParseContext::setEnvironment(const std::string& name, const s
 
 LaunchConfig::LaunchConfig(const FDWatcher::Ptr& watcher)
  : m_fdWatcher(watcher)
+ , m_ok(true)
 {
 }
 
@@ -752,7 +753,7 @@ bool LaunchConfig::allShutdown()
 void LaunchConfig::handleRequiredNodeExit(const std::string& name)
 {
 	log("Required node '%s' exited, shutting down...", name.c_str());
-	ros::shutdown();
+	m_ok = false;
 }
 
 void LaunchConfig::log(const char* fmt, ...)

@@ -86,5 +86,18 @@ bool ROSInterface::handleStartStop(StartStopRequest& req, StartStopResponse& res
 	return true;
 }
 
+void ROSInterface::shutdown()
+{
+	m_updateTimer.stop();
+
+	// Send empty state packet to clear the GUI
+	rosmon::State state;
+	state.header.stamp = ros::Time::now();
+	m_pub_state.publish(state);
+
+	// HACK: Currently there is no way to make sure that we sent a message.
+	usleep(200 * 1000);
+}
+
 }
 

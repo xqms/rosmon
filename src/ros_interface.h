@@ -18,6 +18,8 @@ class ROSInterface
 public:
 	ROSInterface(LaunchConfig* config);
 	~ROSInterface();
+
+	void shutdown();
 private:
 	void update();
 	bool handleStartStop(StartStopRequest& req, StartStopResponse& resp);

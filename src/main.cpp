@@ -18,10 +18,13 @@
 
 #include <unistd.h>
 #include <getopt.h>
+#include <signal.h>
 
 namespace fs = boost::filesystem;
 
 static ros::Publisher g_pub_rosout;
+
+bool g_shouldStop = false;
 
 static fs::path findFile(const fs::path& base, const std::string name)
 {
@@ -53,6 +56,11 @@ void usage()
 		"                 name is chosen.\n"
 		"\n"
 	);
+}
+
+void handleSIGINT(int)
+{
+	g_shouldStop = true;
 }
 
 // Options
@@ -88,7 +96,7 @@ int main(int argc, char** argv)
 	}
 
 	// Initialize the ROS node.
-	uint32_t init_options = 0;
+	uint32_t init_options = ros::init_options::NoSigintHandler;
 
 	if(name.empty())
 	{
@@ -210,7 +218,9 @@ int main(int argc, char** argv)
 
 	ros::WallDuration waitDuration(0.1);
 
-	while(ros::ok())
+	signal(SIGINT, handleSIGINT);
+
+	while(ros::ok() && config.ok() && !g_shouldStop)
 	{
 		ros::spinOnce();
 		watcher->wait(waitDuration);
@@ -227,10 +237,14 @@ int main(int argc, char** argv)
 		ui.update();
 
 		if(config.allShutdown())
+		{
+			rosInterface.shutdown();
 			return 0;
+		}
 	}
 
 	config.forceExit();
+	rosInterface.shutdown();
 
 	while(1)
 	{

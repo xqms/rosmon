@@ -57,6 +57,9 @@ public:
 	inline const std::vector<Node::Ptr>& nodes() const
 	{ return m_nodes; }
 
+	inline bool ok() const
+	{ return m_ok; }
+
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 private:
 	class ParseContext
@@ -134,6 +137,8 @@ private:
 
 	std::vector<Node::Ptr> m_nodes;
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
+
+	bool m_ok;
 };
 
 }
