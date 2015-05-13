@@ -10,9 +10,12 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+static unsigned int g_statusLines = 2;
+
 void cleanup()
 {
-	printf("\n\n\n");
+	for(unsigned int i = 0; i < g_statusLines+1; ++i)
+		printf("\n");
 
 	// Switch cursor back on
 	printf("\033[?25h");
@@ -24,7 +27,6 @@ namespace rosmon
 UI::UI(LaunchConfig* config)
  : m_config(config)
  , m_columns(80)
- , m_statusLines(2)
 {
 	std::atexit(cleanup);
 	m_config->logMessageSignal.connect(boost::bind(&UI::log, this, _1, _2));
@@ -128,10 +130,10 @@ void UI::drawStatusLine()
 		}
 	}
 
-	for(unsigned int i = lines; i < m_statusLines; ++i)
+	for(unsigned int i = lines; i < g_statusLines; ++i)
 		printf("\n\033[K");
 
-	m_statusLines = std::max(lines, m_statusLines);
+	g_statusLines = std::max(lines, g_statusLines);
 }
 
 void UI::log(const std::string& channel, const std::string& log)
@@ -166,7 +168,7 @@ void UI::update()
 	drawStatusLine();
 
 	// Move back
-	printf("\033[K\033[%uA\r", m_statusLines);
+	printf("\033[K\033[%uA\r", g_statusLines);
 	fflush(stdout);
 }
 
