@@ -40,6 +40,9 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 	connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)),
 		SLOT(showContextMenu(QPoint))
 	);
+	connect(m_model, SIGNAL(stateReceived(rosmon::StateConstPtr)),
+		m_ui.tableView, SLOT(resizeRowsToContents())
+	);
 
 	ctx.addWidget(m_w);
 }
