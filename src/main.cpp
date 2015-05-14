@@ -13,6 +13,7 @@
 #include "ros_interface.h"
 #include "package_registry.h"
 #include "fd_watcher.h"
+#include "logger.h"
 
 #include <boost/filesystem.hpp>
 
@@ -54,6 +55,7 @@ void usage()
 		"  --help         This help screen\n"
 		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
 		"                 name is chosen.\n"
+		"  --log=FILE     Write log file to FILE\n"
 		"\n"
 	);
 }
@@ -67,12 +69,14 @@ void handleSIGINT(int)
 static const struct option OPTIONS[] = {
 	{"help", no_argument, NULL, 'h'},
 	{"name", required_argument, NULL, 'n'},
+	{"log",  required_argument, NULL, 'l'},
 	{NULL, 0, NULL, 0}
 };
 
 int main(int argc, char** argv)
 {
 	std::string name;
+	std::string logFile;
 	std::string launchFilePath;
 
 	// Parse options
@@ -91,6 +95,9 @@ int main(int argc, char** argv)
 				return 0;
 			case 'n':
 				name = optarg;
+				break;
+			case 'l':
+				logFile = optarg;
 				break;
 		}
 	}
@@ -185,6 +192,14 @@ int main(int argc, char** argv)
 
 	// Disable direct logging to stdout
 	ros::console::backend::function_print = nullptr;
+
+	// Open logger
+	boost::scoped_ptr<rosmon::Logger> logger;
+	if(!logFile.empty())
+	{
+		logger.reset(new rosmon::Logger(logFile));
+		config.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
+	}
 
 	for(int i = firstArg; i < argc; ++i)
 	{
