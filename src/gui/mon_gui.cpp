@@ -56,11 +56,15 @@ void MonGUI::restoreSettings(const qt_gui_cpp::Settings& pluginSettings, const q
 		QString ns = instanceSettings.value("namespace").toString();
 		m_ui.nodeEdit->setText(ns);
 	}
+
+	if(instanceSettings.contains("viewState"))
+		m_ui.tableView->horizontalHeader()->restoreState(instanceSettings.value("viewState").toByteArray());
 }
 
 void MonGUI::saveSettings(qt_gui_cpp::Settings& pluginSettings, qt_gui_cpp::Settings& instanceSettings) const
 {
 	instanceSettings.setValue("namespace", m_ui.nodeEdit->text());
+	instanceSettings.setValue("viewState", m_ui.tableView->horizontalHeader()->saveState());
 }
 
 void MonGUI::showContextMenu(const QPoint& point)
