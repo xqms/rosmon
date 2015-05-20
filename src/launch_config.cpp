@@ -515,7 +515,7 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 		if(ns)
 			ctx = ctx.enterScope(ctx.evaluate(ns));
 
-		const char* name = element->Attribute("name");
+		const char* name = element->Attribute("param");
 		if(name)
 			ctx = ctx.enterScope(ctx.evaluate(name));
 
