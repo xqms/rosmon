@@ -189,7 +189,8 @@ void Node::stop(bool restart)
 	if(!running())
 		return;
 
-	kill(m_pid, SIGINT);
+	// kill(-pid) sends the signal to all processes in the process group
+	kill(-m_pid, SIGINT);
 
 	m_stopCheckTimer.start();
 }
@@ -219,14 +220,16 @@ void Node::restart()
 void Node::shutdown()
 {
 	if(m_pid != -1)
-		kill(m_pid, SIGINT);
+	{
+		kill(-m_pid, SIGINT);
+	}
 }
 
 void Node::forceExit()
 {
 	if(m_pid != -1)
 	{
-		kill(m_pid, SIGKILL);
+		kill(-m_pid, SIGKILL);
 	}
 }
 
