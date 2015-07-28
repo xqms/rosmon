@@ -391,7 +391,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 					m_params[fullName] = boost::lexical_cast<int>(fullValue);
 				else if(strcmp(type, "double") == 0)
 					m_params[fullName] = boost::lexical_cast<double>(fullValue);
-				else if(strcmp(type, "bool") == 0)
+				else if(strcmp(type, "bool") == 0 || strcmp(type, "boolean") == 0)
 				{
 					if(fullValue == "true")
 						m_params[fullName] = true;
@@ -404,7 +404,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 						);
 					}
 				}
-				else if(strcmp(type, "str") == 0)
+				else if(strcmp(type, "str") == 0 || strcmp(type, "string") == 0)
 					m_params[fullName] = fullValue;
 				else
 				{
