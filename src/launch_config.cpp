@@ -35,6 +35,48 @@ static LaunchConfig::ParseException error(const char* fmt, ...)
 	return LaunchConfig::ParseException(str);
 }
 
+/**
+ * @brief Compress any sequence of whitespace to single spaces.
+ *
+ * Since we switch of space condensing in TinyXML to be able to properly parse
+ * <rosparam> tags, this function can be used for attributes.
+ *
+ * roslaunch also strips whitespace at begin/end, so we do that as well.
+ **/
+static std::string simplifyWhitespace(const std::string& input)
+{
+	std::string output;
+	output.reserve(input.size());
+
+	// Skip initial space
+	size_t i = 0;
+	for(; i < input.size(); ++i)
+	{
+		if(!isspace(i))
+			break;
+	}
+
+	bool in_space = false;
+
+	for(; i < input.size(); ++i)
+	{
+		char c = input[i];
+
+		if(isspace(c))
+			in_space = true;
+		else
+		{
+			if(in_space)
+				output.push_back(' ');
+
+			output.push_back(c);
+			in_space = false;
+		}
+	}
+
+	return output;
+}
+
 std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
 {
 	static const boost::regex regex(R"(\$\((\w+) ([^\(\)]+)\))");
@@ -379,7 +421,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	if(value)
 	{
 		const char* type = element->Attribute("type");
-		std::string fullValue = ctx.evaluate(value);
+		std::string fullValue = ctx.evaluate(simplifyWhitespace(value));
 
 		if(type)
 		{
