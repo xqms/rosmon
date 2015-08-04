@@ -3,6 +3,8 @@
 
 #include "node.h"
 
+#include "package_registry.h"
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -107,10 +109,17 @@ void Node::setExtraEnvironment(const std::map<std::string, std::string>& env)
 
 std::vector<std::string> Node::composeCommand() const
 {
+	std::string executable = PackageRegistry::getExecutable(m_package, m_type);
+
+	if(executable.empty())
+	{
+		throw error("Could not find node '%s' in package '%s'",
+			m_type.c_str(), m_package.c_str()
+		);
+	}
+
 	std::vector<std::string> cmd{
-		"rosrun",
-		m_package,
-		m_type,
+		executable
 	};
 
 	std::copy(m_extraArgs.begin(), m_extraArgs.end(), std::back_inserter(cmd));

@@ -8,17 +8,45 @@
 
 #include <rospack/rospack.h>
 
+#include <boost/filesystem.hpp>
+#include <boost/tokenizer.hpp>
+
+#include <sys/types.h>
+#include <sys/wait.h>
+
 namespace rosmon
 {
 
 static std::map<std::string, std::string> g_cache;
 static rospack::Rospack g_pack;
+static std::vector<std::string> g_catkin_workspaces;
+
+namespace fs = boost::filesystem;
 
 void PackageRegistry::init()
 {
 	std::vector<std::string> sp;
 	g_pack.getSearchPathFromEnv(sp);
 	g_pack.crawl(sp, false);
+
+	// Determine stack of catkin workspaces
+	char* env_cmake = getenv("CMAKE_PREFIX_PATH");
+	if(env_cmake)
+	{
+		std::string cmakePath = env_cmake;
+		boost::char_separator<char> sep(":");
+		boost::tokenizer<boost::char_separator<char>> tok(cmakePath, sep);
+
+		for(auto token : tok)
+		{
+			fs::path path(token);
+			if(!fs::exists(path / ".catkin"))
+				continue;
+
+			printf("Found catkin workspace: '%s'\n", path.string().c_str());
+			g_catkin_workspaces.push_back(path.string());
+		}
+	}
 }
 
 std::string PackageRegistry::getPath(const std::string& package)
@@ -37,6 +65,47 @@ std::string PackageRegistry::getPath(const std::string& package)
 	}
 	else
 		return it->second;
+}
+
+static std::string getExecutableInPath(const fs::path& path, const std::string& name)
+{
+	if(!fs::exists(path))
+		return std::string();
+
+	for(fs::recursive_directory_iterator it(path); it != fs::recursive_directory_iterator(); ++it)
+	{
+		if(it->path().filename() == name && it->status().permissions() & fs::others_exe)
+		{
+			return it->path().string();
+		}
+	}
+
+	return std::string();
+}
+
+std::string PackageRegistry::getExecutable(const std::string& package, const std::string& name)
+{
+	// Try catkin libexec & catkin share first
+	for(const auto& workspace : g_catkin_workspaces)
+	{
+		fs::path workspacePath(workspace);
+
+		fs::path execPath = workspacePath / "lib" / package / name;
+		if(fs::exists(execPath) && fs::status(execPath).permissions() & fs::others_exe)
+			return execPath.string();
+
+		std::string sharePath = getExecutableInPath(workspacePath / "share" / package, name);
+		if(!sharePath.empty())
+			return sharePath;
+	}
+
+	// Crawl package directory for an appropriate executable
+	std::string packageDir = getPath(package);
+	if(!packageDir.empty())
+		return getExecutableInPath(packageDir, name);
+
+	// Nothing found :-(
+	return std::string();
 }
 
 }

@@ -14,6 +14,8 @@ class PackageRegistry
 public:
 	static void init();
 	static std::string getPath(const std::string& package);
+
+	static std::string getExecutable(const std::string& package, const std::string& name);
 };
 
 }
