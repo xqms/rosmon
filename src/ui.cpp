@@ -116,6 +116,7 @@ void UI::drawStatusLine()
 	int col = 0;
 
 	char key = 'a';
+	int i = 0;
 
 	for(auto node : m_config->nodes())
 	{
@@ -143,7 +144,11 @@ void UI::drawStatusLine()
 				printf("\033[43;30m");
 				break;
 		}
-		printf("%c %s ", key, label);
+
+		if(i == m_selectedNode)
+			printf("%c[%s]", key, label);
+		else
+			printf("%c %s ", key, label);
 		printf("\033[0m");
 
 		// Primitive wrapping control
@@ -167,7 +172,16 @@ void UI::drawStatusLine()
 			printf("\n\033[K");
 		}
 
-		++key;
+		if(key == 'z')
+			key = 'A';
+		else if(key == 'Z')
+			key = '0';
+		else if(key == '9')
+			key = ' ';
+		else if(key != ' ')
+			++key;
+
+		++i;
 	}
 
 	for(unsigned int i = lines; i < g_statusLines; ++i)
@@ -229,7 +243,15 @@ void UI::handleInput()
 
 	if(m_selectedNode == -1)
 	{
-		int nodeIndex = c - 'a';
+		int nodeIndex = -1;
+
+		if(c >= 'a' && c <= 'z')
+			nodeIndex = c - 'a';
+		else if(c >= 'A' && c <= 'Z')
+			nodeIndex = 26 + c - 'A';
+		else if(c >= '0' && c <= '9')
+			nodeIndex = 26 + 26 + c - '0';
+
 		if(nodeIndex < 0 || (size_t)nodeIndex > m_config->nodes().size())
 			return;
 
