@@ -5,6 +5,7 @@
 #define UI_H
 
 #include "launch_config.h"
+#include "fd_watcher.h"
 
 #include <ros/wall_timer.h>
 
@@ -16,7 +17,7 @@ namespace rosmon
 class UI
 {
 public:
-	explicit UI(LaunchConfig* config);
+	explicit UI(LaunchConfig* config, const FDWatcher::Ptr& fdWatcher);
 	~UI();
 
 	void update();
@@ -25,13 +26,17 @@ private:
 	void drawStatusLine();
 	void checkWindowSize();
 	void setupColors();
+	void handleInput();
 
 	LaunchConfig* m_config;
+	FDWatcher::Ptr m_fdWatcher;
 
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
 
 	std::map<std::string, unsigned int> m_nodeColorMap;
+
+	int m_selectedNode;
 };
 
 }

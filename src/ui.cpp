@@ -10,6 +10,8 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+#include <termios.h>
+
 static unsigned int g_statusLines = 2;
 
 void cleanup()
@@ -19,14 +21,25 @@ void cleanup()
 
 	// Switch cursor back on
 	printf("\033[?25h");
+
+	// Switch character echo on
+	termios ios;
+	if(tcgetattr(STDIN_FILENO, &ios) == 0)
+	{
+		ios.c_lflag |= ECHO;
+		ios.c_lflag |= ICANON;
+		tcsetattr(STDIN_FILENO, TCSANOW, &ios);
+	}
 }
 
 namespace rosmon
 {
 
-UI::UI(LaunchConfig* config)
+UI::UI(LaunchConfig* config, const FDWatcher::Ptr& fdWatcher)
  : m_config(config)
+ , m_fdWatcher(fdWatcher)
  , m_columns(80)
+ , m_selectedNode(-1)
 {
 	std::atexit(cleanup);
 	m_config->logMessageSignal.connect(boost::bind(&UI::log, this, _1, _2));
@@ -39,10 +52,22 @@ UI::UI(LaunchConfig* config)
 
 	// Switch cursor off
 	printf("\033[?25l");
+
+	// Switch character echo off
+	termios ios;
+	if(tcgetattr(STDIN_FILENO, &ios) == 0)
+	{
+		ios.c_lflag &= ~ECHO;
+		ios.c_lflag &= ~ICANON;
+		tcsetattr(STDIN_FILENO, TCSANOW, &ios);
+	}
+
+	fdWatcher->registerFD(STDIN_FILENO, boost::bind(&UI::handleInput, this));
 }
 
 UI::~UI()
 {
+	m_fdWatcher->removeFD(STDIN_FILENO);
 }
 
 void UI::setupColors()
@@ -76,8 +101,21 @@ void UI::drawStatusLine()
 {
 	const int NODE_WIDTH = 13;
 
-	unsigned int lines = 1;
+	unsigned int lines = 2;
+
+	if(m_selectedNode != -1)
+	{
+		auto& node = m_config->nodes()[m_selectedNode];
+
+		printf("Actions: s: start, k: stop");
+		if(node->coredumpAvailable())
+			printf(", d: debug");
+	}
+	printf("\n");
+
 	int col = 0;
+
+	char key = 'a';
 
 	for(auto node : m_config->nodes())
 	{
@@ -105,11 +143,11 @@ void UI::drawStatusLine()
 				printf("\033[43;30m");
 				break;
 		}
-		printf(" %s ", label);
+		printf("%c %s ", key, label);
 		printf("\033[0m");
 
 		// Primitive wrapping control
-		const int BLOCK_WIDTH = NODE_WIDTH + 2;
+		const int BLOCK_WIDTH = NODE_WIDTH + 3;
 		col += BLOCK_WIDTH;
 
 		if(col + 1 + BLOCK_WIDTH < m_columns)
@@ -128,6 +166,8 @@ void UI::drawStatusLine()
 			lines++;
 			printf("\n\033[K");
 		}
+
+		++key;
 	}
 
 	for(unsigned int i = lines; i < g_statusLines; ++i)
@@ -178,6 +218,41 @@ void UI::checkWindowSize()
 	if(ioctl(0, TIOCGWINSZ, &w) == 0)
 	{
 		m_columns = w.ws_col;
+	}
+}
+
+void UI::handleInput()
+{
+	char c;
+	if(read(STDIN_FILENO, &c, 1) != 1)
+		return;
+
+	if(m_selectedNode == -1)
+	{
+		int nodeIndex = c - 'a';
+		if(nodeIndex < 0 || (size_t)nodeIndex > m_config->nodes().size())
+			return;
+
+		m_selectedNode = nodeIndex;
+	}
+	else
+	{
+		auto& node = m_config->nodes()[m_selectedNode];
+
+		switch(c)
+		{
+			case 's':
+				node->start();
+				break;
+			case 'k':
+				node->stop();
+				break;
+			case 'd':
+				node->launchDebugger();
+				break;
+		}
+
+		m_selectedNode = -1;
 	}
 }
 

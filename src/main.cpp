@@ -226,7 +226,7 @@ int main(int argc, char** argv)
 	config.start();
 
 	// Start the ncurses UI
-	rosmon::UI ui(&config);
+	rosmon::UI ui(&config, watcher);
 
 	// ROS interface
 	rosmon::ROSInterface rosInterface(&config);
