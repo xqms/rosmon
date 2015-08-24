@@ -7,6 +7,9 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
+#include <sys/utsname.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -15,10 +18,13 @@
 #include <string.h>
 #include <pty.h>
 #include <wordexp.h>
+#include <glob.h>
 
 #include <sstream>
 
 #include <boost/tokenizer.hpp>
+#include <boost/range.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <ros/node_handle.h>
 
@@ -57,6 +63,8 @@ Node::Node(const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh, const std::stri
 {
 	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&Node::start, this));
 	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&Node::checkStop, this));
+
+	m_executable = PackageRegistry::getExecutable(m_package, m_type);
 }
 
 Node::~Node()
@@ -109,9 +117,7 @@ void Node::setExtraEnvironment(const std::map<std::string, std::string>& env)
 
 std::vector<std::string> Node::composeCommand() const
 {
-	std::string executable = PackageRegistry::getExecutable(m_package, m_type);
-
-	if(executable.empty())
+	if(m_executable.empty())
 	{
 		throw error("Could not find node '%s' in package '%s'",
 			m_type.c_str(), m_package.c_str()
@@ -119,7 +125,7 @@ std::vector<std::string> Node::composeCommand() const
 	}
 
 	std::vector<std::string> cmd{
-		executable
+		      m_executable
 	};
 
 	std::copy(m_extraArgs.begin(), m_extraArgs.end(), std::back_inserter(cmd));
@@ -168,6 +174,16 @@ void Node::start()
 
 		for(auto& pair : m_extraEnvironment)
 			setenv(pair.first.c_str(), pair.second.c_str(), 1);
+
+		// Try to enable core dumps
+		{
+			rlimit limit;
+			if(getrlimit(RLIMIT_CORE, &limit) == 0)
+			{
+				limit.rlim_cur = limit.rlim_max;
+				setrlimit(RLIMIT_CORE, &limit);
+			}
+		}
 
 		if(execvp(path, ptrs.data()) != 0)
 		{
@@ -294,6 +310,15 @@ void Node::communicate()
 			m_exitCode = 255;
 		}
 
+#ifdef WCOREDUMP
+		if(WCOREDUMP(status))
+		{
+			// We have a chance to find the core dump...
+			log("%s left a core dump", m_name.c_str());
+			gatherCoredump(WTERMSIG(status));
+		}
+#endif
+
 		m_pid = -1;
 		m_fdWatcher->removeFD(m_fd);
 		close(m_fd);
@@ -356,6 +381,143 @@ void Node::setRespawn(bool respawn)
 void Node::setRespawnDelay(const ros::WallDuration& respawnDelay)
 {
 	m_respawnDelay = respawnDelay;
+}
+
+static boost::iterator_range<std::string::const_iterator>
+corePatternFormatFinder(std::string::const_iterator begin, std::string::const_iterator end)
+{
+	for(; begin != end && begin+1 != end; ++begin)
+	{
+		if(*begin == '%')
+			return boost::iterator_range<std::string::const_iterator>(begin, begin+2);
+	}
+
+	return boost::iterator_range<std::string::const_iterator>(end, end);
+}
+
+void Node::gatherCoredump(int signal)
+{
+	char core_pattern[256];
+	int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY);
+	if(core_fd < 0)
+	{
+		log("could not open /proc/sys/kernel/core_pattern: %s", strerror(errno));
+		return;
+	}
+
+	int bytes = read(core_fd, core_pattern, sizeof(core_pattern)-1);
+	close(core_fd);
+
+	if(bytes < 1)
+	{
+		log("Could not read /proc/sys/kernel/core_pattern: %s", strerror(errno));
+		return;
+	}
+
+	if(core_pattern[0] == '|')
+	{
+		log("You have apport or some other coredump manager installed on your "
+		    "system. If you want to use the core dump feature of rosmon, set "
+			"/proc/sys/kernel/core_pattern to something like "
+			"/tmp/cores/core.%%e.%%p.%%t");
+		return;
+	}
+
+	core_pattern[bytes-1] = 0; // Strip off the newline at the end
+
+	auto formatter = [&](boost::iterator_range<std::string::const_iterator> match) -> std::string {
+		char code = *(match.begin()+1);
+
+		switch(code)
+		{
+			case '%':
+				return "%";
+			case 'p':
+				return boost::lexical_cast<std::string>(m_pid);
+			case 'u':
+				return boost::lexical_cast<std::string>(getuid());
+			case 'g':
+				return boost::lexical_cast<std::string>(getgid());
+			case 's':
+				return boost::lexical_cast<std::string>(signal);
+			case 't':
+				return "*"; // No chance
+			case 'h':
+			{
+				utsname uts;
+				if(uname(&uts) == 0)
+					return uts.nodename;
+				else
+					return "*";
+			}
+			case 'e':
+				return m_type;
+			case 'E':
+			{
+				std::string executable = m_executable;
+				boost::replace_all(executable, "/", "!");
+				return executable;
+			}
+			case 'c':
+			{
+				rlimit limit;
+				getrlimit(RLIMIT_CORE, &limit);
+
+				// core limit is set to the maximum above
+				return boost::lexical_cast<std::string>(limit.rlim_max);
+			}
+			default:
+				return "*";
+		}
+	};
+
+	std::string coreGlob = boost::find_format_all_copy(std::string(core_pattern), corePatternFormatFinder, formatter);
+
+	log("Determined pattern '%s'", coreGlob.c_str());
+
+	glob_t results;
+	int ret = glob(coreGlob.c_str(), GLOB_NOSORT, 0, &results);
+
+	if(ret != 0 || results.gl_pathc == 0)
+	{
+		log("Could not find a matching core file :-(");
+		globfree(&results);
+		return;
+	}
+
+	if(results.gl_pathc > 1)
+	{
+		log("Found multiple matching core files :-(");
+		globfree(&results);
+		return;
+	}
+
+	std::string coreFile = results.gl_pathv[0];
+	globfree(&results);
+
+	log("Found core file '%s'", coreFile.c_str());
+
+	char* envTerm = getenv("ROSMON_DEBUGGER_TERMINAL");
+
+	std::stringstream ss;
+
+	if(envTerm)
+		ss << envTerm;
+	else
+		ss << "xterm -e";
+
+	ss << " gdb " << m_executable << " " << coreFile << " &";
+
+	m_debuggerCommand = ss.str();
+}
+
+void Node::launchDebugger()
+{
+	if(!coredumpAvailable())
+		return;
+
+	if(system(m_debuggerCommand.c_str()) != 0)
+		log("Could not launch debugger");
 }
 
 }

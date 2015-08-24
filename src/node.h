@@ -69,17 +69,25 @@ public:
 	inline const std::string& name() const
 	{ return m_name; }
 
+	inline bool coredumpAvailable() const
+	{ return !m_debuggerCommand.empty(); }
+
+	void launchDebugger();
+
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 	boost::signals2::signal<void(std::string)> exitedSignal;
 private:
 	void log(const char* fmt, ...) __attribute__ (( format (printf, 2, 3) ));
 	void checkStop();
+	void gatherCoredump(int signal);
 
 	FDWatcher::Ptr m_fdWatcher;
 
 	std::string m_name;
 	std::string m_package;
 	std::string m_type;
+
+	std::string m_executable;
 
 	std::string m_namespace;
 
@@ -103,6 +111,8 @@ private:
 
 	bool m_respawn;
 	ros::WallDuration m_respawnDelay;
+
+	std::string m_debuggerCommand;
 };
 
 }

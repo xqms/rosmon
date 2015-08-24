@@ -84,6 +84,11 @@ if(QT_FOUND AND rqt_gui_cpp_FOUND)
 	)
 endif()
 
+# Utils
+add_executable(abort
+	src/util/abort.cpp
+)
+
 # Version 1.1 (increment this comment to trigger a CMake update)
 catkin_add_env_hooks(50-rosmon SHELLS bash DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
 
