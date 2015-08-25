@@ -497,8 +497,6 @@ void Node::gatherCoredump(int signal)
 
 	log("Found core file '%s'", coreFile.c_str());
 
-
-
 	std::stringstream ss;
 
 	ss << "gdb " << m_executable << " " << coreFile << " &";
