@@ -130,12 +130,16 @@ void UI::drawStatusLine()
 			label[i] = ' ';
 		label[NODE_WIDTH] = 0;
 
+		// Print key with grey background
+		printf("\033[48;2;200;200;200;30m%c", key);
+
 		switch(node->state())
 		{
 			case Node::STATE_RUNNING:
 				printf("\033[42;30m");
 				break;
 			case Node::STATE_IDLE:
+				printf("\033[0m");
 				break;
 			case Node::STATE_CRASHED:
 				printf("\033[41;30m");
@@ -146,9 +150,9 @@ void UI::drawStatusLine()
 		}
 
 		if(i == m_selectedNode)
-			printf("%c[%s]", key, label);
+			printf("[%s]", label);
 		else
-			printf("%c %s ", key, label);
+			printf(" %s ", label);
 		printf("\033[0m");
 
 		// Primitive wrapping control
