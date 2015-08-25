@@ -497,16 +497,11 @@ void Node::gatherCoredump(int signal)
 
 	log("Found core file '%s'", coreFile.c_str());
 
-	char* envTerm = getenv("ROSMON_DEBUGGER_TERMINAL");
+
 
 	std::stringstream ss;
 
-	if(envTerm)
-		ss << envTerm;
-	else
-		ss << "xterm -e";
-
-	ss << " gdb " << m_executable << " " << coreFile << " &";
+	ss << "gdb " << m_executable << " " << coreFile << " &";
 
 	m_debuggerCommand = ss.str();
 }
@@ -516,8 +511,23 @@ void Node::launchDebugger()
 	if(!coredumpAvailable())
 		return;
 
-	if(system(m_debuggerCommand.c_str()) != 0)
-		log("Could not launch debugger");
+	if(getenv("DISPLAY") == 0)
+	{
+		log("No X11 available, run gdb yourself: %s", m_debuggerCommand.c_str());
+	}
+	else
+	{
+		char* envTerm = getenv("ROSMON_DEBUGGER_TERMINAL");
+		std::string term = "xterm -e";
+		if(envTerm)
+			term = envTerm;
+
+		if(system((term + " " + m_debuggerCommand).c_str()) != 0)
+		{
+			log("Could not launch debugger");
+			log("Command: %s", m_debuggerCommand.c_str());
+		}
+	}
 }
 
 }
