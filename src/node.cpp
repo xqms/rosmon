@@ -28,6 +28,8 @@
 
 #include <ros/node_handle.h>
 
+#define TASK_COMM_LEN 16 // from linux/sched.h
+
 static std::runtime_error error(const char* fmt, ...)
 {
 	va_list args;
@@ -451,7 +453,7 @@ void Node::gatherCoredump(int signal)
 					return "*";
 			}
 			case 'e':
-				return m_type;
+				return m_type.substr(0, TASK_COMM_LEN-1);
 			case 'E':
 			{
 				std::string executable = m_executable;

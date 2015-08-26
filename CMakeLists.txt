@@ -89,6 +89,10 @@ add_executable(abort
 	src/util/abort.cpp
 )
 
+add_executable(abort_really_long_executable
+	src/util/abort.cpp
+)
+
 # Version 1.1 (increment this comment to trigger a CMake update)
 catkin_add_env_hooks(50-rosmon SHELLS bash DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
 
