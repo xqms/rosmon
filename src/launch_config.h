@@ -60,13 +60,16 @@ public:
 	inline bool ok() const
 	{ return m_ok; }
 
+	std::string anonName(const std::string& base);
+
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 private:
 	class ParseContext
 	{
 	public:
-		ParseContext()
-		 : m_prefix("/")
+		ParseContext(LaunchConfig* config)
+		 : m_config(config)
+		 , m_prefix("/")
 		{}
 
 		const std::string& prefix() const
@@ -105,7 +108,12 @@ private:
 		{ return m_environment; }
 
 		bool shouldSkip(TiXmlElement* element);
+
+		inline LaunchConfig* config()
+		{ return m_config; }
 	private:
+		LaunchConfig* m_config;
+
 		std::string m_prefix;
 		std::string m_filename;
 		std::map<std::string, std::string> m_args;
@@ -139,6 +147,9 @@ private:
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
 
 	bool m_ok;
+
+	std::map<std::string, std::string> m_anonNames;
+	std::mt19937_64 m_anonGen;
 };
 
 }

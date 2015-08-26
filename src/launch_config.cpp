@@ -13,6 +13,7 @@
 #include <stdio.h>
 
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <yaml-cpp/yaml.h>
 
@@ -138,6 +139,13 @@ std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
 			else
 				value = defaultValue;
 		}
+		else if(cmd == "anon")
+		{
+			std::string base = args;
+			boost::trim(base);
+
+			value = config()->anonName(base);
+		}
 		else
 			throw error("Unsupported subst command '%s'", cmd.c_str());
 
@@ -201,7 +209,9 @@ void LaunchConfig::ParseContext::setEnvironment(const std::string& name, const s
 
 LaunchConfig::LaunchConfig(const FDWatcher::Ptr& watcher)
  : m_fdWatcher(watcher)
+ , m_rootContext(this)
  , m_ok(true)
+ , m_anonGen(std::random_device()())
 {
 }
 
@@ -810,6 +820,24 @@ void LaunchConfig::log(const char* fmt, ...)
 	va_end(v);
 
 	logMessageSignal("[rosmon]", buf);
+}
+
+std::string LaunchConfig::anonName(const std::string& base)
+{
+	auto it = m_anonNames.find(base);
+	if(it == m_anonNames.end())
+	{
+		uint32_t r = m_anonGen();
+
+		char buf[20];
+		snprintf(buf, sizeof(buf), "%08X", r);
+
+		auto name = base + "_" + buf;
+
+		it = m_anonNames.emplace(base, name).first;
+	}
+
+	return it->second;
 }
 
 }
