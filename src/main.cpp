@@ -246,28 +246,42 @@ int main(int argc, char** argv)
 	config.shutdown();
 
 	ros::WallTime start = ros::WallTime::now();
-	while(ros::WallTime::now() - start < ros::WallDuration(5.0))
+	while(!config.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(5.0))
 	{
 		watcher->wait(waitDuration);
 		ui.update();
+	}
 
-		if(config.allShutdown())
+	if(!config.allShutdown())
+		config.forceExit();
+
+	rosInterface.shutdown();
+
+	while(!config.allShutdown())
+	{
+		watcher->wait(waitDuration);
+		ui.update();
+	}
+
+	bool coredumpsAvailable = false;
+	for(auto& node : config.nodes())
+	{
+		if(node->coredumpAvailable())
 		{
-			rosInterface.shutdown();
-			return 0;
+			coredumpsAvailable = true;
+			break;
 		}
 	}
 
-	config.forceExit();
-	rosInterface.shutdown();
-
-	while(1)
+	if(coredumpsAvailable)
 	{
-		watcher->wait(waitDuration);
-		ui.update();
-
-		if(config.allShutdown())
-			return 0;
+		ui.log("[rosmon]", "\n");
+		ui.log("[rosmon]", "If you want to debug one of the crashed nodes, you can use the following commands");
+		for(auto& node : config.nodes())
+		{
+			if(node->coredumpAvailable())
+				ui.log("[rosmon]", " # " + node->debuggerCommand());
+		}
 	}
 
 	return 0;

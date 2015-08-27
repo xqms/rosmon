@@ -72,6 +72,9 @@ public:
 	inline bool coredumpAvailable() const
 	{ return !m_debuggerCommand.empty(); }
 
+	inline std::string debuggerCommand() const
+	{ return m_debuggerCommand; }
+
 	void launchDebugger();
 
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;

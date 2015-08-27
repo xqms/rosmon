@@ -501,7 +501,7 @@ void Node::gatherCoredump(int signal)
 
 	std::stringstream ss;
 
-	ss << "gdb " << m_executable << " " << coreFile << " &";
+	ss << "gdb " << m_executable << " " << coreFile;
 
 	m_debuggerCommand = ss.str();
 }
@@ -522,7 +522,7 @@ void Node::launchDebugger()
 		if(envTerm)
 			term = envTerm;
 
-		if(system((term + " " + m_debuggerCommand).c_str()) != 0)
+		if(system((term + " " + m_debuggerCommand + " &").c_str()) != 0)
 		{
 			log("Could not launch debugger");
 			log("Command: %s", m_debuggerCommand.c_str());
