@@ -19,6 +19,12 @@ Another nice feature is that `rosmon` intercepts all `stdout/stderr` output from
 your nodes and is able to tag it, e.g. with the node name. That way, you don't
 have to wonder anymore who is spamming the console with plain `printf` calls...
 
+## Interaction
+
+`rosmon` includes a simple keyboard user interface: Each node has an assigned
+key. If you press that key, you get a menu in the status line which allows you
+to start, stop, or debug a coredump of that very node.
+
 ## Remote control
 
 `rosmon` offers a simple but effective ROS interface to start, stop or restart
