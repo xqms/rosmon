@@ -52,10 +52,11 @@ void usage()
 		"  rosmon [options] path/to/test.launch [arg1:=value1 ...]\n"
 		"\n"
 		"Options:\n"
+		"  --benchmark    Exit after loading the launch file\n"
 		"  --help         This help screen\n"
+		"  --log=FILE     Write log file to FILE\n"
 		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
 		"                 name is chosen.\n"
-		"  --log=FILE     Write log file to FILE\n"
 		"\n"
 	);
 }
@@ -70,6 +71,7 @@ static const struct option OPTIONS[] = {
 	{"help", no_argument, NULL, 'h'},
 	{"name", required_argument, NULL, 'n'},
 	{"log",  required_argument, NULL, 'l'},
+	{"benchmark", no_argument, NULL, 'b'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -78,6 +80,7 @@ int main(int argc, char** argv)
 	std::string name;
 	std::string logFile;
 	std::string launchFilePath;
+	bool benchmark = false;
 
 	// Parse options
 	while(1)
@@ -98,6 +101,9 @@ int main(int argc, char** argv)
 				break;
 			case 'l':
 				logFile = optarg;
+				break;
+			case 'b':
+				benchmark = true;
 				break;
 		}
 	}
@@ -222,6 +228,9 @@ int main(int argc, char** argv)
 
 	config.parse(launchFilePath);
 	config.setParameters();
+
+	if(benchmark)
+		return 0;
 
 	config.start();
 
