@@ -20,6 +20,7 @@ namespace rosmon
 static std::map<std::string, std::string> g_cache;
 static rospack::Rospack g_pack;
 static std::vector<std::string> g_catkin_workspaces;
+static std::map<std::pair<std::string, std::string>, std::string> g_executableCache;
 
 namespace fs = boost::filesystem;
 
@@ -83,7 +84,7 @@ static std::string getExecutableInPath(const fs::path& path, const std::string& 
 	return std::string();
 }
 
-std::string PackageRegistry::getExecutable(const std::string& package, const std::string& name)
+static std::string _getExecutable(const std::string& package, const std::string& name)
 {
 	// Try catkin libexec & catkin share first
 	for(const auto& workspace : g_catkin_workspaces)
@@ -100,12 +101,26 @@ std::string PackageRegistry::getExecutable(const std::string& package, const std
 	}
 
 	// Crawl package directory for an appropriate executable
-	std::string packageDir = getPath(package);
+	std::string packageDir = PackageRegistry::getPath(package);
 	if(!packageDir.empty())
 		return getExecutableInPath(packageDir, name);
 
 	// Nothing found :-(
 	return std::string();
+}
+
+std::string PackageRegistry::getExecutable(const std::string& package, const std::string& name)
+{
+	std::pair<std::string, std::string> key(package, name);
+
+	auto it = g_executableCache.find(key);
+	if(it != g_executableCache.end())
+		return it->second;
+
+	std::string result = _getExecutable(package, name);
+	g_executableCache[key] = result;
+
+	return result;
 }
 
 }
