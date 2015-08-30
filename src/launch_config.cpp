@@ -240,11 +240,6 @@ void LaunchConfig::parse(const std::string& filename)
 	parse(document.RootElement(), m_rootContext);
 	printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
 
-	for(auto it : m_params)
-	{
-		log("parameter: %s\n", it.first.c_str());
-	}
-
 	log("\n==================================\nNodes:\n");
 	for(auto node : m_nodes)
 	{
@@ -257,13 +252,57 @@ void LaunchConfig::parse(const std::string& filename)
 	}
 }
 
+template<class Iterator>
+void safeAdvance(Iterator& it, const Iterator& end, size_t i)
+{
+	for(size_t j = 0; j < i; ++j)
+	{
+		if(it == end)
+			return;
+		++it;
+	}
+}
+
 void LaunchConfig::setParameters()
 {
-	ros::NodeHandle nh;
-	for(auto it : m_params)
+	// This function is optimized for speed, since we usually have a lot of
+	// parameters and some of those take time (>2s) to compute and upload
+	// (e.g. xacro).
+
+	// The optimization is two-fold: we use std::future to avoid useless
+	// computations of parameters which are re-set later on anyways, and
+	// we use a thread pool to evaluate the futures below.
+
+	const int NUM_THREADS = std::thread::hardware_concurrency();
+
+	std::vector<std::thread> threads(NUM_THREADS);
+
+	for(int i = 0; i < NUM_THREADS; ++i)
 	{
-		nh.setParam(it.first, it.second);
+		threads[i] = std::thread([this,i,NUM_THREADS]() {
+			ros::NodeHandle nh;
+
+			// Thread number i starts at position i and moves in NUM_THREADS
+			// increments.
+			auto it = m_paramJobs.begin();
+			safeAdvance(it, m_paramJobs.end(), i);
+
+			while(it != m_paramJobs.end())
+			{
+				nh.setParam(it->first, it->second.get());
+				safeAdvance(it, m_paramJobs.end(), NUM_THREADS);
+			}
+		});
 	}
+
+	// Meanwhile, set all fixed parameters in the main thread
+	ros::NodeHandle nh;
+	for(auto& param : m_params)
+		nh.setParam(param.first, param.second);
+
+	// and wait for completion for the others.
+	for(auto& t : threads)
+		t.join();
 }
 
 void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
@@ -433,6 +472,8 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		const char* type = element->Attribute("type");
 		std::string fullValue = ctx.evaluate(simplifyWhitespace(value));
 
+		XmlRpc::XmlRpcValue result;
+
 		if(type)
 		{
 			// Fixed type.
@@ -440,15 +481,15 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 			try
 			{
 				if(strcmp(type, "int") == 0)
-					m_params[fullName] = boost::lexical_cast<int>(fullValue);
+					result = boost::lexical_cast<int>(fullValue);
 				else if(strcmp(type, "double") == 0)
-					m_params[fullName] = boost::lexical_cast<double>(fullValue);
+					result = boost::lexical_cast<double>(fullValue);
 				else if(strcmp(type, "bool") == 0 || strcmp(type, "boolean") == 0)
 				{
 					if(fullValue == "true")
-						m_params[fullName] = true;
+						result = true;
 					else if(fullValue == "false")
-						m_params[fullName] = false;
+						result = false;
 					else
 					{
 						throw error("%s:%d: invalid boolean value '%s'",
@@ -457,7 +498,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 					}
 				}
 				else if(strcmp(type, "str") == 0 || strcmp(type, "string") == 0)
-					m_params[fullName] = fullValue;
+					result = fullValue;
 				else
 				{
 					throw error("%s:%d: invalid param type '%s'",
@@ -477,53 +518,74 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 			// Try to determine the type automatically.
 
 			if(fullValue == "true")
-				m_params[fullName] = XmlRpc::XmlRpcValue(true);
+				result = XmlRpc::XmlRpcValue(true);
 			else if(fullValue == "false")
-				m_params[fullName] = XmlRpc::XmlRpcValue(false);
+				result = XmlRpc::XmlRpcValue(false);
 			else
 			{
-				try { m_params[fullName] = boost::lexical_cast<int>(fullValue); return; }
+				try { result = boost::lexical_cast<int>(fullValue); return; }
 				catch(boost::bad_lexical_cast&) {}
 
-				try { m_params[fullName] = boost::lexical_cast<float>(fullValue); return; }
+				try { result = boost::lexical_cast<float>(fullValue); return; }
 				catch(boost::bad_lexical_cast&) {}
 
-				m_params[fullName] = fullValue;
+				result = fullValue;
 			}
 		}
+
+		m_params[fullName] = result;
+
+		// A dynamic parameter of the same name gets overwritten now
+		m_paramJobs.erase(fullName);
 	}
 	else if(command)
 	{
 		std::string fullCommand = ctx.evaluate(command);
 
-		std::stringstream buffer;
+		// Commands may take a while - that is why we use std::async here.
+		m_paramJobs[fullName] = std::move(std::async(std::launch::deferred,
+			[=]() -> XmlRpc::XmlRpcValue {
+				std::stringstream buffer;
 
-		FILE* f = popen(fullCommand.c_str(), "r");
-		while(!feof(f))
-		{
-			char buf[1024];
-			int ret = fread(buf, 1, sizeof(buf)-1, f);
-			if(ret <= 0)
-				throw error("Could not read: %s", strerror(errno));
+				FILE* f = popen(fullCommand.c_str(), "r");
+				while(!feof(f))
+				{
+					char buf[1024];
+					int ret = fread(buf, 1, sizeof(buf)-1, f);
+					if(ret <= 0)
+						throw error("Could not read: %s", strerror(errno));
 
-			buf[ret] = 0;
-			buffer << buf;
-		}
-		pclose(f);
+					buf[ret] = 0;
+					buffer << buf;
+				}
+				pclose(f);
 
-		m_params[fullName] = buffer.str();
+				return buffer.str();
+			}
+		));
+
+		// A fixed parameter of the same name gets overwritten now
+		m_params.erase(fullName);
 	}
 	else if(textfile)
 	{
 		std::string fullFile = ctx.evaluate(textfile);
-		std::ifstream stream(fullFile);
-		if(stream.bad())
-			throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
 
-		std::stringstream buffer;
-		buffer << stream.rdbuf();
+		m_paramJobs[fullName] = std::move(std::async(std::launch::deferred,
+			[=]() -> XmlRpc::XmlRpcValue {
+				std::ifstream stream(fullFile);
+				if(stream.bad())
+					throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
 
-		m_params[fullName] = buffer.str();
+				std::stringstream buffer;
+				buffer << stream.rdbuf();
+
+				return buffer.str();
+			}
+		));
+
+		// A fixed parameter of the same name gets overwritten now
+		m_params.erase(fullName);
 	}
 	else
 	{
@@ -673,6 +735,9 @@ void LaunchConfig::loadYAMLParams(const YAML::Node& n, const std::string& prefix
 		case YAML::NodeType::Scalar:
 		{
 			m_params[prefix] = yamlToXmlRpc(n);
+
+			// A dynamic parameter of the same name gets overwritten now
+			m_paramJobs.erase(prefix);
 			break;
 		}
 		default:

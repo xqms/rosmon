@@ -10,6 +10,7 @@
 #include <map>
 #include <vector>
 #include <stdexcept>
+#include <future>
 
 #include <XmlRpc.h>
 #include <tinyxml.h>
@@ -144,7 +145,9 @@ private:
 	ParseContext m_rootContext;
 
 	std::vector<Node::Ptr> m_nodes;
+	typedef std::future<XmlRpc::XmlRpcValue> ParameterFuture;
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
+	std::map<std::string, ParameterFuture> m_paramJobs;
 
 	bool m_ok;
 
