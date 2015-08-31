@@ -447,6 +447,24 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	m_nodes.push_back(node);
 }
 
+static XmlRpc::XmlRpcValue autoXmlRpcValue(const std::string& fullValue)
+{
+	if(fullValue == "true")
+		return XmlRpc::XmlRpcValue(true);
+	else if(fullValue == "false")
+		return XmlRpc::XmlRpcValue(false);
+	else
+	{
+		try { return boost::lexical_cast<int>(fullValue); }
+		catch(boost::bad_lexical_cast&) {}
+
+		try { return boost::lexical_cast<float>(fullValue); }
+		catch(boost::bad_lexical_cast&) {}
+
+		return fullValue;
+	}
+}
+
 void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 {
 	const char* name = element->Attribute("name");
@@ -516,21 +534,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		else
 		{
 			// Try to determine the type automatically.
-
-			if(fullValue == "true")
-				result = XmlRpc::XmlRpcValue(true);
-			else if(fullValue == "false")
-				result = XmlRpc::XmlRpcValue(false);
-			else
-			{
-				try { result = boost::lexical_cast<int>(fullValue); return; }
-				catch(boost::bad_lexical_cast&) {}
-
-				try { result = boost::lexical_cast<float>(fullValue); return; }
-				catch(boost::bad_lexical_cast&) {}
-
-				result = fullValue;
-			}
+			result = autoXmlRpcValue(fullValue);
 		}
 
 		m_params[fullName] = result;
