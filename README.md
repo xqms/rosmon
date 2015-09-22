@@ -1,7 +1,9 @@
 # rosmon
 
-`rosmon` is a drop-in replacement for the standard `roslaunch` tool. It has two
-main goals, which may differ from the goals of `roslaunch`:
+![screenshot](https://github.com/xqms/rosmon/raw/master/doc/screenshot.png)
+
+`rosmon` is a drop-in replacement for the standard `roslaunch` tool. Rather
+unlike `roslaunch`, `rosmon` is focussed on (remote) process monitoring.
 
 ## Quick & effective development
 
@@ -29,12 +31,12 @@ to start, stop, or debug a coredump of that very node.
 
 `rosmon` offers a simple but effective ROS interface to start, stop or restart
 nodes and monitor node states. Restarting a single stuck node out of the launch
-file is no longer a problem.
+file is no longer a problem. An `rqt` plugin for controlling `rosmon` is
+included.
 
 ## Status
 
-That said, `rosmon` is very much work-in-progress right now. The sketched
-features are all present, but have not been tested thoroughly.
+That said, `rosmon` is very much work-in-progress right now.
 
 **WARNING**: `rosmon` is not yet `roslaunch` compliant. For example, the
 `$(find PACKAGE)` substitution performs a simple search using `rospack` and
