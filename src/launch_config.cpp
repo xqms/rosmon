@@ -606,11 +606,12 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 	if(!command || strcmp(command, "load") == 0)
 	{
 		const char* file = element->Attribute("file");
+		std::string fullFile;
 
 		std::string contents;
 		if(file)
 		{
-			std::string fullFile = ctx.evaluate(file);
+			fullFile = ctx.evaluate(file);
 			std::ifstream stream(fullFile);
 			if(stream.bad())
 				throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
@@ -638,7 +639,22 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 			ctx = ctx.enterScope(ctx.evaluate(name));
 
 		// Remove trailing / from prefix to get param name
-		loadYAMLParams(n, ctx.prefix().substr(0, ctx.prefix().length()-1));
+		try
+		{
+			loadYAMLParams(n, ctx.prefix().substr(0, ctx.prefix().length()-1));
+		}
+		catch(ParseException& e)
+		{
+			std::stringstream ss;
+			ss << ctx.filename() << ": ";
+			if(file)
+				ss << "Error while parsing rosparam input file '" << fullFile << "': ";
+			else
+				ss << "Error while parsing YAML input from launch file: ";
+
+			ss << e.what();
+			throw ParseException(ss.str());
+		}
 	}
 	else
 		throw error("Unsupported rosparam command '%s'", command);
@@ -745,7 +761,9 @@ void LaunchConfig::loadYAMLParams(const YAML::Node& n, const std::string& prefix
 			break;
 		}
 		default:
+		{
 			throw error("invalid yaml node type");
+		}
 	}
 }
 
