@@ -201,11 +201,22 @@ int main(int argc, char** argv)
 
 	// Open logger
 	boost::scoped_ptr<rosmon::Logger> logger;
-	if(!logFile.empty())
+	if(logFile.empty())
 	{
-		logger.reset(new rosmon::Logger(logFile));
-		config.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
+		// Log to /tmp by default
+
+		time_t t = time(NULL);
+		tm currentTime;
+		localtime_r(&t, &currentTime);
+
+		char buf[256];
+		strftime(buf, sizeof(buf), "/tmp/rosmon_%Y_%m_%d_%H_%M_%S.log", &currentTime);
+
+		logFile = buf;
 	}
+
+	logger.reset(new rosmon::Logger(logFile));
+	config.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
 
 	for(int i = firstArg; i < argc; ++i)
 	{
