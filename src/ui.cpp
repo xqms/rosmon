@@ -117,7 +117,11 @@ void UI::drawStatusLine()
 
 		// Print key with grey background
 		m_term.setSimpleForeground(Terminal::Black);
-		m_term.setBackgroundColor(0xC8C8C8);
+
+		if(m_term.has256Colors())
+			m_term.setBackgroundColor(0xC8C8C8);
+		else
+			m_term.setSimpleBackground(Terminal::White);
 		printf("%c", key);
 
 		switch(node->state())
@@ -186,17 +190,31 @@ void UI::log(const std::string& channel, const std::string& log)
 	std::string clean = log;
 
 	auto it = m_nodeColorMap.find(channel);
-	if(it != m_nodeColorMap.end())
-		m_term.setBackgroundColor(it->second);
 
-	printf("\033[K%20s:\033[0m ", channel.c_str());
+	if(m_term.has256Colors())
+	{
+		if(it != m_nodeColorMap.end())
+			m_term.setBackgroundColor(it->second);
+	}
+	else
+	{
+		m_term.setSimplePair(Terminal::Black, Terminal::White);
+	}
+
+	m_term.clearToEndOfLine();
+	printf("%20s:", channel.c_str());
+	m_term.setStandardColors();
+	putchar(' ');
 
 	unsigned int len = clean.length();
 	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
 		len--;
 
 	fwrite(clean.c_str(), 1, len, stdout);
-	printf("\033[K\n\033[0m\033[K");
+	m_term.clearToEndOfLine();
+	putchar('\n');
+	m_term.setStandardColors();
+	m_term.clearToEndOfLine();
 	fflush(stdout);
 }
 

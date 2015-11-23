@@ -51,7 +51,10 @@ public:
 
 	bool getSize(int* columns, int* rows);
 
+	bool has256Colors() const;
+
 private:
+	bool m_256colors;
 	bool m_truecolor;
 
 	std::string m_bgColorStr;

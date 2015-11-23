@@ -27,6 +27,10 @@ Terminal::Terminal()
 		// FIXME: do so
 	}
 
+	// Detect 256 color terminals
+	int num_colors = tigetnum("colors");
+	m_256colors = num_colors >= 256;
+
 	// Detect truecolor-capable terminals
 	m_truecolor = false;
 
@@ -71,11 +75,11 @@ Terminal::Terminal()
 			printf("Your terminal does not support ANSI background!\n");
 	}
 	{
-			const char* fgColor = tigetstr("setaf");
-			if(fgColor && fgColor != (char*)-1)
-				m_fgColorStr = fgColor;
-			else
-				printf("Your terminal does not support ANSI foreground!\n");
+		const char* fgColor = tigetstr("setaf");
+		if(fgColor && fgColor != (char*)-1)
+			m_fgColorStr = fgColor;
+		else
+			printf("Your terminal does not support ANSI foreground!\n");
 	}
 
 	m_opStr = tigetstr("op");
@@ -85,6 +89,11 @@ Terminal::Terminal()
 
 Terminal::~Terminal()
 {
+}
+
+bool Terminal::has256Colors() const
+{
+	return m_256colors;
 }
 
 void Terminal::setCursorInvisible()
