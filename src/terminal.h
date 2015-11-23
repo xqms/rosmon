@@ -10,9 +10,21 @@
 namespace rosmon
 {
 
+/**
+ * @brief Encapsulates terminal control
+ *
+ * This class enables low-level manipulation of the terminal. It uses the
+ * ncurses/terminfo library internally to stay somewhat portable.
+ **/
 class Terminal
 {
 public:
+	/**
+	 * @brief Simple colors
+	 *
+	 * These colors can be used with the setSimpleForeground(),
+	 * setSimpleBackground(), setSimplePair() methods.
+	 **/
 	enum SimpleColor
 	{
 		Black,
@@ -22,17 +34,38 @@ public:
 		Blue,
 		Magenta,
 		Cyan,
-		White
+		White,
+		IntenseBlack,
+		IntenseRed,
+		IntenseGreen,
+		IntenseYellow,
+		IntenseBlue,
+		IntenseMagenta,
+		IntenseCyan,
+		IntenseWhite,
+
+		//! 24-step grayscale starts here
+		Grayscale = 0xe8
 	};
 
+	/**
+	 * @brief Terminal escape sequence parser
+	 *
+	 * This class allows the user to parse Linux escape sequences
+	 * (restricted to simple color sequences for now).
+	 **/
 	class Parser
 	{
 	public:
 		Parser();
 
+		//! parse single character c
 		void parse(char c);
+
+		//! parse string
 		void parse(const std::string& str);
 
+		//! Apply the current internal state (colors) on the terminal
 		void apply(Terminal* term);
 	private:
 		void parseSetAttributes(const std::string& attrs);
@@ -54,29 +87,64 @@ public:
 	Terminal();
 	~Terminal();
 
+	/**
+	 * @brief Set 24-bit foreground color
+	 *
+	 * This automatically falls back to 256 colors if the terminal does not
+	 * support true color.
+	 **/
 	void setForegroundColor(uint32_t color);
+
+	/**
+	 * @brief Set 24-bit background color
+	 *
+	 * This automatically falls back to 256 colors if the terminal does not
+	 * support true color.
+	 **/
 	void setBackgroundColor(uint32_t color);
 
+	//! hide cursor
 	void setCursorInvisible();
+
+	//! restore cursor
 	void setCursorVisible();
 
+	/**
+	 * Enable/disable automatic echo of keypresses
+	 **/
 	void setEcho(bool on);
 
-	void resetToShell();
-
+	//! @name Set indexed foreground/background color
+	//@{
 	void setSimpleBackground(SimpleColor color);
 	void setSimpleForeground(SimpleColor color);
 	void setSimplePair(SimpleColor fg, SimpleColor bg);
+	//@}
 
+	//! Reset fg + bg to standard terminal colors
 	void setStandardColors();
 
+	//! Clear characters from cursor to end of line
 	void clearToEndOfLine();
 
+	//! Move cursor up by numLines
 	void moveCursorUp(int numLines);
+
+	//! Move cursor to start of the line
 	void moveCursorToStartOfLine();
 
+	/**
+	 * @brief Get current window size
+	 *
+	 * @return true on success
+	 **/
 	bool getSize(int* columns, int* rows);
 
+	/**
+	 * Returns whether the terminal supports 256 colors. If it does not suppport
+	 * 256 colors, you should not use the setForegroundColor() /
+	 * setBackgroundColor() functions.
+	 **/
 	bool has256Colors() const;
 
 private:

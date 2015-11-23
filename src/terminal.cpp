@@ -265,11 +265,6 @@ void Terminal::setEcho(bool on)
 	}
 }
 
-void Terminal::resetToShell()
-{
-	reset_shell_mode();
-}
-
 void Terminal::setSimpleForeground(SimpleColor color)
 {
 	char* out = tiparm(m_fgColorStr.c_str(), color);
