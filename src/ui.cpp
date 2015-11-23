@@ -78,7 +78,7 @@ void UI::setupColors()
 			| (std::min(255, std::max<int>(0, g)) << 8)
 			| (std::min(255, std::max<int>(0, b)) << 16);
 
-		m_nodeColorMap[m_config->nodes()[i]->name()] = color;
+		m_nodeColorMap[m_config->nodes()[i]->name()] = ChannelInfo(color);
 	}
 }
 
@@ -195,7 +195,7 @@ void UI::log(const std::string& channel, const std::string& log)
 	{
 		if(it != m_nodeColorMap.end())
 		{
-			m_term.setBackgroundColor(it->second);
+			m_term.setBackgroundColor(it->second.labelColor);
 			m_term.setSimpleForeground(Terminal::White);
 		}
 	}
@@ -212,6 +212,12 @@ void UI::log(const std::string& channel, const std::string& log)
 	unsigned int len = clean.length();
 	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
 		len--;
+
+	if(it != m_nodeColorMap.end())
+	{
+		it->second.parser.apply(&m_term);
+		it->second.parser.parse(clean);
+	}
 
 	fwrite(clean.c_str(), 1, len, stdout);
 	m_term.clearToEndOfLine();

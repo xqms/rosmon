@@ -13,6 +13,44 @@ namespace rosmon
 class Terminal
 {
 public:
+	enum SimpleColor
+	{
+		Black,
+		Red,
+		Green,
+		Yellow,
+		Blue,
+		Magenta,
+		Cyan,
+		White
+	};
+
+	class Parser
+	{
+	public:
+		Parser();
+
+		void parse(char c);
+		void parse(const std::string& str);
+
+		void apply(Terminal* term);
+	private:
+		void parseSetAttributes(const std::string& attrs);
+
+		enum State
+		{
+			STATE_ESCAPE,
+			STATE_TYPE,
+			STATE_CSI
+		};
+
+		State m_state;
+		std::string m_buf;
+
+		int m_fgColor;
+		int m_bgColor;
+	};
+
 	Terminal();
 	~Terminal();
 
@@ -25,18 +63,6 @@ public:
 	void setEcho(bool on);
 
 	void resetToShell();
-
-	enum SimpleColor
-	{
-		Black,
-		Red,
-		Green,
-		Yellow,
-		Blue,
-		Magenta,
-		Cyan,
-		White
-	};
 
 	void setSimpleBackground(SimpleColor color);
 	void setSimpleForeground(SimpleColor color);

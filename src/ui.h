@@ -24,6 +24,19 @@ public:
 	void update();
 	void log(const std::string& channel, const std::string& str);
 private:
+	struct ChannelInfo
+	{
+		ChannelInfo()
+		{}
+
+		ChannelInfo(uint32_t color)
+		 : labelColor(color)
+		{}
+
+		uint32_t labelColor;
+		Terminal::Parser parser;
+	};
+
 	void drawStatusLine();
 	void checkWindowSize();
 	void setupColors();
@@ -37,7 +50,7 @@ private:
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
 
-	std::map<std::string, unsigned int> m_nodeColorMap;
+	std::map<std::string, ChannelInfo> m_nodeColorMap;
 
 	int m_selectedNode;
 

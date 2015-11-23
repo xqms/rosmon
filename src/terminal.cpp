@@ -15,8 +15,103 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+#include <boost/tokenizer.hpp>
+
 namespace rosmon
 {
+
+Terminal::Parser::Parser()
+ : m_state(STATE_ESCAPE)
+ , m_fgColor(-1)
+ , m_bgColor(-1)
+{
+}
+
+void Terminal::Parser::parseSetAttributes(const std::string& str)
+{
+	using Tokenizer = boost::tokenizer<boost::char_separator<char>>;
+
+	boost::char_separator<char> sep(";");
+	Tokenizer tok(str, sep);
+
+	for(Tokenizer::iterator it = tok.begin(); it != tok.end(); ++it)
+	{
+		errno = 0;
+		char* endptr = const_cast<char*>(it->c_str());
+		int code = strtoul(it->c_str(), &endptr, 10);
+
+		if(errno != 0 || *endptr != 0)
+		{
+			// Error in specification, break out of here
+			m_fgColor = -1;
+			m_bgColor = -1;
+			return;
+		}
+
+		if(code == 0)
+		{
+			m_fgColor = -1;
+			m_bgColor = -1;
+		}
+		else if(code >= 30 && code <= 37)
+			m_fgColor = code - 30;
+		else if(code >= 40 && code <= 47)
+			m_bgColor = code - 40;
+	}
+}
+
+void Terminal::Parser::parse(char c)
+{
+	switch(m_state)
+	{
+		case STATE_ESCAPE:
+			if(c == '\033')
+				m_state = STATE_TYPE;
+			break;
+		case STATE_TYPE:
+			if(c == '[')
+			{
+				m_state = STATE_CSI;
+				m_buf.clear();
+			}
+			else
+				m_state = STATE_ESCAPE;
+			break;
+		case STATE_CSI:
+			if(c == 'm')
+			{
+				parseSetAttributes(m_buf);
+				m_state = STATE_ESCAPE;
+			}
+			else
+			{
+				m_buf.push_back(c);
+				if(m_buf.length() >= 16)
+					m_state = STATE_ESCAPE;
+			}
+			break;
+	}
+}
+
+void Terminal::Parser::parse(const std::string& str)
+{
+	for(char c : str)
+		parse(c);
+}
+
+void Terminal::Parser::apply(Terminal* term)
+{
+	if(m_fgColor >= 0 && m_bgColor >= 0)
+		term->setSimplePair((SimpleColor)m_fgColor, (SimpleColor)m_bgColor);
+	else
+	{
+		term->setStandardColors();
+		if(m_fgColor >= 0)
+			term->setSimpleForeground((SimpleColor)m_fgColor);
+		else if(m_bgColor >= 0)
+			term->setSimpleBackground((SimpleColor)m_fgColor);
+	}
+}
 
 Terminal::Terminal()
 {
