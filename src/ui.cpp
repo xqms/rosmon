@@ -7,11 +7,6 @@
 #include <cstdlib>
 #include <ros/node_handle.h>
 
-#include <sys/ioctl.h>
-#include <sys/types.h>
-
-#include <termios.h>
-
 static unsigned int g_statusLines = 2;
 
 void cleanup()
@@ -19,17 +14,13 @@ void cleanup()
 	for(unsigned int i = 0; i < g_statusLines+1; ++i)
 		printf("\n");
 
+	rosmon::Terminal term;
+
 	// Switch cursor back on
-	printf("\033[?25h");
+	term.setCursorVisible();
 
 	// Switch character echo on
-	termios ios;
-	if(tcgetattr(STDIN_FILENO, &ios) == 0)
-	{
-		ios.c_lflag |= ECHO;
-		ios.c_lflag |= ICANON;
-		tcsetattr(STDIN_FILENO, TCSANOW, &ios);
-	}
+	term.setEcho(true);
 }
 
 namespace rosmon
@@ -51,16 +42,10 @@ UI::UI(LaunchConfig* config, const FDWatcher::Ptr& fdWatcher)
 	setupColors();
 
 	// Switch cursor off
-	printf("\033[?25l");
+	m_term.setCursorInvisible();
 
 	// Switch character echo off
-	termios ios;
-	if(tcgetattr(STDIN_FILENO, &ios) == 0)
-	{
-		ios.c_lflag &= ~ECHO;
-		ios.c_lflag &= ~ICANON;
-		tcsetattr(STDIN_FILENO, TCSANOW, &ios);
-	}
+	m_term.setEcho(false);
 
 	fdWatcher->registerFD(STDIN_FILENO, boost::bind(&UI::handleInput, this));
 }
@@ -131,21 +116,23 @@ void UI::drawStatusLine()
 		label[NODE_WIDTH] = 0;
 
 		// Print key with grey background
-		printf("\033[48;2;200;200;200;30m%c", key);
+		m_term.setSimpleForeground(Terminal::Black);
+		m_term.setBackgroundColor(0xC8C8C8);
+		printf("%c", key);
 
 		switch(node->state())
 		{
 			case Node::STATE_RUNNING:
-				printf("\033[42;30m");
+				m_term.setSimplePair(Terminal::Black, Terminal::Green);
 				break;
 			case Node::STATE_IDLE:
-				printf("\033[0m");
+				m_term.setStandardColors();
 				break;
 			case Node::STATE_CRASHED:
-				printf("\033[41;30m");
+				m_term.setSimplePair(Terminal::Black, Terminal::Red);
 				break;
 			case Node::STATE_WAITING:
-				printf("\033[43;30m");
+				m_term.setSimplePair(Terminal::Black, Terminal::Yellow);
 				break;
 		}
 
@@ -153,7 +140,7 @@ void UI::drawStatusLine()
 			printf("[%s]", label);
 		else
 			printf(" %s ", label);
-		printf("\033[0m");
+		m_term.setStandardColors();
 
 		// Primitive wrapping control
 		const int BLOCK_WIDTH = NODE_WIDTH + 3;
@@ -200,13 +187,7 @@ void UI::log(const std::string& channel, const std::string& log)
 
 	auto it = m_nodeColorMap.find(channel);
 	if(it != m_nodeColorMap.end())
-	{
-		char buf[256];
-
-		unsigned int color = it->second;
-		snprintf(buf, sizeof(buf), "\033[48;2;%d;%d;%dm", color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF);
-		fputs(buf, stdout);
-	}
+		m_term.setBackgroundColor(it->second);
 
 	printf("\033[K%20s:\033[0m ", channel.c_str());
 
@@ -222,21 +203,22 @@ void UI::log(const std::string& channel, const std::string& log)
 void UI::update()
 {
 	// We currently are at the beginning of the status line.
-	printf("\n\033[K");
+	putchar('\n');
+	m_term.clearToEndOfLine();
 	drawStatusLine();
 
 	// Move back
-	printf("\033[K\033[%uA\r", g_statusLines);
+	m_term.clearToEndOfLine();
+	m_term.moveCursorUp(g_statusLines);
+	m_term.moveCursorToStartOfLine();
 	fflush(stdout);
 }
 
 void UI::checkWindowSize()
 {
-	struct winsize w;
-	if(ioctl(0, TIOCGWINSZ, &w) == 0)
-	{
-		m_columns = w.ws_col;
-	}
+	int rows, columns;
+	if(m_term.getSize(&columns, &rows))
+		m_columns = columns;
 }
 
 void UI::handleInput()

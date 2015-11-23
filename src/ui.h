@@ -6,6 +6,7 @@
 
 #include "launch_config.h"
 #include "fd_watcher.h"
+#include "terminal.h"
 
 #include <ros/wall_timer.h>
 
@@ -31,12 +32,16 @@ private:
 	LaunchConfig* m_config;
 	FDWatcher::Ptr m_fdWatcher;
 
+	Terminal m_term;
+
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
 
 	std::map<std::string, unsigned int> m_nodeColorMap;
 
 	int m_selectedNode;
+
+	std::string m_strSetColor;
 };
 
 }

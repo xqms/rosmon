@@ -27,6 +27,9 @@ catkin_package()
 
 find_package(TinyXML REQUIRED)
 
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIRS})
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror")
 
 add_executable(rosmon
@@ -39,10 +42,12 @@ add_executable(rosmon
 	src/package_registry.cpp
 	src/fd_watcher.cpp
 	src/logger.cpp
+	src/terminal.cpp
 )
 target_link_libraries(rosmon
 	${catkin_LIBRARIES}
 	${TinyXML_LIBRARIES}
+	${CURSES_LIBRARIES}
 	yaml-cpp
 	util
 )
