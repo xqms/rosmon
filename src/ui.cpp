@@ -193,6 +193,7 @@ void UI::log(const std::string& channel, const std::string& log)
 
 	if(m_term.has256Colors())
 	{
+		m_term.setSimpleForeground(Terminal::White);
 		if(it != m_nodeColorMap.end())
 			m_term.setBackgroundColor(it->second);
 	}
