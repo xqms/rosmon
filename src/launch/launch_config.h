@@ -125,7 +125,6 @@ private:
 	void parseInclude(TiXmlElement* element, ParseContext context);
 	void parseArgument(TiXmlElement* element, ParseContext& context);
 	void parseEnv(TiXmlElement* element, ParseContext& context);
-	void parseRosmon(TiXmlElement* element, ParseContext& context);
 
 	void loadYAMLParams(const YAML::Node& n, const std::string& prefix);
 

@@ -238,6 +238,12 @@ void LaunchConfig::parse(const std::string& filename)
 	ros::WallTime start = ros::WallTime::now();
 	m_rootContext.setFilename(filename);
 	parse(document.RootElement(), m_rootContext);
+
+	// Parse top-level rosmon-specific attributes
+	const char* name = document.RootElement()->Attribute("rosmon-name");
+	if(name)
+		m_rosmonNodeName = name;
+
 	printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
 }
 
@@ -288,8 +294,6 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
 			parseInclude(e, ctx);
 		else if(e->ValueStr() == "env")
 			parseEnv(e, ctx);
-		else if(e->ValueStr() == "rosmon")
-			parseRosmon(e, ctx);
 	}
 }
 
@@ -786,14 +790,6 @@ void LaunchConfig::parseEnv(TiXmlElement* element, ParseContext& ctx)
 		throw error("%s:%d: <env> needs name, value attributes", ctx.filename().c_str(), element->Row());
 
 	ctx.setEnvironment(ctx.evaluate(name), ctx.evaluate(value));
-}
-
-void LaunchConfig::parseRosmon(TiXmlElement* element, ParseContext&)
-{
-	const char* name = element->Attribute("name");
-
-	if(name)
-		m_rosmonNodeName = name;
 }
 
 std::string LaunchConfig::anonName(const std::string& base)
