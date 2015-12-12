@@ -53,6 +53,7 @@ void usage()
 		"\n"
 		"Options:\n"
 		"  --benchmark    Exit after loading the launch file\n"
+		"  --disable-ui   Disable fancy terminal UI\n"
 		"  --help         This help screen\n"
 		"  --log=FILE     Write log file to FILE\n"
 		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
@@ -66,12 +67,18 @@ void handleSIGINT(int)
 	g_shouldStop = true;
 }
 
+void logToStdout(const std::string& channel, const std::string& str)
+{
+	printf("%20s: %s\n", channel.c_str(), str.c_str());
+}
+
 // Options
 static const struct option OPTIONS[] = {
 	{"help", no_argument, NULL, 'h'},
 	{"name", required_argument, NULL, 'n'},
 	{"log",  required_argument, NULL, 'l'},
 	{"benchmark", no_argument, NULL, 'b'},
+	{"disable-ui", no_argument, NULL, 'd'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -81,6 +88,7 @@ int main(int argc, char** argv)
 	std::string logFile;
 	std::string launchFilePath;
 	bool benchmark = false;
+	bool enableUI = true;
 
 	// Parse options
 	while(1)
@@ -104,6 +112,9 @@ int main(int argc, char** argv)
 				break;
 			case 'b':
 				benchmark = true;
+				break;
+			case 'd':
+				enableUI = false;
 				break;
 		}
 	}
@@ -274,7 +285,15 @@ int main(int argc, char** argv)
 	monitor.start();
 
 	// Start the ncurses UI
-	rosmon::UI ui(&monitor, watcher);
+	boost::scoped_ptr<rosmon::UI> ui;
+	if(enableUI)
+	{
+		ui.reset(new rosmon::UI(&monitor, watcher));
+	}
+	else
+	{
+		monitor.logMessageSignal.connect(logToStdout);
+	}
 
 	// ROS interface
 	rosmon::ROSInterface rosInterface(&monitor);
@@ -288,10 +307,12 @@ int main(int argc, char** argv)
 	{
 		ros::spinOnce();
 		watcher->wait(waitDuration);
-		ui.update();
+
+		if(ui)
+			ui->update();
 	}
 
-	ui.log("[rosmon]", "Shutting down...");
+	ui->log("[rosmon]", "Shutting down...");
 	monitor.shutdown();
 
 	// Wait for graceful shutdown
@@ -299,7 +320,9 @@ int main(int argc, char** argv)
 	while(!monitor.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(5.0))
 	{
 		watcher->wait(waitDuration);
-		ui.update();
+
+		if(ui)
+			ui->update();
 	}
 
 	// If we timed out, force exit (kill the nodes with SIGKILL)
@@ -312,7 +335,9 @@ int main(int argc, char** argv)
 	while(!monitor.allShutdown())
 	{
 		watcher->wait(waitDuration);
-		ui.update();
+
+		if(enableUI)
+			ui->update();
 	}
 
 	// If coredumps are available, be helpful and display gdb commands
@@ -322,15 +347,15 @@ int main(int argc, char** argv)
 
 	if(coredumpsAvailable)
 	{
-		ui.log("[rosmon]", "\n");
-		ui.log("[rosmon]", "If you want to debug one of the crashed nodes, you can use the following commands");
+		ui->log("[rosmon]", "\n");
+		ui->log("[rosmon]", "If you want to debug one of the crashed nodes, you can use the following commands");
 		for(auto& node : monitor.nodes())
 		{
 			if(node->coredumpAvailable())
 			{
 				std::stringstream ss;
 				ss << std::setw(20) << node->name() << ": # " + node->debuggerCommand();
-				ui.log("[rosmon]", ss.str());
+				ui->log("[rosmon]", ss.str());
 			}
 		}
 	}
