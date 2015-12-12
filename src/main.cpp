@@ -247,6 +247,7 @@ int main(int argc, char** argv)
 	rosmon::monitor::Monitor monitor(config, watcher);
 	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
 
+	monitor.setParameters();
 	monitor.start();
 
 	// Start the ncurses UI
