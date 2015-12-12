@@ -79,10 +79,8 @@ std::vector<std::string> NodeMonitor::composeCommand() const
 		m_launchNode->executable()
 	};
 
-	std::copy(
-		m_launchNode->extraArguments().begin(), m_launchNode->extraArguments().end(),
-		std::back_inserter(cmd)
-	);
+	auto args = m_launchNode->extraArguments();
+	std::copy(args.begin(), args.end(), std::back_inserter(cmd));
 
 	cmd.push_back("__name:=" + m_launchNode->name());
 
