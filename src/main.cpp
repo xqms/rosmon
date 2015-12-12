@@ -7,6 +7,7 @@
 #include <ros/node_handle.h>
 #include <ros/package.h>
 #include <ros/console_backend.h>
+#include <ros/this_node.h>
 
 #include "launch/launch_config.h"
 #include "monitor/monitor.h"
@@ -219,6 +220,12 @@ int main(int argc, char** argv)
 	// Initialize the ROS node.
 	uint32_t init_options = ros::init_options::NoSigintHandler;
 
+	// If the user did not specify a node name on the command line, look in
+	// the launch file
+	if(name.empty())
+		name = config->rosmonNodeName();
+
+	// As last fallback, choose anonymous name.
 	if(name.empty())
 	{
 		name = "rosmon";
@@ -244,9 +251,12 @@ int main(int argc, char** argv)
 
 	ros::NodeHandle nh;
 
+	printf("Running as '%s'\n", ros::this_node::getName().c_str());
+
 	rosmon::monitor::Monitor monitor(config, watcher);
 	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
 
+	printf("\n\n");
 	monitor.setParameters();
 	monitor.start();
 

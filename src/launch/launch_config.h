@@ -58,6 +58,9 @@ public:
 	{ return m_nodes; }
 
 	std::string anonName(const std::string& base);
+
+	std::string rosmonNodeName() const
+	{ return m_rosmonNodeName; }
 private:
 	class ParseContext
 	{
@@ -122,6 +125,7 @@ private:
 	void parseInclude(TiXmlElement* element, ParseContext context);
 	void parseArgument(TiXmlElement* element, ParseContext& context);
 	void parseEnv(TiXmlElement* element, ParseContext& context);
+	void parseRosmon(TiXmlElement* element, ParseContext& context);
 
 	void loadYAMLParams(const YAML::Node& n, const std::string& prefix);
 
@@ -138,6 +142,8 @@ private:
 
 	std::map<std::string, std::string> m_anonNames;
 	std::mt19937_64 m_anonGen;
+
+	std::string m_rosmonNodeName;
 };
 
 }

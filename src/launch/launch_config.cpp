@@ -288,6 +288,8 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
 			parseInclude(e, ctx);
 		else if(e->ValueStr() == "env")
 			parseEnv(e, ctx);
+		else if(e->ValueStr() == "rosmon")
+			parseRosmon(e, ctx);
 	}
 }
 
@@ -784,6 +786,14 @@ void LaunchConfig::parseEnv(TiXmlElement* element, ParseContext& ctx)
 		throw error("%s:%d: <env> needs name, value attributes", ctx.filename().c_str(), element->Row());
 
 	ctx.setEnvironment(ctx.evaluate(name), ctx.evaluate(value));
+}
+
+void LaunchConfig::parseRosmon(TiXmlElement* element, ParseContext&)
+{
+	const char* name = element->Attribute("name");
+
+	if(name)
+		m_rosmonNodeName = name;
 }
 
 std::string LaunchConfig::anonName(const std::string& base)
