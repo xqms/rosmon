@@ -109,19 +109,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	// Initialize the ROS node.
-	uint32_t init_options = ros::init_options::NoSigintHandler;
-
-	if(name.empty())
-	{
-		name = "rosmon";
-		init_options |= ros::init_options::AnonymousName;
-	}
-
-	// prevent ros::init from parsing the launch file arguments as remappings
-	int dummyArgc = 1;
-	ros::init(dummyArgc, argv, name, init_options);
-
 	// Parse the positional arguments
 	if(optind == argc)
 	{
@@ -174,21 +161,6 @@ int main(int argc, char** argv)
 		usage();
 		return 1;
 	}
-
-	printf("ROS_MASTER_URI: '%s'\n", ros::master::getURI().c_str());
-
-	if(ros::master::check())
-	{
-		printf("roscore is already running.\n");
-	}
-	else
-	{
-		printf("Starting own roscore...\n");
-		fprintf(stderr, "Scratch that, I can't do that yet. Exiting...\n");
-		return 1;
-	}
-
-	ros::NodeHandle nh;
 
 	// Setup a sane ROSCONSOLE_FORMAT if the user did not already
 	setenv("ROSCONSOLE_FORMAT", "[${function}]: ${message}", 0);
@@ -243,6 +215,34 @@ int main(int argc, char** argv)
 
 	if(benchmark)
 		return 0;
+
+	// Initialize the ROS node.
+	uint32_t init_options = ros::init_options::NoSigintHandler;
+
+	if(name.empty())
+	{
+		name = "rosmon";
+		init_options |= ros::init_options::AnonymousName;
+	}
+
+	// prevent ros::init from parsing the launch file arguments as remappings
+	int dummyArgc = 1;
+	ros::init(dummyArgc, argv, name, init_options);
+
+	printf("ROS_MASTER_URI: '%s'\n", ros::master::getURI().c_str());
+
+	if(ros::master::check())
+	{
+		printf("roscore is already running.\n");
+	}
+	else
+	{
+		printf("Starting own roscore...\n");
+		fprintf(stderr, "Scratch that, I can't do that yet. Exiting...\n");
+		return 1;
+	}
+
+	ros::NodeHandle nh;
 
 	rosmon::monitor::Monitor monitor(config, watcher);
 	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
