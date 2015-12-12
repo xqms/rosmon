@@ -327,7 +327,11 @@ int main(int argc, char** argv)
 		for(auto& node : monitor.nodes())
 		{
 			if(node->coredumpAvailable())
-				ui.log("[rosmon]", " # " + node->debuggerCommand());
+			{
+				std::stringstream ss;
+				ss << std::setw(20) << node->name() << ": # " + node->debuggerCommand();
+				ui.log("[rosmon]", ss.str());
+			}
 		}
 	}
 
