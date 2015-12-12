@@ -10,8 +10,8 @@
 namespace rosmon
 {
 
-ROSInterface::ROSInterface(LaunchConfig* config)
- : m_config(config)
+ROSInterface::ROSInterface(monitor::Monitor* monitor)
+ : m_monitor(monitor)
  , m_nh("~")
 {
 	m_updateTimer = m_nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&ROSInterface::update, this));
@@ -30,23 +30,23 @@ void ROSInterface::update()
 	rosmon::State state;
 	state.header.stamp = ros::Time::now();
 
-	for(auto node : m_config->nodes())
+	for(auto& node : m_monitor->nodes())
 	{
 		rosmon::NodeState nstate;
 		nstate.name = node->name();
 
 		switch(node->state())
 		{
-			case Node::STATE_RUNNING:
+			case monitor::NodeMonitor::STATE_RUNNING:
 				nstate.state = nstate.RUNNING;
 				break;
-			case Node::STATE_CRASHED:
+			case monitor::NodeMonitor::STATE_CRASHED:
 				nstate.state = nstate.CRASHED;
 				break;
-			case Node::STATE_IDLE:
+			case monitor::NodeMonitor::STATE_IDLE:
 				nstate.state = nstate.IDLE;
 				break;
-			case Node::STATE_WAITING:
+			case monitor::NodeMonitor::STATE_WAITING:
 				nstate.state = nstate.WAITING;
 				break;
 			default:
@@ -60,14 +60,14 @@ void ROSInterface::update()
 	m_pub_state.publish(state);
 }
 
-bool ROSInterface::handleStartStop(StartStopRequest& req, StartStopResponse& resp)
+bool ROSInterface::handleStartStop(StartStopRequest& req, StartStopResponse&)
 {
 	auto it = std::find_if(
-		m_config->nodes().begin(), m_config->nodes().end(),
-		[&](const Node::Ptr& n){ return n->name() == req.node; }
+		m_monitor->nodes().begin(), m_monitor->nodes().end(),
+		[&](const monitor::NodeMonitor::ConstPtr& n){ return n->name() == req.node; }
 	);
 
-	if(it == m_config->nodes().end())
+	if(it == m_monitor->nodes().end())
 		return false;
 
 	switch(req.action)
@@ -100,4 +100,3 @@ void ROSInterface::shutdown()
 }
 
 }
-

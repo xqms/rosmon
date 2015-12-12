@@ -1,9 +1,7 @@
-// Represents a node to be started
+// Monitors a single node process
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
-#include "node.h"
-
-#include "package_registry.h"
+#include "node_monitor.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -26,8 +24,6 @@
 #include <boost/range.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <ros/node_handle.h>
-
 #define TASK_COMM_LEN 16 // from linux/sched.h
 
 static std::runtime_error error(const char* fmt, ...)
@@ -46,30 +42,23 @@ static std::runtime_error error(const char* fmt, ...)
 
 namespace rosmon
 {
+namespace monitor
+{
 
-Node::Node(const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type)
- : m_fdWatcher(fdWatcher)
- , m_name(name)
- , m_package(package)
- , m_type(type)
+NodeMonitor::NodeMonitor(const launch::Node::ConstPtr& launchNode, const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh)
+ : m_launchNode(launchNode)
+ , m_fdWatcher(fdWatcher)
  , m_rxBuffer(4096)
  , m_pid(-1)
  , m_exitCode(0)
  , m_command(CMD_STOP) // we start in stopped state
  , m_restarting(false)
-
- // NOTE: roslaunch documentation seems to suggest that this is true by default,
- //  however, the source tells a different story...
- , m_respawn(false)
- , m_respawnDelay(1.0)
 {
-	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&Node::start, this));
-	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&Node::checkStop, this));
-
-	m_executable = PackageRegistry::getExecutable(m_package, m_type);
+	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&NodeMonitor::start, this));
+	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&NodeMonitor::checkStop, this));
 }
 
-Node::~Node()
+NodeMonitor::~NodeMonitor()
 {
 	if(m_pid != -1)
 	{
@@ -77,64 +66,27 @@ Node::~Node()
 	}
 }
 
-void Node::addRemapping(const std::string& from, const std::string& to)
+std::vector<std::string> NodeMonitor::composeCommand() const
 {
-	m_remappings[from] = to;
-}
-
-void Node::addExtraArguments(const std::string& argString)
-{
-	wordexp_t tokens;
-
-	// Get rid of newlines since this confuses wordexp
-	std::string clean = argString;
-	for(unsigned int i = 0; i < clean.length(); ++i)
-	{
-		if(clean[i] == '\n' || clean[i] == '\r')
-			clean[i] = ' ';
-	}
-
-	// NOTE: This also does full shell expansion (things like $PATH)
-	//   But since we trust the user here (and modifying PATH etc dooms us in
-	//   any case), I think we can use wordexp here.
-	int ret = wordexp(clean.c_str(), &tokens, WRDE_NOCMD);
-	if(ret != 0)
-		throw error("You're supplying something strange in 'args': '%s' (wordexp ret %d)", clean.c_str(), ret);
-
-	for(unsigned int i = 0; i < tokens.we_wordc; ++i)
-		m_extraArgs.push_back(tokens.we_wordv[i]);
-
-	wordfree(&tokens);
-}
-
-void Node::setNamespace(const std::string& ns)
-{
-	m_namespace = ns;
-}
-
-void Node::setExtraEnvironment(const std::map<std::string, std::string>& env)
-{
-	m_extraEnvironment = env;
-}
-
-std::vector<std::string> Node::composeCommand() const
-{
-	if(m_executable.empty())
+	if(m_launchNode->executable().empty())
 	{
 		throw error("Could not find node '%s' in package '%s'",
-			m_type.c_str(), m_package.c_str()
+			m_launchNode->type().c_str(), m_launchNode->package().c_str()
 		);
 	}
 
 	std::vector<std::string> cmd{
-		      m_executable
+		m_launchNode->executable()
 	};
 
-	std::copy(m_extraArgs.begin(), m_extraArgs.end(), std::back_inserter(cmd));
+	std::copy(
+		m_launchNode->extraArguments().begin(), m_launchNode->extraArguments().end(),
+		std::back_inserter(cmd)
+	);
 
-	cmd.push_back("__name:=" + m_name);
+	cmd.push_back("__name:=" + m_launchNode->name());
 
-	for(auto map : m_remappings)
+	for(auto map : m_launchNode->remappings())
 	{
 		cmd.push_back(map.first + ":=" + map.second);
 	}
@@ -142,7 +94,7 @@ std::vector<std::string> Node::composeCommand() const
 	return cmd;
 }
 
-void Node::start()
+void NodeMonitor::start()
 {
 	m_command = CMD_RUN;
 
@@ -153,7 +105,7 @@ void Node::start()
 	if(running())
 		return;
 
-	ROS_INFO("rosmon: starting '%s'", m_name.c_str());
+	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
 
 	int pid = forkpty(&m_fd, NULL, NULL, NULL);
 	if(pid < 0)
@@ -171,10 +123,10 @@ void Node::start()
 			ptrs[i] = strdup(cmd[i].data());
 		ptrs.push_back(nullptr);
 
-		if(!m_namespace.empty())
-			setenv("ROS_NAMESPACE", m_namespace.c_str(), 1);
+		if(!m_launchNode->namespaceString().empty())
+			setenv("ROS_NAMESPACE", m_launchNode->namespaceString().c_str(), 1);
 
-		for(auto& pair : m_extraEnvironment)
+		for(auto& pair : m_launchNode->extraEnvironment())
 			setenv(pair.first.c_str(), pair.second.c_str(), 1);
 
 		// Try to enable core dumps
@@ -200,10 +152,10 @@ void Node::start()
 
 	// Parent
 	m_pid = pid;
-	m_fdWatcher->registerFD(m_fd, boost::bind(&Node::communicate, this));
+	m_fdWatcher->registerFD(m_fd, boost::bind(&NodeMonitor::communicate, this));
 }
 
-void Node::stop(bool restart)
+void NodeMonitor::stop(bool restart)
 {
 	if(restart)
 		m_command = CMD_RESTART;
@@ -222,7 +174,7 @@ void Node::stop(bool restart)
 	m_stopCheckTimer.start();
 }
 
-void Node::checkStop()
+void NodeMonitor::checkStop()
 {
 	if(running())
 	{
@@ -233,7 +185,7 @@ void Node::checkStop()
 	m_stopCheckTimer.stop();
 }
 
-void Node::restart()
+void NodeMonitor::restart()
 {
 	m_stopCheckTimer.stop();
 	m_restartTimer.stop();
@@ -244,7 +196,7 @@ void Node::restart()
 		start();
 }
 
-void Node::shutdown()
+void NodeMonitor::shutdown()
 {
 	if(m_pid != -1)
 	{
@@ -252,7 +204,7 @@ void Node::shutdown()
 	}
 }
 
-void Node::forceExit()
+void NodeMonitor::forceExit()
 {
 	if(m_pid != -1)
 	{
@@ -260,12 +212,12 @@ void Node::forceExit()
 	}
 }
 
-bool Node::running() const
+bool NodeMonitor::running() const
 {
 	return m_pid != -1;
 }
 
-Node::State Node::state() const
+NodeMonitor::State NodeMonitor::state() const
 {
 	if(running())
 		return STATE_RUNNING;
@@ -277,7 +229,7 @@ Node::State Node::state() const
 		return STATE_CRASHED;
 }
 
-void Node::communicate()
+void NodeMonitor::communicate()
 {
 	char buf[1024];
 	int bytes = read(m_fd, buf, sizeof(buf));
@@ -295,20 +247,20 @@ void Node::communicate()
 				if(errno == EINTR || errno == EAGAIN)
 					continue;
 
-				throw error("%s: Could not waitpid(): %s", m_name.c_str(), strerror(errno));
+				throw error("%s: Could not waitpid(): %s", m_launchNode->name().c_str(), strerror(errno));
 			}
 		}
 
 		if(WIFEXITED(status))
 		{
-			log("%s exited with status %d", m_name.c_str(), WEXITSTATUS(status));
-			ROS_INFO("rosmon: %s exited with status %d", m_name.c_str(), WEXITSTATUS(status));
+			log("%s exited with status %d", name().c_str(), WEXITSTATUS(status));
+			ROS_INFO("rosmon: %s exited with status %d", name().c_str(), WEXITSTATUS(status));
 			m_exitCode = WEXITSTATUS(status);
 		}
 		else if(WIFSIGNALED(status))
 		{
-			log("%s died from signal %d", m_name.c_str(), WTERMSIG(status));
-			ROS_ERROR("rosmon: %s died from signal %d", m_name.c_str(), WTERMSIG(status));
+			log("%s died from signal %d", name().c_str(), WTERMSIG(status));
+			ROS_ERROR("rosmon: %s died from signal %d", name().c_str(), WTERMSIG(status));
 			m_exitCode = 255;
 		}
 
@@ -316,7 +268,7 @@ void Node::communicate()
 		if(WCOREDUMP(status))
 		{
 			// We have a chance to find the core dump...
-			log("%s left a core dump", m_name.c_str());
+			log("%s left a core dump", name().c_str());
 			gatherCoredump(WTERMSIG(status));
 		}
 #endif
@@ -326,24 +278,24 @@ void Node::communicate()
 		close(m_fd);
 		m_fd = -1;
 
-		if(m_command == CMD_RESTART || (m_command == CMD_RUN && m_respawn))
+		if(m_command == CMD_RESTART || (m_command == CMD_RUN && m_launchNode->respawn()))
 		{
 			if(m_command == CMD_RESTART)
 				m_restartTimer.setPeriod(ros::WallDuration(1.0));
 			else
-				m_restartTimer.setPeriod(m_respawnDelay);
+				m_restartTimer.setPeriod(m_launchNode->respawnDelay());
 
 			m_restartTimer.start();
 			m_restarting = true;
 		}
 
-		exitedSignal(m_name);
+		exitedSignal(name());
 
 		return;
 	}
 
 	if(bytes < 0)
-		throw error("%s: Could not read: %s", m_name.c_str(), strerror(errno));
+		throw error("%s: Could not read: %s", name().c_str(), strerror(errno));
 
 	for(int i = 0; i < bytes; ++i)
 	{
@@ -354,14 +306,14 @@ void Node::communicate()
 			m_rxBuffer.linearize();
 
 			auto one = m_rxBuffer.array_one();
-			logMessageSignal(m_name, one.first);
+			logMessageSignal(name(), one.first);
 
 			m_rxBuffer.clear();
 		}
 	}
 }
 
-void Node::log(const char* fmt, ...)
+void NodeMonitor::log(const char* fmt, ...)
 {
 	static char buf[512];
 
@@ -372,17 +324,7 @@ void Node::log(const char* fmt, ...)
 
 	va_end(v);
 
-	logMessageSignal(m_name, buf);
-}
-
-void Node::setRespawn(bool respawn)
-{
-	m_respawn = respawn;
-}
-
-void Node::setRespawnDelay(const ros::WallDuration& respawnDelay)
-{
-	m_respawnDelay = respawnDelay;
+	logMessageSignal(name(), buf);
 }
 
 static boost::iterator_range<std::string::const_iterator>
@@ -397,7 +339,7 @@ corePatternFormatFinder(std::string::const_iterator begin, std::string::const_it
 	return boost::iterator_range<std::string::const_iterator>(end, end);
 }
 
-void Node::gatherCoredump(int signal)
+void NodeMonitor::gatherCoredump(int signal)
 {
 	char core_pattern[256];
 	int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY);
@@ -453,10 +395,10 @@ void Node::gatherCoredump(int signal)
 					return "*";
 			}
 			case 'e':
-				return m_type.substr(0, TASK_COMM_LEN-1);
+				return m_launchNode->type().substr(0, TASK_COMM_LEN-1);
 			case 'E':
 			{
-				std::string executable = m_executable;
+				std::string executable = m_launchNode->executable();
 				boost::replace_all(executable, "/", "!");
 				return executable;
 			}
@@ -501,12 +443,12 @@ void Node::gatherCoredump(int signal)
 
 	std::stringstream ss;
 
-	ss << "gdb " << m_executable << " " << coreFile;
+	ss << "gdb " << m_launchNode->executable() << " " << coreFile;
 
 	m_debuggerCommand = ss.str();
 }
 
-void Node::launchDebugger()
+void NodeMonitor::launchDebugger()
 {
 	if(!coredumpAvailable())
 		return;
@@ -530,4 +472,5 @@ void Node::launchDebugger()
 	}
 }
 
+}
 }

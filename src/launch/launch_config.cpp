@@ -2,10 +2,9 @@
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
 #include "launch_config.h"
-#include "package_registry.h"
+#include "../package_registry.h"
 
 #include <ros/package.h>
-#include <ros/node_handle.h>
 
 #include <fstream>
 
@@ -14,12 +13,15 @@
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <yaml-cpp/yaml.h>
 
 static const char* UNSET_MARKER = "~~~~~ ROSMON-UNSET ~~~~~";
 
 namespace rosmon
+{
+namespace launch
 {
 
 static LaunchConfig::ParseException error(const char* fmt, ...)
@@ -207,10 +209,8 @@ void LaunchConfig::ParseContext::setEnvironment(const std::string& name, const s
 	m_environment[name] = value;
 }
 
-LaunchConfig::LaunchConfig(const FDWatcher::Ptr& watcher)
- : m_fdWatcher(watcher)
- , m_rootContext(this)
- , m_ok(true)
+LaunchConfig::LaunchConfig()
+ : m_rootContext(this)
  , m_anonGen(std::random_device()())
 {
 }
@@ -239,70 +239,6 @@ void LaunchConfig::parse(const std::string& filename)
 	m_rootContext.setFilename(filename);
 	parse(document.RootElement(), m_rootContext);
 	printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
-
-	log("\n==================================\nNodes:\n");
-	for(auto node : m_nodes)
-	{
-		std::vector<std::string> cmd = node->composeCommand();
-		std::stringstream ss;
-		for(auto part : cmd)
-			ss << part << " ";
-
-		log(" - %s\n", ss.str().c_str());
-	}
-}
-
-template<class Iterator>
-void safeAdvance(Iterator& it, const Iterator& end, size_t i)
-{
-	for(size_t j = 0; j < i; ++j)
-	{
-		if(it == end)
-			return;
-		++it;
-	}
-}
-
-void LaunchConfig::setParameters()
-{
-	// This function is optimized for speed, since we usually have a lot of
-	// parameters and some of those take time (>2s) to compute and upload
-	// (e.g. xacro).
-
-	// The optimization is two-fold: we use std::future to avoid useless
-	// computations of parameters which are re-set later on anyways, and
-	// we use a thread pool to evaluate the futures below.
-
-	const int NUM_THREADS = std::thread::hardware_concurrency();
-
-	std::vector<std::thread> threads(NUM_THREADS);
-
-	for(int i = 0; i < NUM_THREADS; ++i)
-	{
-		threads[i] = std::thread([this,i,NUM_THREADS]() {
-			ros::NodeHandle nh;
-
-			// Thread number i starts at position i and moves in NUM_THREADS
-			// increments.
-			auto it = m_paramJobs.begin();
-			safeAdvance(it, m_paramJobs.end(), i);
-
-			while(it != m_paramJobs.end())
-			{
-				nh.setParam(it->first, it->second.get());
-				safeAdvance(it, m_paramJobs.end(), NUM_THREADS);
-			}
-		});
-	}
-
-	// Meanwhile, set all fixed parameters in the main thread
-	ros::NodeHandle nh;
-	for(auto& param : m_params)
-		nh.setParam(param.first, param.second);
-
-	// and wait for completion for the others.
-	for(auto& t : threads)
-		t.join();
 }
 
 void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
@@ -381,7 +317,9 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	// Enter scope
 	ctx = ctx.enterScope(ctx.evaluate(name));
 
-	Node::Ptr node = boost::make_shared<Node>(m_fdWatcher, m_nh, ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type));
+	Node::Ptr node = std::make_shared<Node>(
+		ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type)
+	);
 
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));
@@ -411,7 +349,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	if(required && ctx.parseBool(required, element->Row()))
 	{
-		node->exitedSignal.connect(boost::bind(&LaunchConfig::handleRequiredNodeExit, this, _1));
+		node->setRequired(true);
 	}
 
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
@@ -441,8 +379,6 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	// Set environment *after* parsing the node children (may contain env tags)
 	node->setExtraEnvironment(ctx.environment());
-
-	node->logMessageSignal.connect(logMessageSignal);
 
 	m_nodes.push_back(node);
 }
@@ -850,65 +786,6 @@ void LaunchConfig::parseEnv(TiXmlElement* element, ParseContext& ctx)
 	ctx.setEnvironment(ctx.evaluate(name), ctx.evaluate(value));
 }
 
-void LaunchConfig::start()
-{
-	for(auto node : m_nodes)
-	{
-		node->start();
-	}
-}
-
-void LaunchConfig::shutdown()
-{
-	for(auto node : m_nodes)
-		node->shutdown();
-}
-
-void LaunchConfig::forceExit()
-{
-	log("Killing the following nodes, which are refusing to exit:\n");
-	for(auto node : m_nodes)
-	{
-		if(node->running())
-		{
-			log(" - %s\n", node->name().c_str());
-			node->forceExit();
-		}
-	}
-}
-
-bool LaunchConfig::allShutdown()
-{
-	bool allShutdown = true;
-	for(auto node : m_nodes)
-	{
-		if(node->running())
-			allShutdown = false;
-	}
-
-	return allShutdown;
-}
-
-void LaunchConfig::handleRequiredNodeExit(const std::string& name)
-{
-	log("Required node '%s' exited, shutting down...", name.c_str());
-	m_ok = false;
-}
-
-void LaunchConfig::log(const char* fmt, ...)
-{
-	static char buf[512];
-
-	va_list v;
-	va_start(v, fmt);
-
-	vsnprintf(buf, sizeof(buf), fmt, v);
-
-	va_end(v);
-
-	logMessageSignal("[rosmon]", buf);
-}
-
 std::string LaunchConfig::anonName(const std::string& base)
 {
 	auto it = m_anonNames.find(base);
@@ -927,4 +804,59 @@ std::string LaunchConfig::anonName(const std::string& base)
 	return it->second;
 }
 
+template<class Iterator>
+void safeAdvance(Iterator& it, const Iterator& end, size_t i)
+{
+	for(size_t j = 0; j < i; ++j)
+	{
+		if(it == end)
+			return;
+		++it;
+	}
+}
+
+void LaunchConfig::evaluateParameters()
+{
+	// This function is optimized for speed, since we usually have a lot of
+	// parameters and some of those take time (>2s) to compute and upload
+	// (e.g. xacro).
+
+	// The optimization is two-fold: we use std::future to avoid useless
+	// computations of parameters which are re-set later on anyways, and
+	// we use a thread pool to evaluate the futures below.
+
+	const int NUM_THREADS = std::thread::hardware_concurrency();
+
+	std::vector<std::thread> threads(NUM_THREADS);
+
+	std::mutex mutex;
+
+	for(int i = 0; i < NUM_THREADS; ++i)
+	{
+		threads[i] = std::thread([this,i,NUM_THREADS,&mutex]() {
+			// Thread number i starts at position i and moves in NUM_THREADS
+			// increments.
+			auto it = m_paramJobs.begin();
+			safeAdvance(it, m_paramJobs.end(), i);
+
+			while(it != m_paramJobs.end())
+			{
+				XmlRpc::XmlRpcValue val = it->second.get();
+				{
+					std::lock_guard<std::mutex> guard(mutex);
+					m_params[it->first] = val;
+				}
+				safeAdvance(it, m_paramJobs.end(), NUM_THREADS);
+			}
+		});
+	}
+
+	// and wait for completion for the threads.
+	for(auto& t : threads)
+		t.join();
+
+	m_paramJobs.clear();
+}
+
+}
 }

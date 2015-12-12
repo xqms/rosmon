@@ -1,27 +1,28 @@
-// Represents a node to be started
+// Monitors a single node process
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
-#ifndef ROSMON_NODE_H
-#define ROSMON_NODE_H
+#ifndef ROSMON_MONITOR_NODE_MONITOR_H
+#define ROSMON_MONITOR_NODE_MONITOR_H
 
-#include <boost/shared_ptr.hpp>
+#include "../launch/node.h"
+#include "../fd_watcher.h"
 
-#include <map>
+#include <ros/node_handle.h>
 
-#include <boost/circular_buffer.hpp>
 #include <boost/signals2.hpp>
-
-#include <ros/wall_timer.h>
-
-#include "fd_watcher.h"
+#include <boost/circular_buffer.hpp>
 
 namespace rosmon
 {
 
-class Node
+namespace monitor
+{
+
+class NodeMonitor
 {
 public:
-	typedef boost::shared_ptr<Node> Ptr;
+	typedef std::shared_ptr<NodeMonitor> Ptr;
+	typedef std::shared_ptr<NodeMonitor> ConstPtr;
 
 	enum State
 	{
@@ -38,16 +39,10 @@ public:
 		CMD_RESTART
 	};
 
-	Node(const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh, const std::string& name, const std::string& package, const std::string& type);
-	~Node();
-
-	void addRemapping(const std::string& from, const std::string& to);
-	void addExtraArguments(const std::string& argString);
-	void setNamespace(const std::string& ns);
-	void setExtraEnvironment(const std::map<std::string, std::string>& env);
-
-	void setRespawn(bool respawn);
-	void setRespawnDelay(const ros::WallDuration& respawnDelay);
+	NodeMonitor(
+		const launch::Node::ConstPtr& launchNode,
+		const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh);
+	~NodeMonitor();
 
 	std::vector<std::string> composeCommand() const;
 
@@ -66,9 +61,6 @@ public:
 	inline int fd()
 	{ return m_fd; }
 
-	inline const std::string& name() const
-	{ return m_name; }
-
 	inline bool coredumpAvailable() const
 	{ return !m_debuggerCommand.empty(); }
 
@@ -77,6 +69,9 @@ public:
 
 	void launchDebugger();
 
+	inline std::string name() const
+	{ return m_launchNode->name(); }
+
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 	boost::signals2::signal<void(std::string)> exitedSignal;
 private:
@@ -84,20 +79,9 @@ private:
 	void checkStop();
 	void gatherCoredump(int signal);
 
+	launch::Node::ConstPtr m_launchNode;
+
 	FDWatcher::Ptr m_fdWatcher;
-
-	std::string m_name;
-	std::string m_package;
-	std::string m_type;
-
-	std::string m_executable;
-
-	std::string m_namespace;
-
-	std::map<std::string, std::string> m_remappings;
-	std::vector<std::string> m_extraArgs;
-
-	std::map<std::string, std::string> m_extraEnvironment;
 
 	boost::circular_buffer<char> m_rxBuffer;
 
@@ -112,11 +96,10 @@ private:
 
 	bool m_restarting;
 
-	bool m_respawn;
-	ros::WallDuration m_respawnDelay;
-
 	std::string m_debuggerCommand;
 };
+
+}
 
 }
 

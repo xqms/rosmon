@@ -4,7 +4,7 @@
 #ifndef ROS_INTERFACE_H
 #define ROS_INTERFACE_H
 
-#include "launch_config.h"
+#include "monitor/monitor.h"
 
 #include <ros/node_handle.h>
 
@@ -16,7 +16,7 @@ namespace rosmon
 class ROSInterface
 {
 public:
-	ROSInterface(LaunchConfig* config);
+	ROSInterface(monitor::Monitor* monitor);
 	~ROSInterface();
 
 	void shutdown();
@@ -24,7 +24,7 @@ private:
 	void update();
 	bool handleStartStop(StartStopRequest& req, StartStopResponse& resp);
 
-	LaunchConfig* m_config;
+	monitor::Monitor* m_monitor;
 
 	ros::NodeHandle m_nh;
 

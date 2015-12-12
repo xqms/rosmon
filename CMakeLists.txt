@@ -34,8 +34,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror")
 
 add_executable(rosmon
 	src/main.cpp
-	src/node.cpp
-	src/launch_config.cpp
+	src/launch/node.cpp
+	src/launch/launch_config.cpp
+	src/monitor/node_monitor.cpp
+	src/monitor/monitor.cpp
 	src/ui.cpp
 	src/husl/husl.c
 	src/ros_interface.cpp

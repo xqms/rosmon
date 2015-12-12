@@ -26,14 +26,14 @@ void cleanup()
 namespace rosmon
 {
 
-UI::UI(LaunchConfig* config, const FDWatcher::Ptr& fdWatcher)
- : m_config(config)
+UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
+ : m_monitor(monitor)
  , m_fdWatcher(fdWatcher)
  , m_columns(80)
  , m_selectedNode(-1)
 {
 	std::atexit(cleanup);
-	m_config->logMessageSignal.connect(boost::bind(&UI::log, this, _1, _2));
+	m_monitor->logMessageSignal.connect(boost::bind(&UI::log, this, _1, _2));
 
 	m_sizeTimer = ros::NodeHandle().createWallTimer(ros::WallDuration(2.0), boost::bind(&UI::checkWindowSize, this));
 	m_sizeTimer.start();
@@ -58,7 +58,7 @@ UI::~UI()
 void UI::setupColors()
 {
 	// Sample colors from the HUSL space
-	int n = m_config->nodes().size();
+	int n = m_monitor->nodes().size();
 
 	for(int i = 0; i < n; ++i)
 	{
@@ -78,7 +78,7 @@ void UI::setupColors()
 			| (std::min(255, std::max<int>(0, g)) << 8)
 			| (std::min(255, std::max<int>(0, b)) << 16);
 
-		m_nodeColorMap[m_config->nodes()[i]->name()] = ChannelInfo(color);
+		m_nodeColorMap[m_monitor->nodes()[i]->name()] = ChannelInfo(color);
 	}
 }
 
@@ -90,7 +90,7 @@ void UI::drawStatusLine()
 
 	if(m_selectedNode != -1)
 	{
-		auto& node = m_config->nodes()[m_selectedNode];
+		auto& node = m_monitor->nodes()[m_selectedNode];
 
 		printf("Actions: s: start, k: stop");
 		if(node->coredumpAvailable())
@@ -103,7 +103,7 @@ void UI::drawStatusLine()
 	char key = 'a';
 	int i = 0;
 
-	for(auto node : m_config->nodes())
+	for(auto& node : m_monitor->nodes())
 	{
 		char label[NODE_WIDTH+2];
 		int padding = std::max<int>(0, (NODE_WIDTH - node->name().length())/2);
@@ -126,16 +126,16 @@ void UI::drawStatusLine()
 
 		switch(node->state())
 		{
-			case Node::STATE_RUNNING:
+			case monitor::NodeMonitor::STATE_RUNNING:
 				m_term.setSimplePair(Terminal::Black, Terminal::Green);
 				break;
-			case Node::STATE_IDLE:
+			case monitor::NodeMonitor::STATE_IDLE:
 				m_term.setStandardColors();
 				break;
-			case Node::STATE_CRASHED:
+			case monitor::NodeMonitor::STATE_CRASHED:
 				m_term.setSimplePair(Terminal::Black, Terminal::Red);
 				break;
-			case Node::STATE_WAITING:
+			case monitor::NodeMonitor::STATE_WAITING:
 				m_term.setSimplePair(Terminal::Black, Terminal::Yellow);
 				break;
 		}
@@ -265,14 +265,14 @@ void UI::handleInput()
 		else if(c >= '0' && c <= '9')
 			nodeIndex = 26 + 26 + c - '0';
 
-		if(nodeIndex < 0 || (size_t)nodeIndex > m_config->nodes().size())
+		if(nodeIndex < 0 || (size_t)nodeIndex > m_monitor->nodes().size())
 			return;
 
 		m_selectedNode = nodeIndex;
 	}
 	else
 	{
-		auto& node = m_config->nodes()[m_selectedNode];
+		auto& node = m_monitor->nodes()[m_selectedNode];
 
 		switch(c)
 		{

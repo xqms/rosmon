@@ -8,7 +8,8 @@
 #include <ros/package.h>
 #include <ros/console_backend.h>
 
-#include "launch_config.h"
+#include "launch/launch_config.h"
+#include "monitor/monitor.h"
 #include "ui.h"
 #include "ros_interface.h"
 #include "package_registry.h"
@@ -194,7 +195,7 @@ int main(int argc, char** argv)
 
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
 
-	rosmon::LaunchConfig config(watcher);
+	rosmon::launch::LaunchConfig::Ptr config(new rosmon::launch::LaunchConfig);
 
 	// Disable direct logging to stdout
 	ros::console::backend::function_print = nullptr;
@@ -216,7 +217,6 @@ int main(int argc, char** argv)
 	}
 
 	logger.reset(new rosmon::Logger(logFile));
-	config.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
 
 	for(int i = firstArg; i < argc; ++i)
 	{
@@ -234,28 +234,32 @@ int main(int argc, char** argv)
 
 		char* value = arg + 2;
 
-		config.setArgument(name, value);
+		config->setArgument(name, value);
 	}
 
-	config.parse(launchFilePath);
-	config.setParameters();
+	config->parse(launchFilePath);
+
+	config->evaluateParameters();
 
 	if(benchmark)
 		return 0;
 
-	config.start();
+	rosmon::monitor::Monitor monitor(config, watcher);
+	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
+
+	monitor.start();
 
 	// Start the ncurses UI
-	rosmon::UI ui(&config, watcher);
+	rosmon::UI ui(&monitor, watcher);
 
 	// ROS interface
-	rosmon::ROSInterface rosInterface(&config);
+	rosmon::ROSInterface rosInterface(&monitor);
 
 	ros::WallDuration waitDuration(0.1);
 
 	signal(SIGINT, handleSIGINT);
 
-	while(ros::ok() && config.ok() && !g_shouldStop)
+	while(ros::ok() && monitor.ok() && !g_shouldStop)
 	{
 		ros::spinOnce();
 		watcher->wait(waitDuration);
@@ -263,28 +267,28 @@ int main(int argc, char** argv)
 	}
 
 	ui.log("[rosmon]", "Shutting down...");
-	config.shutdown();
+	monitor.shutdown();
 
 	ros::WallTime start = ros::WallTime::now();
-	while(!config.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(5.0))
+	while(!monitor.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(5.0))
 	{
 		watcher->wait(waitDuration);
 		ui.update();
 	}
 
-	if(!config.allShutdown())
-		config.forceExit();
+	if(!monitor.allShutdown())
+		monitor.forceExit();
 
 	rosInterface.shutdown();
 
-	while(!config.allShutdown())
+	while(!monitor.allShutdown())
 	{
 		watcher->wait(waitDuration);
 		ui.update();
 	}
 
 	bool coredumpsAvailable = false;
-	for(auto& node : config.nodes())
+	for(auto& node : monitor.nodes())
 	{
 		if(node->coredumpAvailable())
 		{
@@ -297,7 +301,7 @@ int main(int argc, char** argv)
 	{
 		ui.log("[rosmon]", "\n");
 		ui.log("[rosmon]", "If you want to debug one of the crashed nodes, you can use the following commands");
-		for(auto& node : config.nodes())
+		for(auto& node : monitor.nodes())
 		{
 			if(node->coredumpAvailable())
 				ui.log("[rosmon]", " # " + node->debuggerCommand());

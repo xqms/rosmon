@@ -4,7 +4,7 @@
 #ifndef UI_H
 #define UI_H
 
-#include "launch_config.h"
+#include "monitor/monitor.h"
 #include "fd_watcher.h"
 #include "terminal.h"
 
@@ -18,7 +18,7 @@ namespace rosmon
 class UI
 {
 public:
-	explicit UI(LaunchConfig* config, const FDWatcher::Ptr& fdWatcher);
+	explicit UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher);
 	~UI();
 
 	void update();
@@ -42,7 +42,7 @@ private:
 	void setupColors();
 	void handleInput();
 
-	LaunchConfig* m_config;
+	monitor::Monitor* m_monitor;
 	FDWatcher::Ptr m_fdWatcher;
 
 	Terminal m_term;

@@ -1,11 +1,10 @@
 // Aggregates all information needed to start and monitor nodes
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
-#ifndef LAUNCH_CONFIG_H
-#define LAUNCH_CONFIG_H
+#ifndef ROSMON_LAUNCH_LAUNCH_CONFIG_H
+#define ROSMON_LAUNCH_LAUNCH_CONFIG_H
 
 #include "node.h"
-#include "fd_watcher.h"
 
 #include <map>
 #include <vector>
@@ -16,16 +15,17 @@
 #include <tinyxml.h>
 #include <yaml-cpp/yaml.h>
 
-#include <ros/node_handle.h>
-
-#include <boost/signals2.hpp>
-
 namespace rosmon
+{
+namespace launch
 {
 
 class LaunchConfig
 {
 public:
+	typedef std::shared_ptr<LaunchConfig> Ptr;
+	typedef std::shared_ptr<const LaunchConfig> ConstPtr;
+
 	class ParseException : public std::exception
 	{
 	public:
@@ -42,28 +42,22 @@ public:
 		std::string m_msg;
 	};
 
-	explicit LaunchConfig(const FDWatcher::Ptr& watcher);
+	LaunchConfig();
 	~LaunchConfig();
 
 	void setArgument(const std::string& name, const std::string& value);
 
 	void parse(const std::string& filename);
 
-	void setParameters();
-	void start();
-	void shutdown();
-	void forceExit();
-	bool allShutdown();
+	void evaluateParameters();
+
+	inline const std::map<std::string, XmlRpc::XmlRpcValue>& parameters() const
+	{ return m_params; }
 
 	inline const std::vector<Node::Ptr>& nodes() const
 	{ return m_nodes; }
 
-	inline bool ok() const
-	{ return m_ok; }
-
 	std::string anonName(const std::string& base);
-
-	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 private:
 	class ParseContext
 	{
@@ -135,13 +129,6 @@ private:
 
 	XmlRpc::XmlRpcValue yamlToXmlRpc(const YAML::Node& n);
 
-	void log(const char* fmt, ...) __attribute__((format (printf, 2, 3)));
-
-	void handleRequiredNodeExit(const std::string& name);
-
-	ros::NodeHandle m_nh;
-	FDWatcher::Ptr m_fdWatcher;
-
 	ParseContext m_rootContext;
 
 	std::vector<Node::Ptr> m_nodes;
@@ -149,12 +136,11 @@ private:
 	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
 	std::map<std::string, ParameterFuture> m_paramJobs;
 
-	bool m_ok;
-
 	std::map<std::string, std::string> m_anonNames;
 	std::mt19937_64 m_anonGen;
 };
 
+}
 }
 
 #endif
