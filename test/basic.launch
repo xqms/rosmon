@@ -1,0 +1,6 @@
+<launch rosmon-name="rosmon_uut">
+	<node name="test1" pkg="rosmon" type="test_node.py">
+		<remap from="~input" to="/test_input" />
+		<remap from="~output" to="/test_output" />
+	</node>
+</launch>

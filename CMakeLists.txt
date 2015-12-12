@@ -100,6 +100,12 @@ add_executable(abort_really_long_executable
 	src/util/abort.cpp
 )
 
+# Register unit tests
+if(CATKIN_ENABLE_TESTING)
+	find_package(rostest REQUIRED)
+	add_rostest(test/basic.test)
+endif()
+
 # Version 1.1 (increment this comment to trigger a CMake update)
 catkin_add_env_hooks(50-rosmon SHELLS bash DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
 
