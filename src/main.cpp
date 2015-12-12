@@ -25,8 +25,6 @@
 
 namespace fs = boost::filesystem;
 
-static ros::Publisher g_pub_rosout;
-
 bool g_shouldStop = false;
 
 static fs::path findFile(const fs::path& base, const std::string name)
