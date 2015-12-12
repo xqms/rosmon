@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	// Find first argument (must contain ':=')
+	// Find first launch file argument (must contain ':=')
 	int firstArg = optind + 1;
 	for(; firstArg < argc; ++firstArg)
 	{
@@ -161,34 +161,38 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	// Setup a sane ROSCONSOLE_FORMAT if the user did not already
-	setenv("ROSCONSOLE_FORMAT", "[${function}]: ${message}", 0);
+	// Setup logging
+	boost::scoped_ptr<rosmon::Logger> logger;
+	{
+		// Setup a sane ROSCONSOLE_FORMAT if the user did not already
+		setenv("ROSCONSOLE_FORMAT", "[${function}]: ${message}", 0);
+
+		// Disable direct logging to stdout
+		ros::console::backend::function_print = nullptr;
+
+		// Open logger
+		if(logFile.empty())
+		{
+			// Log to /tmp by default
+
+			time_t t = time(NULL);
+			tm currentTime;
+			localtime_r(&t, &currentTime);
+
+			char buf[256];
+			strftime(buf, sizeof(buf), "/tmp/rosmon_%Y_%m_%d_%H_%M_%S.log", &currentTime);
+
+			logFile = buf;
+		}
+
+		logger.reset(new rosmon::Logger(logFile));
+	}
 
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
 
 	rosmon::launch::LaunchConfig::Ptr config(new rosmon::launch::LaunchConfig);
 
-	// Disable direct logging to stdout
-	ros::console::backend::function_print = nullptr;
-
-	// Open logger
-	boost::scoped_ptr<rosmon::Logger> logger;
-	if(logFile.empty())
-	{
-		// Log to /tmp by default
-
-		time_t t = time(NULL);
-		tm currentTime;
-		localtime_r(&t, &currentTime);
-
-		char buf[256];
-		strftime(buf, sizeof(buf), "/tmp/rosmon_%Y_%m_%d_%H_%M_%S.log", &currentTime);
-
-		logFile = buf;
-	}
-
-	logger.reset(new rosmon::Logger(logFile));
-
+	// Parse launch file arguments from command line
 	for(int i = firstArg; i < argc; ++i)
 	{
 		char* arg = strstr(argv[i], ":=");
@@ -216,35 +220,39 @@ int main(int argc, char** argv)
 		return 0;
 
 	// Initialize the ROS node.
-	uint32_t init_options = ros::init_options::NoSigintHandler;
-
-	// If the user did not specify a node name on the command line, look in
-	// the launch file
-	if(name.empty())
-		name = config->rosmonNodeName();
-
-	// As last fallback, choose anonymous name.
-	if(name.empty())
 	{
-		name = "rosmon";
-		init_options |= ros::init_options::AnonymousName;
+		uint32_t init_options = ros::init_options::NoSigintHandler;
+
+		// If the user did not specify a node name on the command line, look in
+		// the launch file
+		if(name.empty())
+			name = config->rosmonNodeName();
+
+		// As last fallback, choose anonymous name.
+		if(name.empty())
+		{
+			name = "rosmon";
+			init_options |= ros::init_options::AnonymousName;
+		}
+
+		// prevent ros::init from parsing the launch file arguments as remappings
+		int dummyArgc = 1;
+		ros::init(dummyArgc, argv, name, init_options);
 	}
 
-	// prevent ros::init from parsing the launch file arguments as remappings
-	int dummyArgc = 1;
-	ros::init(dummyArgc, argv, name, init_options);
-
-	printf("ROS_MASTER_URI: '%s'\n", ros::master::getURI().c_str());
-
-	if(ros::master::check())
+	// Check connectivity to ROS master
 	{
-		printf("roscore is already running.\n");
-	}
-	else
-	{
-		printf("Starting own roscore...\n");
-		fprintf(stderr, "Scratch that, I can't do that yet. Exiting...\n");
-		return 1;
+		printf("ROS_MASTER_URI: '%s'\n", ros::master::getURI().c_str());
+		if(ros::master::check())
+		{
+			printf("roscore is already running.\n");
+		}
+		else
+		{
+			printf("Starting own roscore...\n");
+			fprintf(stderr, "Scratch that, I can't do that yet. Exiting...\n");
+			return 1;
+		}
 	}
 
 	ros::NodeHandle nh;
@@ -275,6 +283,7 @@ int main(int argc, char** argv)
 
 	signal(SIGINT, handleSIGINT);
 
+	// Main loop
 	while(ros::ok() && monitor.ok() && !g_shouldStop)
 	{
 		ros::spinOnce();
@@ -285,6 +294,7 @@ int main(int argc, char** argv)
 	ui.log("[rosmon]", "Shutting down...");
 	monitor.shutdown();
 
+	// Wait for graceful shutdown
 	ros::WallTime start = ros::WallTime::now();
 	while(!monitor.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(5.0))
 	{
@@ -292,26 +302,23 @@ int main(int argc, char** argv)
 		ui.update();
 	}
 
+	// If we timed out, force exit (kill the nodes with SIGKILL)
 	if(!monitor.allShutdown())
 		monitor.forceExit();
 
 	rosInterface.shutdown();
 
+	// Wait until that is finished (should always work)
 	while(!monitor.allShutdown())
 	{
 		watcher->wait(waitDuration);
 		ui.update();
 	}
 
-	bool coredumpsAvailable = false;
-	for(auto& node : monitor.nodes())
-	{
-		if(node->coredumpAvailable())
-		{
-			coredumpsAvailable = true;
-			break;
-		}
-	}
+	// If coredumps are available, be helpful and display gdb commands
+	bool coredumpsAvailable = std::any_of(monitor.nodes().begin(), monitor.nodes().end(),
+		[](const rosmon::monitor::NodeMonitor::Ptr& n) { return n->coredumpAvailable(); }
+	);
 
 	if(coredumpsAvailable)
 	{
