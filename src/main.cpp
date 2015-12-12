@@ -258,6 +258,13 @@ int main(int argc, char** argv)
 
 	printf("\n\n");
 	monitor.setParameters();
+
+	if(config->nodes().empty())
+	{
+		printf("No ROS nodes to be launched. Finished...\n");
+		return 0;
+	}
+
 	monitor.start();
 
 	// Start the ncurses UI
