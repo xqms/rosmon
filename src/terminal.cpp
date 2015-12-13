@@ -131,34 +131,17 @@ Terminal::Terminal()
 
 	if(getenv("KONSOLE_DBUS_SESSION"))
 	{
-		char buf[256];
-		FILE* out = popen("konsole -v", "r");
-		boost::regex exp(R"(Konsole: (?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+))");
-
-		while(fgets(buf, sizeof(buf), out))
-		{
-			int n = strlen(buf);
-			if(buf[n-1] == '\n')
-				buf[n-1] = 0;
-
-			boost::cmatch match;
-			if(boost::regex_match(buf, match, exp))
-			{
-				int major = atoi(match.str("major").c_str());
-
-				if(major >= 2)
-				{
-					m_truecolor = true;
-				}
-			}
-		}
-
-		fclose(out);
+		// Sadly, there is no way to determine the Konsole version. Since
+		// any reasonably recent version supports true colors, just assume
+		// true color support
+		m_truecolor = true;
+		m_256colors = true;
 	}
 
 	char* vte_version = getenv("VTE_VERSION");
 	if(vte_version && atoi(vte_version) >= 3600)
 	{
+		m_256colors = true;
 		m_truecolor = true;
 	}
 
