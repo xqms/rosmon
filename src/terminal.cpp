@@ -114,35 +114,71 @@ void Terminal::Parser::apply(Terminal* term)
 }
 
 Terminal::Terminal()
+ : m_valid(false)
+ , m_256colors(false)
+ , m_truecolor(false)
 {
+	// Override using environment variable
+	char* overrideMode = getenv("ROSMON_COLOR_MODE");
+	const char* termOverride = 0;
+	if(overrideMode)
+	{
+		if(strcasecmp(overrideMode, "truecolor") == 0)
+		{
+			termOverride = "xterm-256color";
+			m_256colors = true;
+			m_truecolor = true;
+		}
+		else if(strcasecmp(overrideMode, "256colors") == 0)
+		{
+			termOverride = "xterm-256color";
+			m_256colors = true;
+			m_truecolor = false;
+		}
+		else if(strcasecmp(overrideMode, "ansi") == 0)
+		{
+			m_256colors = false;
+			m_truecolor = false;
+		}
+		else
+		{
+			fprintf(stderr, "Warning: Unknown ROSMON_COLOR_MODE value: '%s'\n", overrideMode);
+		}
+	}
+	else
+	{
+		// Detect truecolor-capable terminals
+		if(getenv("KONSOLE_DBUS_SESSION"))
+		{
+			// Sadly, there is no way to determine the Konsole version. Since
+			// any reasonably recent version supports true colors, just assume
+			// true color support
+			m_truecolor = true;
+			m_256colors = true;
+		}
+
+		char* vte_version = getenv("VTE_VERSION");
+		if(vte_version && atoi(vte_version) >= 3600)
+		{
+			m_256colors = true;
+			m_truecolor = true;
+		}
+	}
+
 	int ret;
-	if(setupterm(NULL, STDOUT_FILENO, &ret) != OK)
+	if(setupterm(termOverride, STDOUT_FILENO, &ret) != OK)
 	{
 		printf("Could not setup the terminal. Disabling all colors...\n");
-		// FIXME: do so
+		return;
 	}
 
-	// Detect 256 color terminals
-	int num_colors = tigetnum("colors");
-	m_256colors = num_colors >= 256;
+	m_valid = true;
 
-	// Detect truecolor-capable terminals
-	m_truecolor = false;
-
-	if(getenv("KONSOLE_DBUS_SESSION"))
+	if(!m_256colors && !overrideMode)
 	{
-		// Sadly, there is no way to determine the Konsole version. Since
-		// any reasonably recent version supports true colors, just assume
-		// true color support
-		m_truecolor = true;
-		m_256colors = true;
-	}
-
-	char* vte_version = getenv("VTE_VERSION");
-	if(vte_version && atoi(vte_version) >= 3600)
-	{
-		m_256colors = true;
-		m_truecolor = true;
+		// Detect 256 color terminals
+		int num_colors = tigetnum("colors");
+		m_256colors = num_colors >= 256;
 	}
 
 	{
@@ -176,11 +212,17 @@ bool Terminal::has256Colors() const
 
 void Terminal::setCursorInvisible()
 {
+	if(!m_valid)
+		return;
+
 	putp(tigetstr("civis"));
 }
 
 void Terminal::setCursorVisible()
 {
+	if(!m_valid)
+		return;
+
 	putp(tigetstr("cnorm"));
 }
 
@@ -199,6 +241,9 @@ static int ansiColor(uint32_t rgb)
 
 void Terminal::setBackgroundColor(uint32_t color)
 {
+	if(!m_valid)
+		return;
+
 	if(m_truecolor)
 	{
 		char buf[256];
@@ -214,6 +259,9 @@ void Terminal::setBackgroundColor(uint32_t color)
 
 void Terminal::setForegroundColor(uint32_t color)
 {
+	if(!m_valid)
+		return;
+
 	if(m_truecolor)
 	{
 		char buf[256];
@@ -250,34 +298,52 @@ void Terminal::setEcho(bool on)
 
 void Terminal::setSimpleForeground(SimpleColor color)
 {
+	if(!m_valid)
+		return;
+
 	char* out = tiparm(m_fgColorStr.c_str(), color);
 	putp(out);
 }
 
 void Terminal::setSimpleBackground(SimpleColor color)
 {
+	if(!m_valid)
+		return;
+
 	char* out = tiparm(m_bgColorStr.c_str(), color);
 	putp(out);
 }
 
 void Terminal::setSimplePair(SimpleColor fg, SimpleColor bg)
 {
+	if(!m_valid)
+		return;
+
 	setSimpleForeground(fg);
 	setSimpleBackground(bg);
 }
 
 void Terminal::setStandardColors()
 {
+	if(!m_valid)
+		return;
+
 	putp(m_opStr.c_str());
 }
 
 void Terminal::clearToEndOfLine()
 {
+	if(!m_valid)
+		return;
+
 	putp(m_elStr.c_str());
 }
 
 void Terminal::moveCursorUp(int numLines)
 {
+	if(!m_valid)
+		return;
+
 	putp(tparm(m_upStr.c_str(), numLines));
 }
 

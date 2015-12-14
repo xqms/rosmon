@@ -59,6 +59,11 @@ void usage()
 		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
 		"                 name is chosen.\n"
 		"\n"
+		"rosmon also obeys some environment variables:\n"
+		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
+		"                      to force a specific color mode\n"
+		"                      If unset, rosmon tries to detect the best\n"
+		"                      available color mode.\n"
 	);
 }
 
