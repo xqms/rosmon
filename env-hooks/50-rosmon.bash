@@ -28,7 +28,7 @@ function _mon() {
 
 			case "${cmd}" in
 				launch)
-					local packages=$(catkin list "${workspace}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed 's/^- //g')
+					local packages=$(rospack list-names 2>/dev/null)
 					local files=$(ls *.launch 2>/dev/null)
 					COMPREPLY=( $(compgen -W "${packages} ${files}" -- $cur) )
 					;;
@@ -43,7 +43,7 @@ function _mon() {
 			esac
 			;;
 		*)
-			COMPREPLY=""
+			COMPREPLY=()
 			;;
 	esac
 }
