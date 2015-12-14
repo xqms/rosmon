@@ -229,6 +229,9 @@ void UI::log(const std::string& channel, const std::string& log)
 
 void UI::update()
 {
+	if(!m_term.interactive())
+		return;
+
 	// We currently are at the beginning of the status line.
 	putchar('\n');
 	m_term.clearToEndOfLine();

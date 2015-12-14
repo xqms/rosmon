@@ -147,7 +147,14 @@ public:
 	 **/
 	bool has256Colors() const;
 
+	/**
+	 * Terminal supports escape codes
+	 **/
+	bool interactive() const
+	{ return m_valid; }
+
 private:
+	bool m_valid;
 	bool m_256colors;
 	bool m_truecolor;
 
