@@ -70,7 +70,6 @@ void MonModel::updateState(const rosmon::StateConstPtr& state)
 
 		if(it == m_entries.end() || it->name != key.name)
 		{
-			printf("insert %d\n", row);
 			beginInsertRows(QModelIndex(), row, row);
 			m_entries.insert(it, key);
 			covered.insert(covered.begin() + row, true);
