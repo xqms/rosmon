@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>rosmon</string>
+   <string>Node Monitor</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
