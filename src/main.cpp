@@ -317,7 +317,8 @@ int main(int argc, char** argv)
 			ui->update();
 	}
 
-	ui->log("[rosmon]", "Shutting down...");
+	if(ui)
+		ui->log("[rosmon]", "Shutting down...");
 	monitor.shutdown();
 
 	// Wait for graceful shutdown
@@ -350,7 +351,7 @@ int main(int argc, char** argv)
 		[](const rosmon::monitor::NodeMonitor::Ptr& n) { return n->coredumpAvailable(); }
 	);
 
-	if(coredumpsAvailable)
+	if(ui && coredumpsAvailable)
 	{
 		ui->log("[rosmon]", "\n");
 		ui->log("[rosmon]", "If you want to debug one of the crashed nodes, you can use the following commands");
