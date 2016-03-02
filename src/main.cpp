@@ -23,6 +23,8 @@
 #include <getopt.h>
 #include <signal.h>
 
+#include <iostream>
+
 namespace fs = boost::filesystem;
 
 bool g_shouldStop = false;
@@ -48,11 +50,14 @@ void usage()
 {
 	fprintf(stderr,
 		"Usage:\n"
-		"  rosmon [options] some_package test.launch [arg1:=value1 ...]\n"
-		"  rosmon [options] path/to/test.launch [arg1:=value1 ...]\n"
+		"  rosmon [actions] [options] some_package test.launch [arg1:=value1 ...]\n"
+		"  rosmon [actions] [options] path/to/test.launch [arg1:=value1 ...]\n"
+		"\n"
+		"Actions (default is to launch the launch file):\n"
+		"  --benchmark    Exit after loading the launch file\n"
+		"  --list-args    List launch file arguments\n"
 		"\n"
 		"Options:\n"
-		"  --benchmark    Exit after loading the launch file\n"
 		"  --disable-ui   Disable fancy terminal UI\n"
 		"  --help         This help screen\n"
 		"  --log=FILE     Write log file to FILE\n"
@@ -79,12 +84,19 @@ void logToStdout(const std::string& channel, const std::string& str)
 
 // Options
 static const struct option OPTIONS[] = {
-	{"help", no_argument, NULL, 'h'},
-	{"name", required_argument, NULL, 'n'},
-	{"log",  required_argument, NULL, 'l'},
-	{"benchmark", no_argument, NULL, 'b'},
 	{"disable-ui", no_argument, NULL, 'd'},
+	{"benchmark", no_argument, NULL, 'b'},
+	{"help", no_argument, NULL, 'h'},
+	{"list-args", no_argument, NULL, 'L'},
+	{"log",  required_argument, NULL, 'l'},
+	{"name", required_argument, NULL, 'n'},
 	{NULL, 0, NULL, 0}
+};
+
+enum Action {
+	ACTION_LAUNCH,
+	ACTION_BENCHMARK,
+	ACTION_LIST_ARGS,
 };
 
 int main(int argc, char** argv)
@@ -92,7 +104,8 @@ int main(int argc, char** argv)
 	std::string name;
 	std::string logFile;
 	std::string launchFilePath;
-	bool benchmark = false;
+
+	Action action = ACTION_LAUNCH;
 	bool enableUI = true;
 
 	// Parse options
@@ -115,8 +128,11 @@ int main(int argc, char** argv)
 			case 'l':
 				logFile = optarg;
 				break;
+			case 'L':
+				action = ACTION_LIST_ARGS;
+				break;
 			case 'b':
-				benchmark = true;
+				action = ACTION_BENCHMARK;
 				break;
 			case 'd':
 				enableUI = false;
@@ -228,12 +244,23 @@ int main(int argc, char** argv)
 		config->setArgument(name, value);
 	}
 
-	config->parse(launchFilePath);
+	bool onlyArguments = (action == ACTION_LIST_ARGS);
+	config->parse(launchFilePath, onlyArguments);
 
 	config->evaluateParameters();
 
-	if(benchmark)
-		return 0;
+	switch(action)
+	{
+		case ACTION_BENCHMARK:
+			return 0;
+		case ACTION_LIST_ARGS:
+			for(const auto& arg : config->arguments())
+				std::cout << arg.first << std::endl;
+
+			return 0;
+		case ACTION_LAUNCH:
+			break;
+	}
 
 	// Initialize the ROS node.
 	{
