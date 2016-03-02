@@ -44,7 +44,7 @@ void PackageRegistry::init()
 			if(!fs::exists(path / ".catkin"))
 				continue;
 
-			printf("Found catkin workspace: '%s'\n", path.string().c_str());
+// 			printf("Found catkin workspace: '%s'\n", path.string().c_str());
 			g_catkin_workspaces.push_back(path.string());
 		}
 	}
