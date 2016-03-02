@@ -47,7 +47,7 @@ public:
 
 	void setArgument(const std::string& name, const std::string& value);
 
-	void parse(const std::string& filename);
+	void parse(const std::string& filename, bool onlyArguments = false);
 
 	void evaluateParameters();
 
@@ -56,6 +56,9 @@ public:
 
 	inline const std::vector<Node::Ptr>& nodes() const
 	{ return m_nodes; }
+
+	inline const std::map<std::string, std::string>& arguments() const
+	{ return m_rootContext.arguments(); }
 
 	std::string anonName(const std::string& base);
 
@@ -98,6 +101,9 @@ private:
 			m_args.clear();
 		}
 
+		inline const std::map<std::string, std::string>& arguments() const
+		{ return m_args; }
+
 		void setArg(const std::string& name, const std::string& argument, bool override);
 
 		void setEnvironment(const std::string& name, const std::string& value);
@@ -118,7 +124,7 @@ private:
 		std::map<std::string, std::string> m_environment;
 	};
 
-	void parse(TiXmlElement* element, ParseContext context);
+	void parse(TiXmlElement* element, ParseContext* context, bool onlyArguments = false);
 	void parseNode(TiXmlElement* element, ParseContext context);
 	void parseParam(TiXmlElement* element, ParseContext context);
 	void parseROSParam(TiXmlElement* element, ParseContext context);

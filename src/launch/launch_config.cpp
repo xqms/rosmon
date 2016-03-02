@@ -224,7 +224,7 @@ void LaunchConfig::setArgument(const std::string& name, const std::string& value
 	m_rootContext.setArg(name, value, true);
 }
 
-void LaunchConfig::parse(const std::string& filename)
+void LaunchConfig::parse(const std::string& filename, bool onlyArguments)
 {
 	TiXmlDocument document(filename);
 
@@ -237,17 +237,18 @@ void LaunchConfig::parse(const std::string& filename)
 
 	ros::WallTime start = ros::WallTime::now();
 	m_rootContext.setFilename(filename);
-	parse(document.RootElement(), m_rootContext);
+	parse(document.RootElement(), &m_rootContext, onlyArguments);
 
 	// Parse top-level rosmon-specific attributes
 	const char* name = document.RootElement()->Attribute("rosmon-name");
 	if(name)
 		m_rosmonNodeName = name;
 
-	printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
+	if(!onlyArguments)
+		printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
 }
 
-void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
+void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments)
 {
 	// First pass: Parse arguments
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
@@ -256,12 +257,15 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
 		if(!e)
 			continue;
 
-		if(ctx.shouldSkip(e))
+		if(ctx->shouldSkip(e))
 			continue;
 
 		if(e->ValueStr() == "arg")
-			parseArgument(e, ctx);
+			parseArgument(e, *ctx);
 	}
+
+	if(onlyArguments)
+		return;
 
 	// Second pass: everything else
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
@@ -270,30 +274,30 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext ctx)
 		if(!e)
 			continue;
 
-		if(ctx.shouldSkip(e))
+		if(ctx->shouldSkip(e))
 			continue;
 
 		if(e->ValueStr() == "node")
-			parseNode(e, ctx);
+			parseNode(e, *ctx);
 		else if(e->ValueStr() == "param")
-			parseParam(e, ctx);
+			parseParam(e, *ctx);
 		else if(e->ValueStr() == "rosparam")
-			parseROSParam(e, ctx);
+			parseROSParam(e, *ctx);
 		else if(e->ValueStr() == "group")
 		{
 			const char* ns = e->Attribute("ns");
 
-			ParseContext cctx = ctx;
+			ParseContext cctx = *ctx;
 
 			if(ns)
-				cctx = cctx.enterScope(ctx.evaluate(ns));
+				cctx = cctx.enterScope(ctx->evaluate(ns));
 
-			parse(e, cctx);
+			parse(e, &cctx);
 		}
 		else if(e->ValueStr() == "include")
-			parseInclude(e, ctx);
+			parseInclude(e, *ctx);
 		else if(e->ValueStr() == "env")
-			parseEnv(e, ctx);
+			parseEnv(e, *ctx);
 	}
 }
 
@@ -753,7 +757,7 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 
 	childCtx.setFilename(fullFile);
 
-	parse(document.RootElement(), childCtx);
+	parse(document.RootElement(), &childCtx);
 }
 
 void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
