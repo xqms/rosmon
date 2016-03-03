@@ -158,8 +158,6 @@ int main(int argc, char** argv)
 	// From the position of the argument (or the end-of-options), we know
 	// if we were called with a) package + filename or b) just a path.
 
-	rosmon::PackageRegistry::init();
-
 	if(firstArg - optind == 1)
 	{
 		launchFilePath = argv[optind];
