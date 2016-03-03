@@ -115,7 +115,7 @@ std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
 			value = it->second;
 
 			if(value == UNSET_MARKER)
-				throw error("%s: $(arg %s): Accessing unset argument", filename().c_str(), args.c_str());
+				throw error("%s: $(arg %s): Accessing unset argument '%s', please specify as parameter.", filename().c_str(), args.c_str(), args.c_str());
 		}
 		else if(cmd == "env")
 		{
