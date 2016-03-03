@@ -58,17 +58,24 @@ function _mon() {
 			# If we have no package name yet, offer package names
 			elif [[ -z $package_name ]]; then
 				local packages=$(rospack list-names 2>/dev/null)
-				local files=$(ls *.launch 2>/dev/null)
-				COMPREPLY=( $(compgen -W "${packages} ${files} ${FLAGS[*]} ${OPTS[*]}" -- $cur) )
+				COMPREPLY=( $(compgen -W "${packages} ${FLAGS[*]} ${OPTS[*]}" -- $cur) )
+				compopt -o default
 
 			# If we have no launch file yet, offer launch files
-			elif [[ -z $launch_name ]]; then
-				local launchfiles=$(find $(rospack find ${COMP_WORDS[2]}) -name '*.launch' -type f -printf "%f\n")
+			elif [[ ( ! -f $package_name ) && -z $launch_name ]]; then
+				local package_dir="$(rospack find ${COMP_WORDS[2]})"
+				local launchfiles=$(find "$package_dir" -name '*.launch' -type f -printf "%f\n")
 				COMPREPLY=( $(compgen -W "${launchfiles} ${FLAGS[*]} ${OPTS[*]}" -- $cur) )
 
 			# Only arguments now
 			else
-				local launch_arguments=$(rosrun rosmon rosmon --list-args ${package_name} ${launch_name} 2> /dev/null)
+				if [[ -f $package_name ]]; then
+					local launch_arguments=$(rosrun rosmon rosmon \
+						--list-args "${package_name}" 2> /dev/null)
+				else
+					local launch_arguments=$(rosrun rosmon rosmon \
+						--list-args ${package_name} ${launch_name} 2> /dev/null)
+				fi
 
 				COMPREPLY=( $(compgen -o nospace -S ":=" -W "${launch_arguments}" -- $cur) )
 				compopt -o nospace
