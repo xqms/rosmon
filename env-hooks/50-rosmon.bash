@@ -2,6 +2,10 @@
 # If you change this file, please increment the version number in
 # CMakeLists.txt to trigger a CMake update.
 
+# cache rosmon executable so that we don't need a rosrun invocation each
+# time we do completion
+_ROSMON_EXECUTABLE=$(rosrun --prefix echo rosmon rosmon)
+
 function mon() {
 	case $1 in
 		launch)
@@ -70,10 +74,10 @@ function _mon() {
 			# Only arguments now
 			else
 				if [[ -f $package_name ]]; then
-					local launch_arguments=$(rosrun rosmon rosmon \
+					local launch_arguments=$($_ROSMON_EXECUTABLE \
 						--list-args "${package_name}" 2> /dev/null)
 				else
-					local launch_arguments=$(rosrun rosmon rosmon \
+					local launch_arguments=$($_ROSMON_EXECUTABLE \
 						--list-args ${package_name} ${launch_name} 2> /dev/null)
 				fi
 
