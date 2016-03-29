@@ -725,7 +725,7 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 
 	ParseContext childCtx = ctx;
 	if(ns)
-		childCtx = childCtx.enterScope(ns);
+		childCtx = childCtx.enterScope(ctx.evaluate(ns));
 
 	// Parse any arguments
 	childCtx.clearArguments();
