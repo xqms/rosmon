@@ -32,6 +32,8 @@ public:
 	void setRespawn(bool respawn);
 	void setRespawnDelay(const ros::WallDuration& respawnDelay);
 
+	void setLaunchPrefix(const std::string& launchPrefix);
+
 	std::string name() const
 	{ return m_name; }
 
@@ -66,6 +68,9 @@ public:
 
 	bool required() const
 	{ return m_required; }
+
+	std::vector<std::string> launchPrefix() const
+	{ return m_launchPrefix; }
 private:
 	std::string m_name;
 	std::string m_package;
@@ -84,6 +89,8 @@ private:
 	ros::WallDuration m_respawnDelay;
 
 	bool m_required;
+
+	std::vector<std::string> m_launchPrefix;
 };
 
 }

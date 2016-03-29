@@ -105,6 +105,31 @@ void Node::setRespawnDelay(const ros::WallDuration& respawnDelay)
 	m_respawnDelay = respawnDelay;
 }
 
+void Node::setLaunchPrefix(const std::string& launchPrefix)
+{
+	wordexp_t tokens;
+
+	// Get rid of newlines since this confuses wordexp
+	std::string clean = launchPrefix;
+	for(unsigned int i = 0; i < clean.length(); ++i)
+	{
+		if(clean[i] == '\n' || clean[i] == '\r')
+			clean[i] = ' ';
+	}
+
+	// NOTE: This also does full shell expansion (things like $PATH)
+	//   But since we trust the user here (and modifying PATH etc dooms us in
+	//   any case), I think we can use wordexp here.
+	int ret = wordexp(clean.c_str(), &tokens, WRDE_NOCMD);
+	if(ret != 0)
+		throw error("You're supplying something strange in 'launch-prefix': '%s' (wordexp ret %d)", clean.c_str(), ret);
+
+	for(unsigned int i = 0; i < tokens.we_wordc; ++i)
+		m_launchPrefix.push_back(tokens.we_wordv[i]);
+
+	wordfree(&tokens);
+}
+
 }
 
 }

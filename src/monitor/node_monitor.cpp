@@ -75,15 +75,20 @@ std::vector<std::string> NodeMonitor::composeCommand() const
 		);
 	}
 
-	std::vector<std::string> cmd{
-		m_launchNode->executable()
-	};
+	// Start with the launch prefix...
+	std::vector<std::string> cmd = m_launchNode->launchPrefix();
 
+	// add executable file
+	cmd.push_back(m_launchNode->executable());
+
+	// add extra arguments from 'args'
 	auto args = m_launchNode->extraArguments();
 	std::copy(args.begin(), args.end(), std::back_inserter(cmd));
 
+	// add parameter for node name
 	cmd.push_back("__name:=" + m_launchNode->name());
 
+	// and finally add remappings.
 	for(auto map : m_launchNode->remappings())
 	{
 		cmd.push_back(map.first + ":=" + map.second);
