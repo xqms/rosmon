@@ -311,6 +311,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* respawn = element->Attribute("respawn");
 	const char* respawnDelay = element->Attribute("respawn_delay");
 	const char* required = element->Attribute("required");
+	const char* launchPrefix = element->Attribute("launch-prefix");
 
 	if(!name || !pkg || !type)
 	{
@@ -389,6 +390,9 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	// Set environment *after* parsing the node children (may contain env tags)
 	node->setExtraEnvironment(ctx.environment());
+
+	if(launchPrefix)
+		node->setLaunchPrefix(ctx.evaluate(launchPrefix));
 
 	m_nodes.push_back(node);
 }
