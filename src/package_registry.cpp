@@ -80,7 +80,7 @@ static std::string getExecutableInPath(const fs::path& path, const std::string& 
 
 	for(fs::recursive_directory_iterator it(path); it != fs::recursive_directory_iterator(); ++it)
 	{
-		if(it->path().filename() == name && it->status().permissions() & fs::others_exe)
+		if(it->path().filename() == name && access(it->path().c_str(), X_OK) == 0)
 		{
 			return it->path().string();
 		}
@@ -100,7 +100,7 @@ static std::string _getExecutable(const std::string& package, const std::string&
 		fs::path workspacePath(workspace);
 
 		fs::path execPath = workspacePath / "lib" / package / name;
-		if(fs::exists(execPath) && fs::status(execPath).permissions() & fs::others_exe)
+		if(fs::exists(execPath) && access(execPath.c_str(), X_OK) == 0)
 			return execPath.string();
 
 		std::string sharePath = getExecutableInPath(workspacePath / "share" / package, name);
