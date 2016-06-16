@@ -137,8 +137,12 @@ void NodeMonitor::start()
 			rlimit limit;
 			if(getrlimit(RLIMIT_CORE, &limit) == 0)
 			{
-				limit.rlim_cur = limit.rlim_max;
-				setrlimit(RLIMIT_CORE, &limit);
+				// only modify the limit if coredumps are disabled entirely
+				if(limit.rlim_cur == 0)
+				{
+					limit.rlim_cur = limit.rlim_max;
+					setrlimit(RLIMIT_CORE, &limit);
+				}
 			}
 		}
 
