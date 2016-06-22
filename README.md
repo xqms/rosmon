@@ -7,19 +7,15 @@ unlike `roslaunch`, `rosmon` is focussed on (remote) process monitoring.
 
 ## Quick & effective development
 
-The first thing to note is that `rosmon` sports a modern console UI with colored
-indicators for each node. With one glance you can see that everything is still
-running as it should.
-
-How often have you stared at the screen, waiting for `roslaunch` to decide that
-it is time to kill that one misbehaving node you have no control over (hello,
-gazebo) that does not react to `SIGINT`? No more. `rosmon` gives nodes five
-seconds to terminate, then they are killed.
-This timeout will be configurable in the future.
-
-Another nice feature is that `rosmon` intercepts all `stdout/stderr` output from
-your nodes and is able to tag it, e.g. with the node name. That way, you don't
-have to wonder anymore who is spamming the console with plain `printf` calls...
+ * Modern console UI with colored indicators for each node. With one glance
+   you can see that everything is still running as it should.
+ * Debugger integration:
+   * Automatic coredump collection for dying processes
+   * Launch `gdb` against your running process or post-mortem against the
+     collected coredump
+ * `rosmon` intercepts all `stdout/stderr` from your nodes and tags it with
+   a timestamp and the node name. No more wondering which of your nodes the
+   mysterious warning came from.
 
 ## Interaction
 
@@ -44,6 +40,12 @@ always returns the path to the package in the source tree. `roslaunch` may
 choose to return the corresponding devel or install path if the file is found
 there. Other inconsistencies and unsupported features may exist. Use at your
 own risk.
+
+## Security
+
+`rosmon` disables the "Yama" `ptrace()` protection from its child processes, so
+that the user can attach with `gdb` without needing root privileges.
+This may be seen as a security risk.
 
 ## Building
 
