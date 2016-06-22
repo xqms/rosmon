@@ -88,14 +88,10 @@ void UI::drawStatusLine()
 
 	unsigned int lines = 2;
 
+	// Print menu if a node is selected
 	if(m_selectedNode != -1)
-	{
-		auto& node = m_monitor->nodes()[m_selectedNode];
+		printf("Actions: s: start, k: stop, d: debug");
 
-		printf("Actions: s: start, k: stop");
-		if(node->coredumpAvailable())
-			printf(", d: debug");
-	}
 	printf("\n");
 
 	int col = 0;

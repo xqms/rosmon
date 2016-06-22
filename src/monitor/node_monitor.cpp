@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
+#include <sys/prctl.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
@@ -145,6 +146,9 @@ void NodeMonitor::start()
 				}
 			}
 		}
+
+		// Allow gdb to attach
+		prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
 
 		if(execvp(path, ptrs.data()) != 0)
 		{
@@ -457,12 +461,20 @@ void NodeMonitor::gatherCoredump(int signal)
 
 void NodeMonitor::launchDebugger()
 {
-	if(!coredumpAvailable())
-		return;
+	std::string cmd;
+
+	if(coredumpAvailable())
+		cmd = m_debuggerCommand;
+	else
+	{
+		std::stringstream ss;
+		ss << "gdb -p " << m_pid;
+		cmd = ss.str();
+	}
 
 	if(getenv("DISPLAY") == 0)
 	{
-		log("No X11 available, run gdb yourself: %s", m_debuggerCommand.c_str());
+		log("No X11 available, run gdb yourself: %s", cmd.c_str());
 	}
 	else
 	{
@@ -471,10 +483,10 @@ void NodeMonitor::launchDebugger()
 		if(envTerm)
 			term = envTerm;
 
-		if(system((term + " " + m_debuggerCommand + " &").c_str()) != 0)
+		if(system((term + " " + cmd + " &").c_str()) != 0)
 		{
 			log("Could not launch debugger");
-			log("Command: %s", m_debuggerCommand.c_str());
+			log("Command: %s", cmd.c_str());
 		}
 	}
 }
