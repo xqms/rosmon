@@ -28,6 +28,7 @@ public:
 	void addExtraArguments(const std::string& argString);
 	void setNamespace(const std::string& ns);
 	void setExtraEnvironment(const std::map<std::string, std::string>& env);
+	void setCoredumpsEnabled(bool on);
 
 	void setRespawn(bool respawn);
 	void setRespawnDelay(const ros::WallDuration& respawnDelay);
@@ -71,6 +72,9 @@ public:
 
 	std::vector<std::string> launchPrefix() const
 	{ return m_launchPrefix; }
+
+	bool coredumpsEnabled() const
+	{ return m_coredumpsEnabled; }
 private:
 	std::string m_name;
 	std::string m_package;
@@ -91,6 +95,8 @@ private:
 	bool m_required;
 
 	std::vector<std::string> m_launchPrefix;
+
+	bool m_coredumpsEnabled;
 };
 
 }

@@ -41,6 +41,7 @@ Node::Node(const std::string& name, const std::string& package, const std::strin
  , m_respawnDelay(1.0)
 
  , m_required(false)
+ , m_coredumpsEnabled(true)
 {
 	m_executable = PackageRegistry::getExecutable(m_package, m_type);
 }
@@ -128,6 +129,11 @@ void Node::setLaunchPrefix(const std::string& launchPrefix)
 		m_launchPrefix.push_back(tokens.we_wordv[i]);
 
 	wordfree(&tokens);
+}
+
+void Node::setCoredumpsEnabled(bool on)
+{
+	m_coredumpsEnabled = on;
 }
 
 }

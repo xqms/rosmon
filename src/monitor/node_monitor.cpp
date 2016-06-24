@@ -134,6 +134,7 @@ void NodeMonitor::start()
 			setenv(pair.first.c_str(), pair.second.c_str(), 1);
 
 		// Try to enable core dumps
+		if(m_launchNode->coredumpsEnabled())
 		{
 			rlimit limit;
 			if(getrlimit(RLIMIT_CORE, &limit) == 0)
@@ -144,6 +145,16 @@ void NodeMonitor::start()
 					limit.rlim_cur = limit.rlim_max;
 					setrlimit(RLIMIT_CORE, &limit);
 				}
+			}
+		}
+		else
+		{
+			// Disable coredumps
+			rlimit limit;
+			if(getrlimit(RLIMIT_CORE, &limit) == 0)
+			{
+				limit.rlim_cur = 0;
+				setrlimit(RLIMIT_CORE, &limit);
 			}
 		}
 
