@@ -387,6 +387,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 			node->addRemapping(ctx.evaluate(from), ctx.evaluate(to));
 		}
+		else if(e->ValueStr() == "env")
+			parseEnv(e, ctx);
 	}
 
 	// Set environment *after* parsing the node children (may contain env tags)
