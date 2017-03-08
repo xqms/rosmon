@@ -82,6 +82,7 @@ public:
 
 		int m_fgColor;
 		int m_bgColor;
+		bool m_bold;
 	};
 
 	Terminal();
@@ -113,6 +114,8 @@ public:
 	 * Enable/disable automatic echo of keypresses
 	 **/
 	void setEcho(bool on);
+
+	void setBold(bool on);
 
 	//! @name Set indexed foreground/background color
 	//@{
@@ -161,8 +164,10 @@ private:
 	std::string m_bgColorStr;
 	std::string m_fgColorStr;
 	std::string m_opStr;
+	std::string m_sgr0Str;
 	std::string m_elStr;
 	std::string m_upStr;
+	std::string m_boldStr;
 };
 
 }

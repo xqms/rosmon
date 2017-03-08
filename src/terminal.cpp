@@ -24,6 +24,7 @@ Terminal::Parser::Parser()
  : m_state(STATE_ESCAPE)
  , m_fgColor(-1)
  , m_bgColor(-1)
+ , m_bold(false)
 {
 }
 
@@ -57,6 +58,8 @@ void Terminal::Parser::parseSetAttributes(const std::string& str)
 			m_fgColor = code - 30;
 		else if(code >= 40 && code <= 47)
 			m_bgColor = code - 40;
+		else if(code == 1)
+			m_bold = true;
 	}
 }
 
@@ -197,8 +200,11 @@ Terminal::Terminal()
 	}
 
 	m_opStr = tigetstr("op");
+	m_sgr0Str = tigetstr("sgr0");
 	m_elStr = tigetstr("el");
 	m_upStr = tigetstr("cuu");
+
+	m_boldStr = tigetstr("bold");
 }
 
 Terminal::~Terminal()
@@ -296,6 +302,15 @@ void Terminal::setEcho(bool on)
 	}
 }
 
+void Terminal::setBold(bool on)
+{
+	if(!m_valid)
+		return;
+
+	if(on)
+		putp(m_boldStr.c_str());
+}
+
 void Terminal::setSimpleForeground(SimpleColor color)
 {
 	if(!m_valid)
@@ -329,6 +344,7 @@ void Terminal::setStandardColors()
 		return;
 
 	putp(m_opStr.c_str());
+	putp(m_sgr0Str.c_str());
 }
 
 void Terminal::clearToEndOfLine()
