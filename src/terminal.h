@@ -156,6 +156,8 @@ public:
 	bool interactive() const
 	{ return m_valid; }
 
+	void setWindowTitle(const std::string& title);
+
 private:
 	bool m_valid;
 	bool m_256colors;

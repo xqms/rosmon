@@ -40,6 +40,9 @@ public:
 	std::vector<NodeMonitor::Ptr>& nodes()
 	{ return m_nodes; }
 
+	launch::LaunchConfig::ConstPtr config() const
+	{ return m_config; }
+
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 private:
 	void log(const char* fmt, ...) __attribute__((format (printf, 2, 3)));

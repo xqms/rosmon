@@ -8,6 +8,7 @@
 #include <ros/node_handle.h>
 
 static unsigned int g_statusLines = 2;
+static bool g_switchedTitle = false;
 
 void cleanup()
 {
@@ -21,6 +22,9 @@ void cleanup()
 
 	// Switch character echo on
 	term.setEcho(true);
+
+	// Restore window title (at least try)
+	term.setWindowTitle("%d : %n");
 }
 
 namespace rosmon
@@ -46,6 +50,14 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
 
 	// Switch character echo off
 	m_term.setEcho(false);
+
+	// Configure window title
+	std::string title = m_monitor->config()->windowTitle();
+	if(!title.empty())
+	{
+		m_term.setWindowTitle(title);
+		g_switchedTitle = true;
+	}
 
 	fdWatcher->registerFD(STDIN_FILENO, boost::bind(&UI::handleInput, this));
 }

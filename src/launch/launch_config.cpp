@@ -244,6 +244,10 @@ void LaunchConfig::parse(const std::string& filename, bool onlyArguments)
 	if(name)
 		m_rosmonNodeName = name;
 
+	const char* windowTitle = document.RootElement()->Attribute("rosmon-window-title");
+	if(windowTitle)
+		m_windowTitle = windowTitle;
+
 	if(!onlyArguments)
 		printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
 }

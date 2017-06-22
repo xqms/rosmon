@@ -381,4 +381,11 @@ bool Terminal::getSize(int* outColumns, int* outRows)
 		return false;
 }
 
+void Terminal::setWindowTitle(const std::string& title)
+{
+	char buf[256];
+	snprintf(buf, sizeof(buf), "\033]30;%s\007", title.c_str());
+	fputs(buf, stdout);
+}
+
 }

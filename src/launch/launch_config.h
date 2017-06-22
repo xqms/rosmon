@@ -64,6 +64,9 @@ public:
 
 	std::string rosmonNodeName() const
 	{ return m_rosmonNodeName; }
+
+	std::string windowTitle() const
+	{ return m_windowTitle; }
 private:
 	class ParseContext
 	{
@@ -149,6 +152,8 @@ private:
 	std::mt19937_64 m_anonGen;
 
 	std::string m_rosmonNodeName;
+
+	std::string m_windowTitle;
 };
 
 }
