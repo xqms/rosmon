@@ -276,7 +276,7 @@ void UI::handleInput()
 		else if(c >= '0' && c <= '9')
 			nodeIndex = 26 + 26 + c - '0';
 
-		if(nodeIndex < 0 || (size_t)nodeIndex > m_monitor->nodes().size())
+		if(nodeIndex < 0 || (size_t)nodeIndex >= m_monitor->nodes().size())
 			return;
 
 		m_selectedNode = nodeIndex;
