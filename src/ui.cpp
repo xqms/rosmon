@@ -212,9 +212,9 @@ void UI::log(const std::string& channel, const std::string& log)
 		m_term.setSimplePair(Terminal::Black, Terminal::White);
 	}
 
-	m_term.clearToEndOfLine();
 	printf("%20s:", channel.c_str());
 	m_term.setStandardColors();
+	m_term.clearToEndOfLine();
 	putchar(' ');
 
 	unsigned int len = clean.length();
