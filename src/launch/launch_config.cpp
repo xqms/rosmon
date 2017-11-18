@@ -511,18 +511,66 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 			[=]() -> XmlRpc::XmlRpcValue {
 				std::stringstream buffer;
 
-				FILE* f = popen(fullCommand.c_str(), "r");
-				while(!feof(f))
+				int pipe_fd[2];
+				if(pipe(pipe_fd) != 0)
+					throw error("Could not create pipe: %s", strerror(errno));
+
+				int pid = fork();
+				if(pid < 0)
+					throw error("Could not fork: %s", strerror(errno));
+
+				if(pid == 0)
 				{
+					// Child
+					close(pipe_fd[0]);
+					if(pipe_fd[1] != STDOUT_FILENO)
+					{
+						dup2(pipe_fd[1], STDOUT_FILENO);
+						close(pipe_fd[1]);
+					}
+
+					char* argp[] = {strdup("sh"), strdup("-c"), strdup(fullCommand.c_str()), NULL};
+
+					execvp("sh", argp); // should never return
+					throw error("Could not execvp '%s': %s", fullCommand.c_str(), strerror(errno));
+				}
+
+				close(pipe_fd[1]);
+
+				timeval timeout;
+				timeout.tv_sec = 0;
+				timeout.tv_usec = 500 * 1000;
+
+				while(true)
+				{
+					fd_set fds;
+					FD_ZERO(&fds);
+					FD_SET(pipe_fd[0], &fds);
+
+					int ret = select(pipe_fd[0]+1, &fds, 0, 0, &timeout);
+					if(ret < 0)
+						throw error("Could not select(): %s", strerror(errno));
+
+					if(ret == 0)
+					{
+						printf("Still loading parameter '%s'...\n", fullName.c_str());
+
+						timeout.tv_sec = 3;
+						continue;
+					}
+
 					char buf[1024];
-					int ret = fread(buf, 1, sizeof(buf)-1, f);
-					if(ret <= 0)
+					ret = read(pipe_fd[0], buf, sizeof(buf)-1);
+					if(ret < 0)
 						throw error("Could not read: %s", strerror(errno));
+					if(ret == 0)
+						break;
 
 					buf[ret] = 0;
 					buffer << buf;
 				}
-				pclose(f);
+
+				close(pipe_fd[0]);
 
 				return buffer.str();
 			}
