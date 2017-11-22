@@ -157,6 +157,7 @@ public:
 	{ return m_valid; }
 
 	void setWindowTitle(const std::string& title);
+	void clearWindowTitle(const std::string& backup);
 
 private:
 	bool m_valid;

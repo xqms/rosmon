@@ -384,7 +384,24 @@ bool Terminal::getSize(int* outColumns, int* outRows)
 void Terminal::setWindowTitle(const std::string& title)
 {
 	char buf[256];
+
+	// Konsole style
 	snprintf(buf, sizeof(buf), "\033]30;%s\007", title.c_str());
+	fputs(buf, stdout);
+
+	// screen/tmux style
+	snprintf(buf, sizeof(buf), "\033k%s\033\\", title.c_str());
+	fputs(buf, stdout);
+}
+
+void Terminal::clearWindowTitle(const std::string& backup)
+{
+	char buf[256];
+
+	fputs("\033]30;%d : %n\007", stdout);
+
+	// screen/tmux style
+	snprintf(buf, sizeof(buf), "\033k%s\033\\", backup.c_str());
 	fputs(buf, stdout);
 }
 
