@@ -10,6 +10,7 @@
 #include <vector>
 #include <stdexcept>
 #include <future>
+#include <random>
 
 #include <XmlRpc.h>
 #include <tinyxml.h>

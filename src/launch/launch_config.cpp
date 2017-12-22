@@ -507,7 +507,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		std::string fullCommand = ctx.evaluate(command);
 
 		// Commands may take a while - that is why we use std::async here.
-		m_paramJobs[fullName] = std::move(std::async(std::launch::deferred,
+		m_paramJobs[fullName] = std::async(std::launch::deferred,
 			[=]() -> XmlRpc::XmlRpcValue {
 				std::stringstream buffer;
 
@@ -574,7 +574,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 				return buffer.str();
 			}
-		));
+		);
 
 		// A fixed parameter of the same name gets overwritten now
 		m_params.erase(fullName);
@@ -583,7 +583,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	{
 		std::string fullFile = ctx.evaluate(textfile);
 
-		m_paramJobs[fullName] = std::move(std::async(std::launch::deferred,
+		m_paramJobs[fullName] = std::async(std::launch::deferred,
 			[=]() -> XmlRpc::XmlRpcValue {
 				std::ifstream stream(fullFile);
 				if(stream.bad())
@@ -594,7 +594,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 				return buffer.str();
 			}
-		));
+		);
 
 		// A fixed parameter of the same name gets overwritten now
 		m_params.erase(fullName);
