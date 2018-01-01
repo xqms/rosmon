@@ -101,6 +101,10 @@ void MonGUI::showContextMenu(const QPoint& point)
 	}
 }
 
+void MonGUI::updateTopic()
+{
+}
+
 }
 
 PLUGINLIB_EXPORT_CLASS(rosmon::MonGUI, rqt_gui_cpp::Plugin)

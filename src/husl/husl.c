@@ -15,10 +15,8 @@
 #include <stdlib.h>
 #endif
 
-#define PI 3.1415926535897932384626433832795
-
-float m[3][3] = {3.2406f, -1.5372f, -0.4986f, -0.9689f, 1.8758f, 0.0415f, 0.0557f, -0.2040f, 1.0570f};
-float m_inv[3][3] = {0.4124f, 0.3576f, 0.1805f, 0.2126f, 0.7152f, 0.0722f, 0.0193f, 0.1192f, 0.9505f};
+float m[3][3] = {{3.2406f, -1.5372f, -0.4986f}, {-0.9689f, 1.8758f, 0.0415f}, {0.0557f, -0.2040f, 1.0570f}};
+float m_inv[3][3] = {{0.4124f, 0.3576f, 0.1805f}, {0.2126f, 0.7152f, 0.0722f}, {0.0193f, 0.1192f, 0.9505f}};
 float refX = 0.95047f;
 float refY = 1.00000f;
 float refZ = 1.08883f;
@@ -98,7 +96,7 @@ float maxChroma(float L, float H){
 	float _ref[2] = {0.0f, 1.0f};
 
 
-	hrad = (float) ((H / 360.0f) * 2 * PI);
+	hrad = (float) ((H / 360.0f) * 2 * M_PI);
 	sinH = (float) (sin(hrad));
 	cosH = (float) (cos(hrad));
 	sub1 = (float) (pow(L + 16, 3) / 1560896.0);
@@ -296,7 +294,7 @@ float* LUV_LCH( float *tuple )
 
 	C = (float) (pow(pow(U, 2) + pow(V, 2), (1 / 2.0f)));
 	Hrad = (float) (atan2(V, U));
-	H = (float) (Hrad * 360.0f / 2.0f / PI);
+	H = (float) (Hrad * 360.0f / 2.0f / M_PI);
 	if (H < 0) {
 		H = 360 + H;
 	}
@@ -316,7 +314,7 @@ float* LCH_LUV( float *tuple )
 	C = tuple[1];
 	H = tuple[2];
 
-	Hrad = (float) (H / 360.0 * 2.0 * PI);
+	Hrad = (float) (H / 360.0 * 2.0 * M_PI);
 	U = (float) (cos(Hrad) * C);
 	V = (float) (sin(Hrad) * C);
 
