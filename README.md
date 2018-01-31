@@ -56,6 +56,16 @@ have the `mon` command in your environment.
 `mon` supports the same argument style as `roslaunch` (either
 `mon launch path/to/file.launch` or `mon launch package file.launch`).
 
+## Setup for coredump collection
+
+Add the following lines to `/etc/rc.local`:
+
+    mkdir /tmp/cores
+    chmod a+rw /tmp/cores
+    echo "/tmp/cores/core.%e.%p.%t" > /proc/sys/kernel/core_pattern
+
+and reboot (or execute `/etc/rc.local` once).
+
 ## License
 
 `rosmon` is licensed under BSD-3.
