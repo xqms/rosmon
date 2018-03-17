@@ -493,11 +493,17 @@ void NodeMonitor::launchDebugger()
 		std::string term = "xterm -e";
 		if(envTerm)
 			term = envTerm;
+		else if(getenv("KONSOLE_DBUS_SESSION"))
+			term = "konsole -e";
+		else if(getenv("VTE_VERSION"))
+			term = "gnome-terminal -e";
 
-		if(system((term + " " + cmd + " &").c_str()) != 0)
+		log("Launching debugger: '%s'", cmd.c_str());
+
+		// system() is not particularly elegant here, but we trust our cmd.
+		if(system((term + " '" + cmd + "' &").c_str()) != 0)
 		{
 			log("Could not launch debugger");
-			log("Command: %s", cmd.c_str());
 		}
 	}
 }
