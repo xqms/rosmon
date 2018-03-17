@@ -115,6 +115,10 @@ if(QT_FOUND AND rqt_gui_cpp_FOUND)
 	add_dependencies(rosmon_gui
 		${PROJECT_NAME}_generate_messages_cpp
 	)
+
+	install(TARGETS rosmon_gui
+		LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	)
 endif()
 
 # Utils
@@ -141,4 +145,8 @@ catkin_add_env_hooks(50-rosmon
 install(TARGETS rosmon
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES rqt_plugin.xml
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
