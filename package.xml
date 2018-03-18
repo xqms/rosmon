@@ -1,6 +1,10 @@
 <package format="2">
 	<name>rosmon</name>
-	<description>Node launcher and monitor for ROS</description>
+	<description>
+		Node launcher and monitor for ROS. rosmon is a replacement
+		for the roslaunch tool, focused on performance, remote
+		monitoring, and usability.
+	</description>
 	<version>0.0.1</version>
 	<license>BSD</license>
 	<maintainer email="max.schwarz@uni-bonn.de">Max Schwarz</maintainer>
