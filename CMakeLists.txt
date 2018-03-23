@@ -40,6 +40,7 @@ add_executable(rosmon
 	src/launch/launch_config.cpp
 	src/monitor/node_monitor.cpp
 	src/monitor/monitor.cpp
+	src/monitor/linux_process_info.cpp
 	src/ui.cpp
 	src/husl/husl.c
 	src/ros_interface.cpp

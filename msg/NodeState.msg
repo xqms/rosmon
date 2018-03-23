@@ -12,3 +12,10 @@ uint8 state
 # How many times has this node been automatically restarted?
 uint32 restart_count
 
+# Estimate of the CPU load in userspace of this node
+# Note that this is relative to one CPU core. On an 8-core machine, this can
+# be 8.0.
+float32 user_load
+
+# Estime of the CPU load in kernelspace of this node
+float32 system_load

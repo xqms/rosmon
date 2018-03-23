@@ -47,12 +47,14 @@ private:
 		QString name;
 		int state;
 		int restartCount;
+		double load;
 	};
 
 	enum Column
 	{
 		COL_NAME,
 		COL_RESTART_COUNT,
+		COL_LOAD,
 
 		COL_COUNT
 	};

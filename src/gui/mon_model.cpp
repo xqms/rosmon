@@ -64,6 +64,7 @@ void MonModel::updateState(const rosmon::StateConstPtr& state)
 		key.name = QString::fromStdString(nodeState.name);
 		key.state = nodeState.state;
 		key.restartCount = nodeState.restart_count;
+		key.load = nodeState.system_load + nodeState.user_load;
 
 		auto it = std::lower_bound(m_entries.begin(), m_entries.end(), key);
 		int row = it - m_entries.begin();
@@ -137,6 +138,8 @@ QVariant MonModel::data(const QModelIndex& index, int role) const
 			{
 				case COL_NAME:
 					return entry.name;
+				case COL_LOAD:
+					return entry.load;
 				case COL_RESTART_COUNT:
 					return entry.restartCount;
 			}
@@ -167,6 +170,7 @@ QVariant MonModel::headerData(int section, Qt::Orientation orientation, int role
 	switch(section)
 	{
 		case COL_NAME:          return "Node";
+		case COL_LOAD:          return "CPU Load";
 		case COL_RESTART_COUNT: return "#Restarts";
 	}
 

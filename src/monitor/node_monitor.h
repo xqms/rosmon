@@ -108,6 +108,28 @@ public:
 	//! @name Statistics
 	//@{
 
+	void beginStatUpdate();
+	void addCPUTime(uint64_t userTime, uint64_t systemTime);
+	void endStatUpdate(uint64_t elapsedTime);
+
+	/**
+	 * @brief Estimate of the userspace load
+	 *
+	 * This is the fraction of CPU time spent in userspace code of this node.
+	 * Note that this value is relative to one CPU core.
+	 **/
+	inline double userLoad() const
+	{ return m_userLoad; }
+
+	/**
+	 * @brief Estimate of the kernelspace load
+	 *
+	 * This is the fraction of CPU time spent in kernelspace code of this node.
+	 * Note that this value is relative to one CPU core.
+	 **/
+	inline double systemLoad() const
+	{ return m_systemLoad; }
+
 	inline unsigned int restartCount() const
 	{ return m_restartCount; }
 
@@ -116,6 +138,10 @@ public:
 	//! Node name
 	inline std::string name() const
 	{ return m_launchNode->name(); }
+
+	//! Node PID
+	inline int pid() const
+	{ return m_pid; }
 
 	/**
 	 * @brief Logging signal
@@ -160,6 +186,13 @@ private:
 	bool m_restarting;
 
 	std::string m_debuggerCommand;
+
+	unsigned int m_restartCount = 0;
+
+	uint64_t m_userTime = 0;
+	uint64_t m_systemTime = 0;
+	double m_userLoad = 0.0;
+	double m_systemLoad = 0.0;
 };
 
 }

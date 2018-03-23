@@ -55,7 +55,7 @@ NodeMonitor::NodeMonitor(const launch::Node::ConstPtr& launchNode, const FDWatch
  , m_command(CMD_STOP) // we start in stopped state
  , m_restarting(false)
 {
-	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&NodeMonitor::start, this));
+	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&NodeMonitor::start, this), false, false);
 	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&NodeMonitor::checkStop, this));
 }
 
@@ -307,6 +307,7 @@ void NodeMonitor::communicate()
 			else
 				m_restartTimer.setPeriod(m_launchNode->respawnDelay());
 
+			m_restartCount++;
 			m_restartTimer.start();
 			m_restarting = true;
 		}
@@ -506,6 +507,25 @@ void NodeMonitor::launchDebugger()
 			log("Could not launch debugger");
 		}
 	}
+}
+
+
+void NodeMonitor::beginStatUpdate()
+{
+	m_userTime = 0;
+	m_systemTime = 0;
+}
+
+void NodeMonitor::addCPUTime(uint64_t userTime, uint64_t systemTime)
+{
+	m_userTime += userTime;
+	m_systemTime += systemTime;
+}
+
+void NodeMonitor::endStatUpdate(uint64_t elapsedTime)
+{
+	m_userLoad = float(m_userTime) / elapsedTime;
+	m_systemLoad = float(m_systemTime) / elapsedTime;
 }
 
 }

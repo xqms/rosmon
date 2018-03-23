@@ -8,6 +8,7 @@
 #include "../launch/launch_config.h"
 
 #include "node_monitor.h"
+#include "linux_process_info.h"
 
 #include <boost/signals2.hpp>
 
@@ -45,9 +46,17 @@ public:
 
 	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
 private:
+	struct ProcessInfo
+	{
+		process_info::ProcessStat stat;
+		bool active;
+	};
+
 	void log(const char* fmt, ...) __attribute__((format (printf, 2, 3)));
 
 	void handleRequiredNodeExit(const std::string& name);
+
+	void updateStats();
 
 	launch::LaunchConfig::ConstPtr m_config;
 
@@ -57,6 +66,9 @@ private:
 	std::vector<NodeMonitor::Ptr> m_nodes;
 
 	bool m_ok;
+
+	ros::SteadyTimer m_statTimer;
+	std::map<int, ProcessInfo> m_processInfos;
 };
 
 }
