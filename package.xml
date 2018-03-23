@@ -17,6 +17,7 @@
 	<depend>rospack</depend>
 	<depend>roslib</depend>
 	<depend>roscpp</depend>
+	<depend>rosbash</depend>
 	<depend>rqt_gui</depend>
 	<depend>rqt_gui_cpp</depend>
 	<depend>std_msgs</depend>
