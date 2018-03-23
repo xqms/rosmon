@@ -54,6 +54,8 @@ void ROSInterface::update()
 				break;
 		}
 
+		nstate.restart_count = node->restartCount();
+
 		state.nodes.push_back(nstate);
 	}
 

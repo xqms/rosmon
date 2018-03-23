@@ -105,6 +105,14 @@ public:
 	void launchDebugger();
 	//@}
 
+	//! @name Statistics
+	//@{
+
+	inline unsigned int restartCount() const
+	{ return m_restartCount; }
+
+	//@}
+
 	//! Node name
 	inline std::string name() const
 	{ return m_launchNode->name(); }

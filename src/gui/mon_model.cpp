@@ -63,7 +63,7 @@ void MonModel::updateState(const rosmon::StateConstPtr& state)
 		Entry key;
 		key.name = QString::fromStdString(nodeState.name);
 		key.state = nodeState.state;
-		key.restartCount = nodeState.restartCount;
+		key.restartCount = nodeState.restart_count;
 
 		auto it = std::lower_bound(m_entries.begin(), m_entries.end(), key);
 		int row = it - m_entries.begin();
