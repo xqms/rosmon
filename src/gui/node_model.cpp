@@ -32,16 +32,21 @@ void NodeModel::setNamespace(const QString& ns)
 {
 	m_namespace = ns;
 
-	try
+	if(!ns.isEmpty())
 	{
-		ros::NodeHandle nh(m_nh, ns.toStdString());
-		m_sub_state = nh.subscribe("state", 1, &NodeModel::stateReceived, this);
+		try
+		{
+			ros::NodeHandle nh(m_nh, ns.toStdString());
+			m_sub_state = nh.subscribe("state", 1, &NodeModel::stateReceived, this);
+		}
+		catch(ros::InvalidNameException& name)
+		{
+			ROS_WARN("Got invalid name '%s'", qPrintable(ns));
+			m_sub_state.shutdown();
+		}
 	}
-	catch(ros::InvalidNameException& name)
-	{
-		ROS_WARN("Got invalid name '%s'", qPrintable(ns));
+	else
 		m_sub_state.shutdown();
-	}
 
 	beginResetModel();
 	m_entries.clear();
