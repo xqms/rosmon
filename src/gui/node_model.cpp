@@ -1,7 +1,7 @@
-// Qt model for a rosmon instance
+// Qt model for nodes controlled by a rosmon instance
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
-#include "mon_model.h"
+#include "node_model.h"
 
 #include <QColor>
 
@@ -12,7 +12,7 @@ Q_DECLARE_METATYPE(rosmon::StateConstPtr)
 namespace rosmon
 {
 
-MonModel::MonModel(ros::NodeHandle& nh, QObject* parent)
+NodeModel::NodeModel(ros::NodeHandle& nh, QObject* parent)
  : QAbstractTableModel(parent)
  , m_nh(nh)
  , m_namespace("/rosmon")
@@ -24,18 +24,18 @@ MonModel::MonModel(ros::NodeHandle& nh, QObject* parent)
 	);
 }
 
-MonModel::~MonModel()
+NodeModel::~NodeModel()
 {
 }
 
-void MonModel::setNamespace(const QString& ns)
+void NodeModel::setNamespace(const QString& ns)
 {
 	m_namespace = ns;
 
 	try
 	{
 		ros::NodeHandle nh(m_nh, ns.toStdString());
-		m_sub_state = nh.subscribe("state", 1, &MonModel::stateReceived, this);
+		m_sub_state = nh.subscribe("state", 1, &NodeModel::stateReceived, this);
 	}
 	catch(ros::InvalidNameException& name)
 	{
@@ -48,12 +48,12 @@ void MonModel::setNamespace(const QString& ns)
 	endResetModel();
 }
 
-void MonModel::unsubscribe()
+void NodeModel::unsubscribe()
 {
 	m_sub_state.shutdown();
 }
 
-void MonModel::updateState(const rosmon::StateConstPtr& state)
+void NodeModel::updateState(const rosmon::StateConstPtr& state)
 {
 	std::vector<bool> covered(m_entries.size(), false);
 
@@ -105,7 +105,7 @@ void MonModel::updateState(const rosmon::StateConstPtr& state)
 	}
 }
 
-int MonModel::rowCount(const QModelIndex& parent) const
+int NodeModel::rowCount(const QModelIndex& parent) const
 {
 	if(parent.isValid())
 		return 0;
@@ -113,7 +113,7 @@ int MonModel::rowCount(const QModelIndex& parent) const
 	return m_entries.size();
 }
 
-int MonModel::columnCount(const QModelIndex& parent) const
+int NodeModel::columnCount(const QModelIndex& parent) const
 {
 	if(parent.isValid())
 		return 0;
@@ -121,7 +121,7 @@ int MonModel::columnCount(const QModelIndex& parent) const
 	return COL_COUNT;
 }
 
-QVariant MonModel::data(const QModelIndex& index, int role) const
+QVariant NodeModel::data(const QModelIndex& index, int role) const
 {
 	if(!index.isValid())
 		return QVariant();
@@ -162,7 +162,7 @@ QVariant MonModel::data(const QModelIndex& index, int role) const
 	return QVariant();
 }
 
-QVariant MonModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant NodeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if(role != Qt::DisplayRole || orientation != Qt::Horizontal)
 		return QAbstractTableModel::headerData(section, orientation, role);
@@ -177,7 +177,7 @@ QVariant MonModel::headerData(int section, Qt::Orientation orientation, int role
 	return QVariant();
 }
 
-QString MonModel::nodeName(int row) const
+QString NodeModel::nodeName(int row) const
 {
 	if(row < 0 || row > (int)m_entries.size())
 		return QString();

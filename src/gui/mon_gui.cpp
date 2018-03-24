@@ -28,7 +28,7 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 	m_w = new QWidget;
 	m_ui.setupUi(m_w);
 
-	m_model = new MonModel(getNodeHandle(), this);
+	m_model = new NodeModel(getNodeHandle(), this);
 
 	connect(m_ui.nodeEdit, SIGNAL(textChanged(QString)),
 		m_model, SLOT(setNamespace(QString))

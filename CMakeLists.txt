@@ -91,7 +91,7 @@ if(QT_FOUND AND rqt_gui_cpp_FOUND)
 	)
 	set(H_FILES
 		src/gui/mon_gui.h
-		src/gui/mon_model.h
+		src/gui/node_model.h
 	)
 
 	if(USE_QT5)
@@ -106,7 +106,7 @@ if(QT_FOUND AND rqt_gui_cpp_FOUND)
 		${UIC_FILES}
 		${MOC_FILES}
 		src/gui/mon_gui.cpp
-		src/gui/mon_model.cpp
+		src/gui/node_model.cpp
 	)
 	target_link_libraries(rosmon_gui
 		${catkin_LIBRARIES}

@@ -8,7 +8,7 @@
 
 #include "ui_mon_gui.h"
 
-#include "mon_model.h"
+#include "node_model.h"
 
 namespace rosmon
 {
@@ -31,7 +31,7 @@ private Q_SLOTS:
 private:
 	Ui_MonGUI m_ui;
 	QWidget* m_w;
-	MonModel* m_model;
+	NodeModel* m_model;
 };
 
 }

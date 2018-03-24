@@ -1,8 +1,8 @@
-// Qt model for a rosmon instance
+// Qt model for nodes controlled by a rosmon instance
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
-#ifndef MON_MODEL_H
-#define MON_MODEL_H
+#ifndef NODE_MODEL_H
+#define NODE_MODEL_H
 
 #include <QAbstractTableModel>
 
@@ -14,12 +14,12 @@
 namespace rosmon
 {
 
-class MonModel : public QAbstractTableModel
+class NodeModel : public QAbstractTableModel
 {
 Q_OBJECT
 public:
-	explicit MonModel(ros::NodeHandle& nh, QObject* parent = 0);
-	virtual ~MonModel();
+	explicit NodeModel(ros::NodeHandle& nh, QObject* parent = 0);
+	virtual ~NodeModel();
 
 	virtual int rowCount(const QModelIndex & parent) const override;
 	virtual int columnCount(const QModelIndex & parent) const override;
