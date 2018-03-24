@@ -19,3 +19,7 @@ float32 user_load
 
 # Estime of the CPU load in kernelspace of this node
 float32 system_load
+
+# How much physical memory is used by the process?
+# Value is given in bytes.
+uint64 memory

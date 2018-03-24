@@ -7,6 +7,8 @@
 
 #include <ros/node_handle.h>
 
+#include "format_data_size.h"
+
 Q_DECLARE_METATYPE(rosmon::StateConstPtr)
 
 namespace rosmon
@@ -70,6 +72,7 @@ void NodeModel::updateState(const rosmon::StateConstPtr& state)
 		key.state = nodeState.state;
 		key.restartCount = nodeState.restart_count;
 		key.load = nodeState.system_load + nodeState.user_load;
+		key.memory = nodeState.memory;
 
 		auto it = std::lower_bound(m_entries.begin(), m_entries.end(), key);
 		int row = it - m_entries.begin();
@@ -145,8 +148,17 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 					return entry.name;
 				case COL_LOAD:
 					return QString::number(entry.load, 'f', 2);
+				case COL_MEMORY:
+					return formattedDataSize(entry.memory, 2);
 				case COL_RESTART_COUNT:
 					return entry.restartCount;
+			}
+			break;
+		case Qt::EditRole:
+			switch(index.column())
+			{
+				case COL_MEMORY:
+					return (uint)entry.memory;
 			}
 			break;
 		case Qt::TextAlignmentRole:
@@ -156,6 +168,7 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 					return QVariant();
 				case COL_RESTART_COUNT:
 				case COL_LOAD:
+				case COL_MEMORY:
 					return int(Qt::AlignRight | Qt::AlignVCenter);
 			}
 			break;
@@ -186,6 +199,7 @@ QVariant NodeModel::headerData(int section, Qt::Orientation orientation, int rol
 	{
 		case COL_NAME:          return "Node";
 		case COL_LOAD:          return "CPU Load";
+		case COL_MEMORY:        return "Memory";
 		case COL_RESTART_COUNT: return "#Restarts";
 	}
 

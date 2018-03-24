@@ -514,12 +514,18 @@ void NodeMonitor::beginStatUpdate()
 {
 	m_userTime = 0;
 	m_systemTime = 0;
+	m_memory = 0;
 }
 
 void NodeMonitor::addCPUTime(uint64_t userTime, uint64_t systemTime)
 {
 	m_userTime += userTime;
 	m_systemTime += systemTime;
+}
+
+void NodeMonitor::addMemory(uint64_t memoryBytes)
+{
+	m_memory += memoryBytes;
 }
 
 void NodeMonitor::endStatUpdate(uint64_t elapsedTime)

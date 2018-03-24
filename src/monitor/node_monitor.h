@@ -110,6 +110,7 @@ public:
 
 	void beginStatUpdate();
 	void addCPUTime(uint64_t userTime, uint64_t systemTime);
+	void addMemory(uint64_t memoryBytes);
 	void endStatUpdate(uint64_t elapsedTime);
 
 	/**
@@ -129,6 +130,17 @@ public:
 	 **/
 	inline double systemLoad() const
 	{ return m_systemLoad; }
+
+	/**
+	 * @brief Total system memory used by the node
+	 *
+	 * This includes child processes. Only resident memory is counted
+	 * (i.e. how much physical memory is used).
+	 *
+	 * @return Memory usage in bytes
+	 **/
+	inline double memory() const
+	{ return m_memory; }
 
 	inline unsigned int restartCount() const
 	{ return m_restartCount; }
@@ -193,6 +205,7 @@ private:
 	uint64_t m_systemTime = 0;
 	double m_userLoad = 0.0;
 	double m_systemLoad = 0.0;
+	uint64_t m_memory = 0;
 };
 
 }

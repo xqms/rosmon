@@ -15,6 +15,7 @@ namespace process_info
 {
 
 static jiffies_t g_kernel_hz = -1;
+static std::size_t g_page_size = -1;
 
 jiffies_t kernel_hz()
 {
@@ -31,6 +32,21 @@ jiffies_t kernel_hz()
 	}
 
 	return g_kernel_hz;
+}
+
+std::size_t page_size()
+{
+	if(g_page_size == -1)
+	{
+		g_page_size = sysconf(_SC_PAGESIZE);
+		if(g_page_size == -1)
+		{
+			fprintf(stderr, "Warning: Could not obtain page size.");
+			g_page_size = 4096;
+		}
+	}
+
+	return g_page_size;
 }
 
 bool readStatFile(const char* filename, ProcessStat* stat)
@@ -64,6 +80,7 @@ bool readStatFile(const char* filename, ProcessStat* stat)
 	unsigned long pgrp = 0;
 	long long unsigned int user_jiffies = 0;
 	long long unsigned int kernel_jiffies = 0;
+	long long unsigned int rss_pages = 0;
 
 	// Parse interesting fields
 	ret = sscanf(start,
@@ -80,19 +97,30 @@ bool readStatFile(const char* filename, ProcessStat* stat)
 		"%*u " // number of major faults with child's
 		"%llu " // user mode jiffies
 		"%llu " // kernel mode jiffies
+		"%*u " // user mode jiffies with child's
+		"%*u " // kernel mode jiffies with child's
+		"%*u " // priority level
+		"%*u " // nice level
+		"%*u " // num_threads
+		"%*u " // it_real_value (obsolete, always 0)
+		"%*u " // time the process started after system boot
+		"%*u " // virtual memory size
+		"%llu " // resident memory size
 		, // many more fields follow
 		&pgrp,
 		&user_jiffies,
-		&kernel_jiffies
+		&kernel_jiffies,
+		&rss_pages
 	);
 
-	if(ret != 3)
+	if(ret != 4)
 		return false;
 
 	stat->pid = pid;
 	stat->pgrp = pgrp;
 	stat->utime = user_jiffies;
 	stat->stime = kernel_jiffies;
+	stat->mem_rss = rss_pages * page_size();
 
 	return true;
 }

@@ -67,6 +67,22 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 		);
 	}
 
+	// Display colored bar graph for memory consumption
+	{
+		auto memDelegate = new BarDelegate(m_ui.tableView);
+
+		long int av_pages = sysconf(_SC_PHYS_PAGES);
+		long int page_size = sysconf(_SC_PAGESIZE);
+		int64_t availableMemory = av_pages * page_size;
+		if(availableMemory < 0)
+			availableMemory = 1;
+
+		memDelegate->setRange(0.0, availableMemory);
+		m_ui.tableView->setItemDelegateForColumn(NodeModel::COL_MEMORY,
+			memDelegate
+		);
+	}
+
 	connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)),
 		SLOT(showContextMenu(QPoint))
 	);

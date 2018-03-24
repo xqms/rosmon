@@ -27,7 +27,15 @@ void BarDelegate::setRange(double min, double max)
 
 void BarDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	double alpha = std::min(1.0, std::max(0.0, (index.data(Qt::DisplayRole).toDouble() - m_min) / (m_max - m_min)));
+	double data;
+
+	QVariant var = index.data(Qt::EditRole);
+	if(var.isValid())
+		data = var.toDouble();
+	else
+		data = index.data(Qt::DisplayRole).toDouble();
+
+	double alpha = std::min(1.0, std::max(0.0, (data - m_min) / (m_max - m_min)));
 
 	QRect rect = option.rect;
 	rect.setWidth(alpha * rect.width());

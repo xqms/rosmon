@@ -4,6 +4,8 @@
 #ifndef LINUX_PROCESS_INFO_H
 #define LINUX_PROCESS_INFO_H
 
+#include <cstddef>
+
 namespace rosmon
 {
 namespace monitor
@@ -21,6 +23,9 @@ typedef unsigned long jiffies_t;
 //! Number of kernel jiffies per second
 jiffies_t kernel_hz();
 
+//! Kernel page size
+std::size_t page_size();
+
 /**
  * Process state extracted from /proc/<pid>/stat
  **/
@@ -30,6 +35,7 @@ struct ProcessStat
 	unsigned long pgrp; //!< Process group ID
 	jiffies_t utime;    //!< Total time spent in userspace
 	jiffies_t stime;    //!< Total time spent in kernel space
+	std::size_t mem_rss; //!< Resident memory size in bytes
 };
 
 /**

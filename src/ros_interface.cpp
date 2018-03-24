@@ -59,6 +59,8 @@ void ROSInterface::update()
 		nstate.user_load = node->userLoad();
 		nstate.system_load = node->systemLoad();
 
+		nstate.memory = node->memory();
+
 		state.nodes.push_back(nstate);
 	}
 

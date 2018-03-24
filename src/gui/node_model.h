@@ -23,6 +23,7 @@ public:
 		COL_NAME,
 		COL_RESTART_COUNT,
 		COL_LOAD,
+		COL_MEMORY,
 
 		COL_COUNT
 	};
@@ -57,6 +58,7 @@ private:
 		int state;
 		int restartCount;
 		double load;
+		uint64_t memory;
 	};
 
 	ros::NodeHandle m_nh;

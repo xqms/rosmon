@@ -172,6 +172,7 @@ void Monitor::updateStats()
 		const auto& oldStat = infoIt->second.stat;
 
 		node->addCPUTime(stat.utime - oldStat.utime, stat.stime - oldStat.stime);
+		node->addMemory(stat.mem_rss);
 
 		infoIt->second.active = true;
 		infoIt->second.stat = stat;
