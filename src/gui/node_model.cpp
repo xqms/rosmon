@@ -144,18 +144,28 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 				case COL_NAME:
 					return entry.name;
 				case COL_LOAD:
-					return entry.load;
+					return QString::number(entry.load, 'f', 2);
 				case COL_RESTART_COUNT:
 					return entry.restartCount;
+			}
+			break;
+		case Qt::TextAlignmentRole:
+			switch(index.column())
+			{
+				case COL_NAME:
+					return QVariant();
+				case COL_RESTART_COUNT:
+				case COL_LOAD:
+					return int(Qt::AlignRight | Qt::AlignVCenter);
 			}
 			break;
 		case Qt::BackgroundColorRole:
 			switch(entry.state)
 			{
-				case rosmon::NodeState::IDLE:
-					return QVariant();
 				case rosmon::NodeState::RUNNING:
-					return QColor(200, 255, 200);
+					return QVariant();
+				case rosmon::NodeState::IDLE:
+					return QColor(200, 200, 200);
 				case rosmon::NodeState::CRASHED:
 					return QColor(255, 100, 100);
 				case rosmon::NodeState::WAITING:

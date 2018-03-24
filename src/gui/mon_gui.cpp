@@ -9,10 +9,15 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QDebug>
+#include <QSortFilterProxyModel>
 
 #include <rosmon/StartStop.h>
 
 #include <ros/service.h>
+
+#include <thread>
+
+#include "bar_delegate.h"
 
 namespace rosmon
 {
@@ -39,9 +44,29 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 		SLOT(setNamespace(QString))
 	);
 
-	m_ui.tableView->setModel(m_model);
+	auto sortFilterProxy = new QSortFilterProxyModel(this);
+	sortFilterProxy->setSourceModel(m_model);
+	sortFilterProxy->setDynamicSortFilter(true);
+	m_ui.tableView->setModel(sortFilterProxy);
 
+	m_ui.tableView->setSortingEnabled(true);
+	m_ui.tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+	m_ui.tableView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 	m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+
+	// Display colored bar graph for CPU load
+	{
+		auto loadDelegate = new BarDelegate(m_ui.tableView);
+		int numCores = std::thread::hardware_concurrency();
+		if(numCores <= 0)
+			numCores = 1;
+
+		loadDelegate->setRange(0.0, numCores);
+		m_ui.tableView->setItemDelegateForColumn(NodeModel::COL_LOAD,
+			loadDelegate
+		);
+	}
+
 	connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)),
 		SLOT(showContextMenu(QPoint))
 	);

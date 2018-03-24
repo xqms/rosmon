@@ -18,6 +18,15 @@ class NodeModel : public QAbstractTableModel
 {
 Q_OBJECT
 public:
+	enum Column
+	{
+		COL_NAME,
+		COL_RESTART_COUNT,
+		COL_LOAD,
+
+		COL_COUNT
+	};
+
 	explicit NodeModel(ros::NodeHandle& nh, QObject* parent = 0);
 	virtual ~NodeModel();
 
@@ -48,15 +57,6 @@ private:
 		int state;
 		int restartCount;
 		double load;
-	};
-
-	enum Column
-	{
-		COL_NAME,
-		COL_RESTART_COUNT,
-		COL_LOAD,
-
-		COL_COUNT
 	};
 
 	ros::NodeHandle m_nh;

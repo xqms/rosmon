@@ -106,6 +106,7 @@ if(QT_FOUND AND rqt_gui_cpp_FOUND)
 	add_library(rosmon_gui
 		${UIC_FILES}
 		${MOC_FILES}
+		src/gui/bar_delegate.cpp
 		src/gui/mon_gui.cpp
 		src/gui/node_model.cpp
 		src/gui/rosmon_model.cpp
