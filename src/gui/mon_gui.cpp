@@ -106,7 +106,7 @@ void MonGUI::showContextMenu(const QPoint& point)
 		srv.request.node = m_model->nodeName(index.row()).toStdString();
 		srv.request.action = triggered->property("action").toInt();
 
-		if(!ros::service::call(m_ui.nodeBox->currentText().toStdString() + "/start_stop", srv))
+		if(!ros::service::call(m_model->namespaceString().toStdString() + "/start_stop", srv))
 			QMessageBox::critical(m_w, "Failure", "Could not call start_stop service");
 	}
 }
