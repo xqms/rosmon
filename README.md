@@ -56,8 +56,16 @@ have the `mon` command in your environment.
 `mon` supports the same argument style as `roslaunch` (either
 `mon launch path/to/file.launch` or `mon launch package file.launch`).
 
-## Setup for coredump collection
+## Robust core dump collection
 
+rosmon will try to collect coredumps automatically on node crashes. However,
+the default setting for `/proc/sys/kernel/core_pattern` is `core`, which means
+that the coredump will be created in the working directory of the process.
+rosmon therefore creates separate temporary working directories for the nodes.
+
+If this is problematic (e.g. your nodes expect a certain working directory
+or change working directory at runtime), you can setup a fixed `core_pattern`
+on your system.
 Add the following lines to `/etc/rc.local`:
 
     mkdir /tmp/cores

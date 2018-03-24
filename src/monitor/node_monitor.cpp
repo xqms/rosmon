@@ -41,6 +41,9 @@ static std::runtime_error error(const char* fmt, ...)
 	return std::runtime_error(str);
 }
 
+static bool g_coreIsRelative = true;
+static bool g_coreIsRelative_valid = false;
+
 namespace rosmon
 {
 namespace monitor
@@ -57,6 +60,29 @@ NodeMonitor::NodeMonitor(const launch::Node::ConstPtr& launchNode, const FDWatch
 {
 	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&NodeMonitor::start, this), false, false);
 	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&NodeMonitor::checkStop, this));
+
+	if(!g_coreIsRelative_valid)
+	{
+		char core_pattern[256];
+		int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY);
+		if(core_fd < 0)
+		{
+			log("could not open /proc/sys/kernel/core_pattern: %s", strerror(errno));
+			return;
+		}
+
+		int bytes = read(core_fd, core_pattern, sizeof(core_pattern)-1);
+		close(core_fd);
+
+		if(bytes < 1)
+		{
+			log("Could not read /proc/sys/kernel/core_pattern: %s", strerror(errno));
+			return;
+		}
+
+		g_coreIsRelative = (core_pattern[0] != '/');
+		g_coreIsRelative_valid = true;
+	}
 }
 
 NodeMonitor::~NodeMonitor()
@@ -109,6 +135,14 @@ void NodeMonitor::start()
 	if(running())
 		return;
 
+	if(m_launchNode->coredumpsEnabled() && g_coreIsRelative)
+	{
+		char tmpfile[256];
+		strncpy(tmpfile, "/tmp/rosmon-node-XXXXXX", sizeof(tmpfile));
+		tmpfile[sizeof(tmpfile)-1] = 0;
+		m_processWorkingDirectory = mkdtemp(tmpfile);
+	}
+
 	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
 
 	int pid = forkpty(&m_fd, NULL, NULL, NULL);
@@ -144,6 +178,16 @@ void NodeMonitor::start()
 				{
 					limit.rlim_cur = limit.rlim_max;
 					setrlimit(RLIMIT_CORE, &limit);
+				}
+			}
+
+			// If needed for coredump collection with a relative core_pattern,
+			// cd to a temporary directory.
+			if(g_coreIsRelative)
+			{
+				if(chdir(m_processWorkingDirectory.c_str()) != 0)
+				{
+					perror("Could not change to newly created process working directory");
 				}
 			}
 		}
@@ -295,6 +339,17 @@ void NodeMonitor::communicate()
 		}
 #endif
 
+		if(!m_processWorkingDirectory.empty())
+		{
+			if(rmdir(m_processWorkingDirectory.c_str()) != 0)
+			{
+				log("Could not remove process working directory '%s' after process exit: %s",
+					m_processWorkingDirectory.c_str(), strerror(errno)
+				);
+			}
+			m_processWorkingDirectory.clear();
+		}
+
 		m_pid = -1;
 		m_fdWatcher->removeFD(m_fd);
 		close(m_fd);
@@ -381,16 +436,14 @@ void NodeMonitor::gatherCoredump(int signal)
 		return;
 	}
 
+	core_pattern[bytes-1] = 0; // Strip off the newline at the end
+
 	if(core_pattern[0] == '|')
 	{
-		log("You have apport or some other coredump manager installed on your "
-		    "system. If you want to use the core dump feature of rosmon, set "
-			"/proc/sys/kernel/core_pattern to something like "
-			"/tmp/cores/core.%%e.%%p.%%t");
-		return;
+		// This may be apport, but apport still writes a "core" file if the
+		// limit is set appropriately.
+		strncpy(core_pattern, "core", sizeof(core_pattern));
 	}
-
-	core_pattern[bytes-1] = 0; // Strip off the newline at the end
 
 	auto formatter = [&](boost::iterator_range<std::string::const_iterator> match) -> std::string {
 		char code = *(match.begin()+1);
@@ -439,6 +492,10 @@ void NodeMonitor::gatherCoredump(int signal)
 	};
 
 	std::string coreGlob = boost::find_format_all_copy(std::string(core_pattern), corePatternFormatFinder, formatter);
+
+	// If the pattern is not absolute, it is relative to our node's cwd.
+	if(coreGlob[0] != '/')
+		coreGlob = m_processWorkingDirectory + "/" + coreGlob;
 
 	log("Determined pattern '%s'", coreGlob.c_str());
 

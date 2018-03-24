@@ -206,6 +206,8 @@ private:
 	double m_userLoad = 0.0;
 	double m_systemLoad = 0.0;
 	uint64_t m_memory = 0;
+
+	std::string m_processWorkingDirectory;
 };
 
 }
