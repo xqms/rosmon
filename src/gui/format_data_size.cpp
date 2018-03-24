@@ -9,13 +9,18 @@
 namespace rosmon
 {
 
+static inline uint countLeadingZeroBits(quint32 v)
+{
+	return __builtin_clz(v);
+}
+
 QString formattedDataSize(qint64 bytes, int precision)
 {
 	int power, base = 1000;
 	if (!bytes) {
 		power = 0;
 	} else { // Compute log2(bytes) / 10:
-		power = int((63 - qCountLeadingZeroBits(quint64(qAbs(bytes)))) / 10);
+		power = int((63 - countLeadingZeroBits(quint64(qAbs(bytes)))) / 10);
 		base = 1024;
 	}
 
