@@ -3,6 +3,8 @@
 
 #include "format_data_size.h"
 
+#include <cmath>
+
 #include <QtAlgorithms>
 #include <QLocale>
 
