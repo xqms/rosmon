@@ -1,4 +1,4 @@
-// Logs node all output to a log file for the run
+// Logs all output to a log file for the run
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
 #include "logger.h"

@@ -18,6 +18,9 @@ namespace rosmon
 namespace monitor
 {
 
+/**
+ * @brief Monitors a single node process
+ **/
 class NodeMonitor
 {
 public:
