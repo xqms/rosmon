@@ -3,7 +3,7 @@
 
 #include "mon_gui.h"
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 
 #include <QMenu>
 #include <QMessageBox>
