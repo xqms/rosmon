@@ -67,8 +67,8 @@ void ROSMonModel::updateData()
 
 	nodeList.prepend("[auto]");
 
-	unsigned int oldIdx = 1;
-	unsigned int newIdx = 1;
+	int oldIdx = 1;
+	int newIdx = 1;
 
 	while(oldIdx < m_data.size() || newIdx < nodeList.size())
 	{

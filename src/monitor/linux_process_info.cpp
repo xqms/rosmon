@@ -19,10 +19,10 @@ static std::size_t g_page_size = -1;
 
 jiffies_t kernel_hz()
 {
-	if(g_kernel_hz == -1)
+	if(g_kernel_hz == (jiffies_t)-1)
 	{
 		g_kernel_hz = sysconf(_SC_CLK_TCK);
-		if(g_kernel_hz == -1)
+		if(g_kernel_hz == (jiffies_t)-1)
 		{
 			fprintf(stderr, "Warning: Could not obtain value of USER_HZ."
 				"CPU load measurements might be inaccurate.\n"
@@ -36,10 +36,10 @@ jiffies_t kernel_hz()
 
 std::size_t page_size()
 {
-	if(g_page_size == -1)
+	if(g_page_size == (std::size_t)-1)
 	{
 		g_page_size = sysconf(_SC_PAGESIZE);
-		if(g_page_size == -1)
+		if(g_page_size == (std::size_t)-1)
 		{
 			fprintf(stderr, "Warning: Could not obtain page size.");
 			g_page_size = 4096;
@@ -71,7 +71,7 @@ bool readStatFile(const char* filename, ProcessStat* stat)
 	// from procps: skip "(filename)"
 	char* start = strrchr(buf, ')');
 
-	if(start - buf > strlen(buf) - 4)
+	if(start - buf > (int)strlen(buf) - 4)
 		return false;
 
 	// Skip ")"
