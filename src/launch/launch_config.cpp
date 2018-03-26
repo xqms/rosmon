@@ -465,9 +465,12 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 				else if(strcmp(type, "bool") == 0 || strcmp(type, "boolean") == 0)
 				{
 					if(fullValue == "true")
-						result = true;
+					{
+						// tricky: there is no operator= for bool, see #3
+						result = XmlRpc::XmlRpcValue(true);
+					}
 					else if(fullValue == "false")
-						result = false;
+						result = XmlRpc::XmlRpcValue(false);
 					else
 					{
 						throw error("%s:%d: invalid boolean value '%s'",
