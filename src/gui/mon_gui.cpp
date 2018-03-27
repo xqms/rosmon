@@ -95,6 +95,7 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 	connect(m_autoTimer, SIGNAL(timeout()), SLOT(checkAutoTopic()));
 
 	ctx.addWidget(m_w);
+	setNamespace("[auto]");
 }
 
 void MonGUI::shutdownPlugin()
