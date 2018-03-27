@@ -84,6 +84,8 @@ void logToStdout(const std::string& channel, const std::string& str)
 	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
 		len--;
 
+	clean.resize(len);
+
 	printf("%20s: %s\n", channel.c_str(), clean.c_str());
 }
 
