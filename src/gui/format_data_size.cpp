@@ -11,9 +11,9 @@
 namespace rosmon
 {
 
-static inline uint countLeadingZeroBits(quint32 v)
+static inline uint countLeadingZeroBits(quint64 v)
 {
-	return __builtin_clz(v);
+	return __builtin_clzll(v);
 }
 
 QString formattedDataSize(qint64 bytes, int precision)
