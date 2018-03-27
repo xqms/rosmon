@@ -79,6 +79,11 @@ void handleSIGINT(int)
 
 void logToStdout(const std::string& channel, const std::string& str)
 {
+	std::string clean = str;
+	unsigned int len = clean.length();
+	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
+		len--;
+
 	printf("%20s: %s\n", channel.c_str(), str.c_str());
 }
 
