@@ -70,6 +70,11 @@ class BasicTest(unittest.TestCase):
 		executable = rospy.get_param("path_to_rosmon_executable")
 		self.assert_(os.access(executable, os.X_OK), 'Invalid rosmon path: ' + executable)
 
+		self.assertEqual(
+			rospy.get_param("dirname"),
+			os.path.join(rospack.get_path('rosmon'), 'test')
+		)
+
 if __name__ == '__main__':
 	rospy.init_node('basic_test')
 

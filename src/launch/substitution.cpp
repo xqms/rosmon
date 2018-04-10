@@ -7,8 +7,11 @@
 #include "../package_registry.h"
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/filesystem.hpp>
 
 #include <stdarg.h>
+
+namespace fs = boost::filesystem;
 
 namespace rosmon
 {
@@ -111,6 +114,12 @@ std::string parseSubstitutionArgs(const std::string& input, ParseContext& contex
 	std::string buffer = input;
 
 	HandlerMap simpleHandlers = {
+		{"anon", [&context](const std::string& args, const std::string&) -> std::string{
+			std::string base = args;
+			boost::trim(base);
+
+			return context.config()->anonName(base);
+		}},
 		{"arg", [&context](const std::string& args, const std::string&) -> std::string{
 			auto it = context.arguments().find(args);
 			if(it == context.arguments().end())
@@ -126,6 +135,10 @@ std::string parseSubstitutionArgs(const std::string& input, ParseContext& contex
 			}
 
 			return value;
+		}},
+		{"dirname", [&context](const std::string& args, const std::string&) -> std::string{
+			fs::path launch_file = context.filename();
+			return fs::absolute(launch_file).parent_path().string();
 		}},
 		{"env", [](const std::string& args, const std::string&) -> std::string{
 			const char* envval = getenv(args.c_str());
@@ -149,12 +162,6 @@ std::string parseSubstitutionArgs(const std::string& input, ParseContext& contex
 				return envval;
 			else
 				return defaultValue;
-		}},
-		{"env", [&context](const std::string& args, const std::string&) -> std::string{
-			std::string base = args;
-			boost::trim(base);
-
-			return context.config()->anonName(base);
 		}},
 	};
 
