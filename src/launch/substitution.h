@@ -30,6 +30,18 @@ private:
 	std::string m_msg;
 };
 
+namespace substitutions
+{
+	std::string anon(const std::string& name, ParseContext& context);
+	std::string arg(const std::string& name, const ParseContext& context);
+	std::string dirname(const ParseContext& context);
+	std::string env(const std::string& name);
+	std::string optenv(const std::string& name, const std::string& defaultValue);
+
+	//! $(find ...) which always gives `rospack find` results
+	std::string find_stupid(const std::string& name);
+}
+
 std::string parseSubstitutionArgs(const std::string& string, ParseContext& context);
 
 }

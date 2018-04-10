@@ -11,9 +11,11 @@
 	<maintainer email="max.schwarz@uni-bonn.de">Max Schwarz</maintainer>
 
 	<buildtool_depend>catkin</buildtool_depend>
+	<depend>boost</depend>
 	<depend>cmake_modules</depend>
 	<depend>libncurses-dev</depend>
 	<depend>message_generation</depend>
+	<build_depend>libpython-dev</build_depend>
 	<depend>rospack</depend>
 	<depend>roslib</depend>
 	<depend>roscpp</depend>

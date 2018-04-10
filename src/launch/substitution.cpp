@@ -2,6 +2,7 @@
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
 #include "substitution.h"
+#include "substitution_python.h"
 
 #include "launch_config.h"
 #include "../package_registry.h"
@@ -40,6 +41,68 @@ static SubstitutionException error(const char* fmt, ...)
 	va_end(args);
 
 	return SubstitutionException(str);
+}
+
+namespace substitutions
+{
+	std::string anon(const std::string& name, ParseContext& context)
+	{
+		std::string base = name;
+		boost::trim(base);
+
+		return context.config()->anonName(base);
+	}
+
+	std::string arg(const std::string& name, const ParseContext& context)
+	{
+		auto it = context.arguments().find(name);
+		if(it == context.arguments().end())
+			throw error("$(arg %s): Unknown arg", name.c_str());
+
+		std::string value = it->second;
+
+		if(value == UNSET_MARKER)
+		{
+			throw error(
+				"$(arg %s): Accessing unset argument '%s', please specify as parameter.", name.c_str(), name.c_str()
+			);
+		}
+
+		return value;
+	}
+
+	std::string dirname(const ParseContext& context)
+	{
+		fs::path launch_file = context.filename();
+		return fs::absolute(launch_file).parent_path().string();
+	}
+
+	std::string env(const std::string& name)
+	{
+		const char* envval = getenv(name.c_str());
+		if(!envval)
+			throw error("$(env %s): Environment variable not set!", name.c_str());
+
+		return envval;
+	}
+
+	std::string optenv(const std::string& name, const std::string& defaultValue)
+	{
+		const char* envval = getenv(name.c_str());
+		if(envval)
+			return envval;
+		else
+			return defaultValue;
+	}
+
+	std::string find_stupid(const std::string& name)
+	{
+		std::string path = PackageRegistry::getPath(name);
+		if(!path.empty())
+			return path;
+
+		throw error("$(find %s): Could not find package", name.c_str());
+	}
 }
 
 static std::string parseOneElement(const std::string& input, const HandlerMap& handlers, bool strict, bool* found)
@@ -113,39 +176,24 @@ std::string parseSubstitutionArgs(const std::string& input, ParseContext& contex
 	bool found = false;
 	std::string buffer = input;
 
+	// $(eval ) is only allowed if it spans the entire value, so handle that here.
+	if(buffer.size() > 6 && buffer.substr(0,6) == "$(eval" && buffer[buffer.size()-1] == ')')
+	{
+		return evaluatePython(buffer.substr(7, buffer.size() - 7 - 1), context);
+	}
+
 	HandlerMap simpleHandlers = {
 		{"anon", [&context](const std::string& args, const std::string&) -> std::string{
-			std::string base = args;
-			boost::trim(base);
-
-			return context.config()->anonName(base);
+			return substitutions::anon(args, context);
 		}},
 		{"arg", [&context](const std::string& args, const std::string&) -> std::string{
-			auto it = context.arguments().find(args);
-			if(it == context.arguments().end())
-				throw error("$(arg %s): Unknown arg", args.c_str());
-
-			std::string value = it->second;
-
-			if(value == UNSET_MARKER)
-			{
-				throw error(
-					"$(arg %s): Accessing unset argument '%s', please specify as parameter.", args.c_str(), args.c_str()
-				);
-			}
-
-			return value;
+			return substitutions::arg(args, context);
 		}},
-		{"dirname", [&context](const std::string& args, const std::string&) -> std::string{
-			fs::path launch_file = context.filename();
-			return fs::absolute(launch_file).parent_path().string();
+		{"dirname", [&context](const std::string&, const std::string&) -> std::string{
+			return substitutions::dirname(context);
 		}},
 		{"env", [](const std::string& args, const std::string&) -> std::string{
-			const char* envval = getenv(args.c_str());
-			if(!envval)
-				throw error("$(env %s): Environment variable not set!", args.c_str());
-
-			return envval;
+			return substitutions::env(args);
 		}},
 		{"optenv", [](const std::string& args, const std::string&) -> std::string{
 			auto pos = args.find(" ");
@@ -157,11 +205,7 @@ std::string parseSubstitutionArgs(const std::string& input, ParseContext& contex
 				name = args.substr(0, pos);
 			}
 
-			const char* envval = getenv(name.c_str());
-			if(envval)
-				return envval;
-			else
-				return defaultValue;
+			return substitutions::optenv(name, defaultValue);
 		}},
 	};
 

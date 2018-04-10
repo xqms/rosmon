@@ -6,6 +6,7 @@ import sys
 import unittest
 import time
 import os
+import math
 
 import rospy
 import rospy.client
@@ -74,6 +75,10 @@ class BasicTest(unittest.TestCase):
 			rospy.get_param("dirname"),
 			os.path.join(rospack.get_path('rosmon'), 'test')
 		)
+
+		self.assertEqual(rospy.get_param("eval_simple"), True)
+		self.assertEqual(rospy.get_param("eval_argexpr"), True)
+		self.assertAlmostEqual(rospy.get_param("eval_radius_pi"), 0.5 * math.pi)
 
 if __name__ == '__main__':
 	rospy.init_node('basic_test')

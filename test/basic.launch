@@ -7,6 +7,16 @@
 	<!-- Test $(dirname) -->
 	<param name="dirname" value="$(dirname)" />
 
+	<!-- Test $(eval) -->
+	<param name="eval_simple" value="$(eval True)" />
+
+	<arg name="arg1" value="true" />
+	<arg name="arg2" value="false" />
+	<param name="eval_argexpr" value="$(eval arg1 and not arg2)" />
+
+	<arg name="radius" value="0.5" />
+	<param name="eval_radius_pi" value="$(eval radius * pi)" />
+
 	<node name="test1" pkg="rosmon" type="test_node.py">
 		<remap from="~input" to="/test_input" />
 		<remap from="~output" to="/test_output" />
