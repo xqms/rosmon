@@ -82,7 +82,14 @@ static std::string simplifyWhitespace(const std::string& input)
 
 std::string ParseContext::evaluate(const std::string& tpl)
 {
-	return parseSubstitutionArgs(tpl, *this);
+	try
+	{
+		return parseSubstitutionArgs(tpl, *this);
+	}
+	catch(SubstitutionException& e)
+	{
+		throw error("%s: %s", filename().c_str(), e.what());
+	}
 }
 
 bool ParseContext::parseBool(const std::string& value, int line)
