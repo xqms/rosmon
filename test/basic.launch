@@ -1,4 +1,8 @@
 <launch rosmon-name="rosmon_uut">
+	<param name="path_to_rosmon" value="$(find rosmon)" />
+	<param name="path_to_launch_file" value="$(find rosmon)/test/basic.launch" />
+	<param name="path_to_rosmon_executable" value="$(find rosmon)/rosmon" />
+
 	<node name="test1" pkg="rosmon" type="test_node.py">
 		<remap from="~input" to="/test_input" />
 		<remap from="~output" to="/test_output" />

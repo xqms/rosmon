@@ -131,4 +131,35 @@ std::string PackageRegistry::getExecutable(const std::string& package, const std
 	return result;
 }
 
+std::string PackageRegistry::findPathToFile(const std::string& package, const std::string& name)
+{
+	if(!g_initialized)
+		init();
+
+	// Try catkin libexec & catkin share first
+	for(const auto& workspace : g_catkin_workspaces)
+	{
+		fs::path workspacePath(workspace);
+
+		fs::path execPath = workspacePath / "lib" / package;
+		fs::path filePath = execPath / name;
+		if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+			return execPath.string();
+
+		fs::path sharePath = workspacePath / "share" / package;
+		filePath = sharePath / name;
+		if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+			return sharePath.string();
+	}
+
+	// Try package directory (src)
+	fs::path packageDir = PackageRegistry::getPath(package);
+	fs::path filePath = packageDir / name;
+	if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+		return packageDir.string();
+
+	// Nothing found :-(
+	return std::string();
+}
+
 }

@@ -50,6 +50,7 @@ add_executable(rosmon
 	src/main.cpp
 	src/launch/node.cpp
 	src/launch/launch_config.cpp
+	src/launch/substitution.cpp
 	src/monitor/node_monitor.cpp
 	src/monitor/monitor.cpp
 	src/monitor/linux_process_info.cpp

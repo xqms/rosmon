@@ -21,6 +21,69 @@ namespace rosmon
 namespace launch
 {
 
+class LaunchConfig;
+
+extern const char* UNSET_MARKER;
+
+class ParseContext
+{
+public:
+	ParseContext(LaunchConfig* config)
+		: m_config(config)
+		, m_prefix("/")
+	{}
+
+	const std::string& prefix() const
+	{ return m_prefix; }
+
+	const std::string& filename() const
+	{ return m_filename; }
+
+	void setFilename(const std::string& filename)
+	{ m_filename = filename; }
+
+	ParseContext enterScope(const std::string& prefix)
+	{
+		ParseContext ret = *this;
+		ret.m_prefix = ret.m_prefix + prefix;
+		if(prefix[prefix.size()-1] != '/')
+			ret.m_prefix.push_back('/');
+
+		return ret;
+	}
+
+	std::string evaluate(const std::string& tpl);
+
+	bool parseBool(const std::string& input, int line);
+
+	void clearArguments()
+	{
+		m_args.clear();
+	}
+
+	inline const std::map<std::string, std::string>& arguments() const
+	{ return m_args; }
+
+	void setArg(const std::string& name, const std::string& argument, bool override);
+
+	void setEnvironment(const std::string& name, const std::string& value);
+
+	inline const std::map<std::string, std::string> environment() const
+	{ return m_environment; }
+
+	bool shouldSkip(TiXmlElement* element);
+
+	inline LaunchConfig* config()
+	{ return m_config; }
+private:
+	LaunchConfig* m_config;
+
+	std::string m_prefix;
+	std::string m_filename;
+	std::map<std::string, std::string> m_args;
+	std::map<std::string, std::string> m_environment;
+};
+
 class LaunchConfig
 {
 public:
@@ -69,65 +132,6 @@ public:
 	std::string windowTitle() const
 	{ return m_windowTitle; }
 private:
-	class ParseContext
-	{
-	public:
-		ParseContext(LaunchConfig* config)
-		 : m_config(config)
-		 , m_prefix("/")
-		{}
-
-		const std::string& prefix() const
-		{ return m_prefix; }
-
-		const std::string& filename() const
-		{ return m_filename; }
-
-		void setFilename(const std::string& filename)
-		{ m_filename = filename; }
-
-		ParseContext enterScope(const std::string& prefix)
-		{
-			ParseContext ret = *this;
-			ret.m_prefix = ret.m_prefix + prefix;
-			if(prefix[prefix.size()-1] != '/')
-				ret.m_prefix.push_back('/');
-
-			return ret;
-		}
-
-		std::string evaluate(const std::string& tpl);
-
-		bool parseBool(const std::string& input, int line);
-
-		void clearArguments()
-		{
-			m_args.clear();
-		}
-
-		inline const std::map<std::string, std::string>& arguments() const
-		{ return m_args; }
-
-		void setArg(const std::string& name, const std::string& argument, bool override);
-
-		void setEnvironment(const std::string& name, const std::string& value);
-
-		inline const std::map<std::string, std::string> environment() const
-		{ return m_environment; }
-
-		bool shouldSkip(TiXmlElement* element);
-
-		inline LaunchConfig* config()
-		{ return m_config; }
-	private:
-		LaunchConfig* m_config;
-
-		std::string m_prefix;
-		std::string m_filename;
-		std::map<std::string, std::string> m_args;
-		std::map<std::string, std::string> m_environment;
-	};
-
 	void parse(TiXmlElement* element, ParseContext* context, bool onlyArguments = false);
 	void parseNode(TiXmlElement* element, ParseContext context);
 	void parseParam(TiXmlElement* element, ParseContext context);
