@@ -5,11 +5,17 @@
 import sys
 import unittest
 import time
+import os
+import math
 
 import rospy
 import rospy.client
 
+import rospkg
+
 from std_msgs.msg import String
+
+rospack = rospkg.RosPack()
 
 class _WFM(object):
 	def __init__(self):
@@ -55,6 +61,24 @@ class BasicTest(unittest.TestCase):
 
 		sub.unregister()
 		pub.unregister()
+
+	def test_params(self):
+		self.assertEqual(rospy.get_param("path_to_rosmon"), rospack.get_path('rosmon'))
+		self.assertEqual(
+			rospy.get_param("path_to_launch_file"),
+			os.path.join(rospack.get_path('rosmon'), 'test/basic.launch')
+		)
+		executable = rospy.get_param("path_to_rosmon_executable")
+		self.assert_(os.access(executable, os.X_OK), 'Invalid rosmon path: ' + executable)
+
+		self.assertEqual(
+			rospy.get_param("dirname"),
+			os.path.join(rospack.get_path('rosmon'), 'test')
+		)
+
+		self.assertEqual(rospy.get_param("eval_simple"), True)
+		self.assertEqual(rospy.get_param("eval_argexpr"), True)
+		self.assertAlmostEqual(rospy.get_param("eval_radius_pi"), 0.5 * math.pi)
 
 if __name__ == '__main__':
 	rospy.init_node('basic_test')

@@ -15,6 +15,18 @@ public:
 	static std::string getPath(const std::string& package);
 
 	static std::string getExecutable(const std::string& package, const std::string& name);
+
+	/**
+	 * @brief Find path to a package file
+	 *
+	 * This function tries to find the package path (src, libexec, share) that
+	 * contains the mentioned file/directory. This is used for $(find ...)/...
+	 * lookups.
+	 *
+	 * @param package ROS package name
+	 * @param file relative path inside the package
+	 **/
+	static std::string findPathToFile(const std::string& package, const std::string& file);
 };
 
 }

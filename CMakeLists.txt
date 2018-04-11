@@ -35,6 +35,17 @@ find_package(TinyXML REQUIRED)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIRS})
 
+find_package(PythonLibs QUIET)
+if(PYTHONLIBS_FOUND)
+	add_definitions(-DHAVE_PYTHON=1)
+	include_directories(${PYTHON_INCLUDE_DIRS})
+else()
+	message(WARNING "Please install libpython-dev (or equivalent) for $(eval ...) support")
+endif()
+
+find_package(Boost REQUIRED COMPONENTS python REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
 # Specific feature tests
 if(${roscpp_VERSION} VERSION_GREATER 1.12.8)
 	message(STATUS "roscpp is new enough, using SteadyTimer for timekeeping")
@@ -50,6 +61,8 @@ add_executable(rosmon
 	src/main.cpp
 	src/launch/node.cpp
 	src/launch/launch_config.cpp
+	src/launch/substitution.cpp
+	src/launch/substitution_python.cpp
 	src/monitor/node_monitor.cpp
 	src/monitor/monitor.cpp
 	src/monitor/linux_process_info.cpp
@@ -65,12 +78,19 @@ target_link_libraries(rosmon
 	${catkin_LIBRARIES}
 	${TinyXML_LIBRARIES}
 	${CURSES_LIBRARIES}
+	${Boost_LIBRARIES}
 	yaml-cpp
 	util
 )
 add_dependencies(rosmon
 	${PROJECT_NAME}_generate_messages_cpp
 )
+
+if(PYTHONLIBS_FOUND)
+	target_link_libraries(rosmon
+		${PYTHON_LIBRARIES}
+	)
+endif()
 
 # GUI
 

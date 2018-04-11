@@ -2,7 +2,7 @@
 // Author: Max Schwarz <max.schwarz@uni-bonn.de>
 
 #include "launch_config.h"
-#include "../package_registry.h"
+#include "substitution.h"
 
 #include <ros/package.h>
 
@@ -17,12 +17,12 @@
 
 #include <yaml-cpp/yaml.h>
 
-static const char* UNSET_MARKER = "~~~~~ ROSMON-UNSET ~~~~~";
-
 namespace rosmon
 {
 namespace launch
 {
+
+const char* UNSET_MARKER = "~~~~~ ROSMON-UNSET ~~~~~";
 
 static LaunchConfig::ParseException error(const char* fmt, ...)
 {
@@ -80,87 +80,19 @@ static std::string simplifyWhitespace(const std::string& input)
 	return output;
 }
 
-std::string LaunchConfig::ParseContext::evaluate(const std::string& tpl)
+std::string ParseContext::evaluate(const std::string& tpl)
 {
-	static const boost::regex regex(R"(\$\((\w+) ([^\(\)]+)\))");
-
-	boost::smatch res;
-
-	if(boost::regex_search(tpl, res, regex))
+	try
 	{
-		std::string cmd = res[1].str();
-		std::string args = res[2].str();
-		std::string value = "";
-
-		if(cmd == "find")
-		{
-			// This command is actually very hard to resolve. It dates back
-			// to the rosbuild days, where all products from a package where
-			// contained in the package directory.
-			// Under catkin, this is not the case anymore. So we actually
-			// have to look at the package directory in src, devel, install
-			// spaces.
-
-			// => FIXME: This is not enough!
-			value = PackageRegistry::getPath(args);
-			if(value.empty())
-				throw error("%s: $(find %s): Could not find package\n", filename().c_str(), args.c_str());
-		}
-		else if(cmd == "arg")
-		{
-			auto it = m_args.find(args);
-			if(it == m_args.end())
-				throw error("%s: $(arg %s): Unknown arg", filename().c_str(), args.c_str());
-
-			value = it->second;
-
-			if(value == UNSET_MARKER)
-				throw error("%s: $(arg %s): Accessing unset argument '%s', please specify as parameter.", filename().c_str(), args.c_str(), args.c_str());
-		}
-		else if(cmd == "env")
-		{
-			const char* envval = getenv(args.c_str());
-			if(!envval)
-				throw error("%s: $(env %s): Environment variable not set!", filename().c_str(), args.c_str());
-
-			value = envval;
-		}
-		else if(cmd == "optenv")
-		{
-			auto pos = args.find(" ");
-			std::string defaultValue;
-			if(pos != std::string::npos)
-			{
-				defaultValue = args.substr(pos + 1);
-				args = args.substr(0, pos);
-			}
-
-			const char* envval = getenv(args.c_str());
-			if(envval)
-				value = envval;
-			else
-				value = defaultValue;
-		}
-		else if(cmd == "anon")
-		{
-			std::string base = args;
-			boost::trim(base);
-
-			value = config()->anonName(base);
-		}
-		else
-			throw error("Unsupported subst command '%s'", cmd.c_str());
-
-		std::stringstream ss;
-		ss << tpl.substr(0, res.position()) << value << tpl.substr(res.position() + res.length());
-
-		return evaluate(ss.str());
+		return parseSubstitutionArgs(tpl, *this);
 	}
-	else
-		return tpl;
+	catch(SubstitutionException& e)
+	{
+		throw error("%s: %s", filename().c_str(), e.what());
+	}
 }
 
-bool LaunchConfig::ParseContext::parseBool(const std::string& value, int line)
+bool ParseContext::parseBool(const std::string& value, int line)
 {
 	std::string expansion = evaluate(value);
 
@@ -172,7 +104,7 @@ bool LaunchConfig::ParseContext::parseBool(const std::string& value, int line)
 		throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), line, expansion.c_str());
 }
 
-bool LaunchConfig::ParseContext::shouldSkip(TiXmlElement* e)
+bool ParseContext::shouldSkip(TiXmlElement* e)
 {
 	const char* if_cond = e->Attribute("if");
 	if(if_cond)
@@ -195,7 +127,7 @@ bool LaunchConfig::ParseContext::shouldSkip(TiXmlElement* e)
 	return false;
 }
 
-void LaunchConfig::ParseContext::setArg(const std::string& name, const std::string& value, bool override)
+void ParseContext::setArg(const std::string& name, const std::string& value, bool override)
 {
 	auto it = m_args.find(name);
 	if(it == m_args.end())
@@ -204,7 +136,7 @@ void LaunchConfig::ParseContext::setArg(const std::string& name, const std::stri
 		m_args[name] = value;
 }
 
-void LaunchConfig::ParseContext::setEnvironment(const std::string& name, const std::string& value)
+void ParseContext::setEnvironment(const std::string& name, const std::string& value)
 {
 	m_environment[name] = value;
 }
