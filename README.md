@@ -30,17 +30,6 @@ nodes and monitor node states. Restarting a single stuck node out of the launch
 file is no longer a problem. An `rqt` plugin for controlling `rosmon` is
 included.
 
-## Status
-
-That said, `rosmon` is very much work-in-progress right now.
-
-**WARNING**: `rosmon` is not yet `roslaunch` compliant. For example, the
-`$(find PACKAGE)` substitution performs a simple search using `rospack` and
-always returns the path to the package in the source tree. `roslaunch` may
-choose to return the corresponding devel or install path if the file is found
-there. Other inconsistencies and unsupported features may exist. Use at your
-own risk.
-
 ## Security
 
 `rosmon` disables the "Yama" `ptrace()` protection from its child processes, so
