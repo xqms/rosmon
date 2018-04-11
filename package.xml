@@ -27,8 +27,8 @@
 	<build_depend>python</build_depend>
 	<build_depend>qtbase5-dev</build_depend>
 
+	<test_depend>python-rospkg</test_depend>
 	<test_depend>rostest</test_depend>
-	<test_depend>rospkg</test_depend>
 
 	<export>
 		<rqt_gui plugin="${prefix}/rqt_plugin.xml" />
