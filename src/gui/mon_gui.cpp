@@ -3,7 +3,11 @@
 
 #include "mon_gui.h"
 
+#if HAVE_PLUGINLIB_NEW_HEADERS
 #include <pluginlib/class_list_macros.hpp>
+#else
+#include <pluginlib/class_list_macros.h>
+#endif
 
 #include <QMenu>
 #include <QMessageBox>
@@ -39,6 +43,12 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 	m_ui.nodeBox->setModel(m_rosmonModel);
 
 	m_model = new NodeModel(getNodeHandle(), this);
+
+#if QT_VERSION_MAJOR >= 5
+	m_ui.nodeBox->setCurrentText("[auto]");
+#else
+	m_ui.nodeBox->setEditText("[auto]");
+#endif
 
 	connect(m_ui.nodeBox, SIGNAL(editTextChanged(QString)),
 		SLOT(setNamespace(QString))

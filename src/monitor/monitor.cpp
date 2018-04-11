@@ -45,7 +45,11 @@ Monitor::Monitor(const launch::LaunchConfig::ConstPtr& config, const FDWatcher::
 		m_nodes.push_back(node);
 	}
 
+#if HAVE_STEADYTIMER
 	m_statTimer = m_nh.createSteadyTimer(
+#else
+	m_statTimer = m_nh.createWallTimer(
+#endif
 		ros::WallDuration(1.0),
 		boost::bind(&Monitor::updateStats, this)
 	);
