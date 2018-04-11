@@ -5,6 +5,7 @@
 #define ROSMON_NODE_MODEL_H
 
 #include <QAbstractListModel>
+#include <QStringList>
 
 namespace rosmon
 {
