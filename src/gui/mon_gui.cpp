@@ -40,6 +40,12 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 
 	m_model = new NodeModel(getNodeHandle(), this);
 
+#if QT_VERSION_MAJOR >= 5
+	m_ui.nodeBox->setCurrentText("[auto]");
+#else
+	m_ui.nodeBox->setEditText("[auto]");
+#endif
+
 	connect(m_ui.nodeBox, SIGNAL(editTextChanged(QString)),
 		SLOT(setNamespace(QString))
 	);

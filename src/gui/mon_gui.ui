@@ -34,9 +34,6 @@
        <property name="editable">
         <bool>true</bool>
        </property>
-       <property name="currentText">
-        <string>[auto]</string>
-       </property>
        <property name="insertPolicy">
         <enum>QComboBox::NoInsert</enum>
        </property>
