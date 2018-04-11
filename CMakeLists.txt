@@ -27,12 +27,18 @@ generate_messages(DEPENDENCIES
 
 catkin_package()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror")
+
 find_package(TinyXML REQUIRED)
 
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror")
+# Specific feature tests
+if(${roscpp_VERSION} VERSION_GREATER 1.12.8)
+	message(STATUS "roscpp is new enough, using SteadyTimer for timekeeping")
+	add_definitions(-DHAVE_STEADYTIMER=1)
+endif()
 
 add_executable(rosmon
 	src/main.cpp

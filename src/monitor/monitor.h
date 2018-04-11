@@ -67,7 +67,12 @@ private:
 
 	bool m_ok;
 
+#if HAVE_STEADYTIMER
 	ros::SteadyTimer m_statTimer;
+#else
+	ros::WallTimer m_statTimer;
+#endif
+
 	std::map<int, ProcessInfo> m_processInfos;
 };
 
