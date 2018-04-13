@@ -3,6 +3,8 @@
 
 #include "fd_watcher.h"
 
+#include <vector>
+
 #include <sys/types.h>
 #include <sys/select.h>
 
