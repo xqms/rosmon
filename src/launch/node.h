@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <vector>
 
 #include <ros/time.h>
 
