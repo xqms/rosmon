@@ -577,7 +577,7 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 
 			if(ctx.checkEmptyString(contents))
 			{
-				printf("File %s is empty, skipping...", fullFile.c_str());
+				printf("File %s is empty, skipping...\n", fullFile.c_str());
 				return;
 			}
 
