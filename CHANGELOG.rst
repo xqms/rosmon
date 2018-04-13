@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.1 (2018-04-13)
+------------------
 * Fix compilation issues on Ubuntu Artful and Debian Stretch.
 * Contributors: Max Schwarz
 
