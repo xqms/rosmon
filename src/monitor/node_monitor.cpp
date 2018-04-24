@@ -335,9 +335,16 @@ void NodeMonitor::communicate()
 #ifdef WCOREDUMP
 		if(WCOREDUMP(status))
 		{
-			// We have a chance to find the core dump...
-			log("%s left a core dump", name().c_str());
-			gatherCoredump(WTERMSIG(status));
+			if(!m_launchNode->launchPrefix().empty())
+			{
+				log("%s used launch-prefix, not collecting core dump as it is probably useless.", name().c_str());
+			}
+			else
+			{
+				// We have a chance to find the core dump...
+				log("%s left a core dump", name().c_str());
+				gatherCoredump(WTERMSIG(status));
+			}
 		}
 #endif
 
