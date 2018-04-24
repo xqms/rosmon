@@ -211,9 +211,11 @@ void NodeMonitor::start()
 			for(auto part : cmd)
 				ss << part << " ";
 
-			log("Could not execute '%s': %s\n", ss.str().c_str(), strerror(errno));
+			fprintf(stderr, "Could not execute '%s': %s\n", ss.str().c_str(), strerror(errno));
 		}
-		exit(1);
+
+		// We should not end up here...
+		std::abort();
 	}
 
 	// Parent
