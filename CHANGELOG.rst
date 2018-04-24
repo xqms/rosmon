@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.2 (2018-04-24)
+------------------
 * node_monitor: don't collect core dumps from launch-prefixed nodes
 * node_monitor: fix error message on failed execvp()
   Previously, the error message was not printed to the screen, as log() is
