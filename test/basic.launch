@@ -17,6 +17,10 @@
 	<arg name="radius" value="0.5" />
 	<param name="eval_radius_pi" value="$(eval radius * pi)" />
 
+	<!-- Test launch file inclusion -->
+	<arg name="test_argument" default="123" />
+	<include file="$(dirname)/basic_sub.launch" pass_all_args="true" />
+
 	<node name="test1" pkg="rosmon" type="test_node.py">
 		<remap from="~input" to="/test_input" />
 		<remap from="~output" to="/test_output" />
