@@ -769,12 +769,12 @@ void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
 
 	if(value)
 	{
-		std::string fullValue = ctx.evaluate(value);
+		std::string fullValue = ctx.evaluate(simplifyWhitespace(value));
 		ctx.setArg(name, fullValue, true);
 	}
 	else if(def)
 	{
-		std::string fullValue = ctx.evaluate(def);
+		std::string fullValue = ctx.evaluate(simplifyWhitespace(def));
 		ctx.setArg(name, fullValue, false);
 	}
 	else
