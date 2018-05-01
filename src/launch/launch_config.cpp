@@ -714,6 +714,7 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 {
 	const char* file = element->Attribute("file");
 	const char* ns = element->Attribute("ns");
+	const char* passAllArgs = element->Attribute("pass_all_args");
 
 	if(!file)
 		throw error("%s:%d: file attribute is mandatory", ctx.filename().c_str(), element->Row());
@@ -725,8 +726,12 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 		childCtx = childCtx.enterScope(ctx.evaluate(ns));
 
 	// Parse any arguments
-	childCtx.clearArguments();
 
+	// If pass_all_args is not set, delete the current arguments.
+	if(!passAllArgs || !ctx.parseBool(passAllArgs, element->Row()))
+		childCtx.clearArguments();
+
+	// Now set all explicitly mentioned arguments.
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
 	{
 		TiXmlElement* e = n->ToElement();

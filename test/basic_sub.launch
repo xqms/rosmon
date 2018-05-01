@@ -1,0 +1,5 @@
+<launch>
+	<arg name="test_argument" default="321" />
+
+	<param name="test_argument" value="$(arg test_argument)" />
+</launch>
