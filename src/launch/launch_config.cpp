@@ -6,6 +6,7 @@
 
 #include <ros/package.h>
 
+#include <cctype>
 #include <fstream>
 
 #include <stdarg.h>
@@ -55,7 +56,7 @@ static std::string simplifyWhitespace(const std::string& input)
 	size_t i = 0;
 	for(; i < input.size(); ++i)
 	{
-		if(!isspace(i))
+		if(!std::isspace(static_cast<unsigned char>(input[i])))
 			break;
 	}
 
@@ -65,7 +66,7 @@ static std::string simplifyWhitespace(const std::string& input)
 	{
 		char c = input[i];
 
-		if(isspace(c))
+		if(std::isspace(static_cast<unsigned char>(c)))
 			in_space = true;
 		else
 		{
@@ -773,12 +774,12 @@ void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
 
 	if(value)
 	{
-		std::string fullValue = ctx.evaluate(value);
+		std::string fullValue = ctx.evaluate(simplifyWhitespace(value));
 		ctx.setArg(name, fullValue, true);
 	}
 	else if(def)
 	{
-		std::string fullValue = ctx.evaluate(def);
+		std::string fullValue = ctx.evaluate(simplifyWhitespace(def));
 		ctx.setArg(name, fullValue, false);
 	}
 	else
