@@ -24,8 +24,7 @@ class Monitor
 {
 public:
 public:
-	explicit Monitor(const launch::LaunchConfig::ConstPtr& config, const FDWatcher::Ptr& watcher);
-	~Monitor();
+	explicit Monitor(launch::LaunchConfig::ConstPtr config, FDWatcher::Ptr watcher);
 
 	void setParameters();
 	void start();

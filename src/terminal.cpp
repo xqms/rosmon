@@ -8,7 +8,7 @@
 #include <term.h>
 #include <curses.h>
 
-#include <stdio.h>
+#include <cstdio>
 
 #include <boost/regex.hpp>
 
@@ -38,7 +38,7 @@ void Terminal::Parser::parseSetAttributes(const std::string& str)
 	for(Tokenizer::iterator it = tok.begin(); it != tok.end(); ++it)
 	{
 		errno = 0;
-		char* endptr = const_cast<char*>(it->c_str());
+		auto endptr = const_cast<char*>(it->c_str());
 		int code = strtoul(it->c_str(), &endptr, 10);
 
 		if(errno != 0 || *endptr != 0)
@@ -123,7 +123,7 @@ Terminal::Terminal()
 {
 	// Override using environment variable
 	char* overrideMode = getenv("ROSMON_COLOR_MODE");
-	const char* termOverride = 0;
+	const char* termOverride = nullptr;
 	if(overrideMode)
 	{
 		if(strcasecmp(overrideMode, "truecolor") == 0)
@@ -205,10 +205,6 @@ Terminal::Terminal()
 	m_upStr = tigetstr("cuu");
 
 	m_boldStr = tigetstr("bold");
-}
-
-Terminal::~Terminal()
-{
 }
 
 bool Terminal::has256Colors() const

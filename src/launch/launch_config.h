@@ -107,7 +107,6 @@ public:
 	};
 
 	LaunchConfig();
-	~LaunchConfig();
 
 	void setArgument(const std::string& name, const std::string& value);
 

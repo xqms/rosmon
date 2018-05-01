@@ -30,10 +30,10 @@ namespace rosmon
 namespace launch
 {
 
-Node::Node(const std::string& name, const std::string& package, const std::string& type)
- : m_name(name)
- , m_package(package)
- , m_type(type)
+Node::Node(std::string name, std::string package, std::string type)
+ : m_name(std::move(name))
+ , m_package(std::move(package))
+ , m_type(std::move(type))
 
  // NOTE: roslaunch documentation seems to suggest that this is true by default,
  //  however, the source tells a different story...
@@ -46,11 +46,6 @@ Node::Node(const std::string& name, const std::string& package, const std::strin
 	m_executable = PackageRegistry::getExecutable(m_package, m_type);
 }
 
-Node::~Node()
-{
-}
-
-
 void Node::addRemapping(const std::string& from, const std::string& to)
 {
 	m_remappings[from] = to;
@@ -62,10 +57,10 @@ void Node::addExtraArguments(const std::string& argString)
 
 	// Get rid of newlines since this confuses wordexp
 	std::string clean = argString;
-	for(unsigned int i = 0; i < clean.length(); ++i)
+	for(auto& c : clean)
 	{
-		if(clean[i] == '\n' || clean[i] == '\r')
-			clean[i] = ' ';
+		if(c == '\n' || c == '\r')
+			c = ' ';
 	}
 
 	// NOTE: This also does full shell expansion (things like $PATH)
@@ -76,7 +71,7 @@ void Node::addExtraArguments(const std::string& argString)
 		throw error("You're supplying something strange in 'args': '%s' (wordexp ret %d)", clean.c_str(), ret);
 
 	for(unsigned int i = 0; i < tokens.we_wordc; ++i)
-		m_extraArgs.push_back(tokens.we_wordv[i]);
+		m_extraArgs.emplace_back(tokens.we_wordv[i]);
 
 	wordfree(&tokens);
 }
@@ -112,10 +107,10 @@ void Node::setLaunchPrefix(const std::string& launchPrefix)
 
 	// Get rid of newlines since this confuses wordexp
 	std::string clean = launchPrefix;
-	for(unsigned int i = 0; i < clean.length(); ++i)
+	for(auto& c : clean)
 	{
-		if(clean[i] == '\n' || clean[i] == '\r')
-			clean[i] = ' ';
+		if(c == '\n' || c == '\r')
+			c = ' ';
 	}
 
 	// NOTE: This also does full shell expansion (things like $PATH)
@@ -126,7 +121,7 @@ void Node::setLaunchPrefix(const std::string& launchPrefix)
 		throw error("You're supplying something strange in 'launch-prefix': '%s' (wordexp ret %d)", clean.c_str(), ret);
 
 	for(unsigned int i = 0; i < tokens.we_wordc; ++i)
-		m_launchPrefix.push_back(tokens.we_wordv[i]);
+		m_launchPrefix.emplace_back(tokens.we_wordv[i]);
 
 	wordfree(&tokens);
 }

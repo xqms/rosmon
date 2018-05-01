@@ -21,7 +21,7 @@
 
 #include <unistd.h>
 #include <getopt.h>
-#include <signal.h>
+#include <csignal>
 
 #include <iostream>
 
@@ -91,13 +91,13 @@ void logToStdout(const std::string& channel, const std::string& str)
 
 // Options
 static const struct option OPTIONS[] = {
-	{"disable-ui", no_argument, NULL, 'd'},
-	{"benchmark", no_argument, NULL, 'b'},
-	{"help", no_argument, NULL, 'h'},
-	{"list-args", no_argument, NULL, 'L'},
-	{"log",  required_argument, NULL, 'l'},
-	{"name", required_argument, NULL, 'n'},
-	{NULL, 0, NULL, 0}
+	{"disable-ui", no_argument, nullptr, 'd'},
+	{"benchmark", no_argument, nullptr, 'b'},
+	{"help", no_argument, nullptr, 'h'},
+	{"list-args", no_argument, nullptr, 'L'},
+	{"log",  required_argument, nullptr, 'l'},
+	{"name", required_argument, nullptr, 'n'},
+	{nullptr, 0, nullptr, 0}
 };
 
 enum Action {
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 	bool enableUI = true;
 
 	// Parse options
-	while(1)
+	while(true)
 	{
 		int option_index;
 		int c = getopt_long(argc, argv, "h", OPTIONS, &option_index);
@@ -212,7 +212,7 @@ int main(int argc, char** argv)
 		{
 			// Log to /tmp by default
 
-			time_t t = time(NULL);
+			time_t t = time(nullptr);
 			tm currentTime;
 			localtime_r(&t, &currentTime);
 

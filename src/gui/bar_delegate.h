@@ -13,7 +13,7 @@ class BarDelegate : public QStyledItemDelegate
 {
 public:
 	explicit BarDelegate(QObject* parent = 0);
-	virtual ~BarDelegate();
+	~BarDelegate() override = default;
 
 	void setRange(double min, double max);
 

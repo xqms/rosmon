@@ -10,7 +10,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 
-#include <stdarg.h>
+#include <cstdarg>
 
 namespace fs = boost::filesystem;
 
@@ -19,8 +19,8 @@ namespace rosmon
 namespace launch
 {
 
-typedef std::function<std::string(const std::string&, const std::string&)> Handler;
-typedef std::map<std::string, Handler> HandlerMap;
+using Handler = std::function<std::string(const std::string&, const std::string&)>;
+using HandlerMap = std::map<std::string, Handler>;
 
 enum ParserState
 {

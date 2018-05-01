@@ -86,7 +86,6 @@ public:
 	};
 
 	Terminal();
-	~Terminal();
 
 	/**
 	 * @brief Set 24-bit foreground color

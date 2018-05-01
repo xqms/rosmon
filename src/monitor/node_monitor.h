@@ -44,8 +44,8 @@ public:
 	 * @param nh ros::NodeHandle to use for creating timers
 	 **/
 	NodeMonitor(
-		const launch::Node::ConstPtr& launchNode,
-		const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh);
+		launch::Node::ConstPtr launchNode,
+		FDWatcher::Ptr fdWatcher, ros::NodeHandle& nh);
 	~NodeMonitor();
 
 	//! @name Starting & stopping

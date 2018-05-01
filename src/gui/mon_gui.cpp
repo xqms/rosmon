@@ -26,14 +26,6 @@
 namespace rosmon
 {
 
-MonGUI::MonGUI()
-{
-}
-
-MonGUI::~MonGUI()
-{
-}
-
 void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 {
 	m_w = new QWidget;

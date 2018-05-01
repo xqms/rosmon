@@ -3,12 +3,12 @@
 
 #include "fd_watcher.h"
 
+#include <cstdarg>
 #include <vector>
 
 #include <sys/types.h>
 #include <sys/select.h>
 
-#include <stdarg.h>
 
 static std::runtime_error error(const char* fmt, ...)
 {
@@ -28,10 +28,6 @@ namespace rosmon
 {
 
 FDWatcher::FDWatcher()
-{
-}
-
-FDWatcher::~FDWatcher()
 {
 }
 
@@ -61,7 +57,7 @@ void FDWatcher::wait(const ros::WallDuration& duration)
 		maxfd = std::max(pair.first, maxfd);
 	}
 
-	int ret = select(maxfd+1, &fds, 0, 0, &timeout);
+	int ret = select(maxfd+1, &fds, nullptr, nullptr, &timeout);
 	if(ret < 0)
 	{
 		if(errno == EINTR || errno == EAGAIN)
@@ -79,7 +75,7 @@ void FDWatcher::wait(const ros::WallDuration& duration)
 		for(auto pair : m_fds)
 		{
 			if(FD_ISSET(pair.first, &fds))
-				toBeNotified.push_back(pair);
+				toBeNotified.emplace_back(pair);
 		}
 
 		// Actually call the callbacks

@@ -3,22 +3,20 @@
 
 #include "logger.h"
 
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <sstream>
-
-#include <stdio.h>
-#include <errno.h>
-#include <time.h>
-#include <string.h>
+#include <stdexcept>
 
 #include <sys/time.h>
-
-#include <stdexcept>
 
 namespace rosmon
 {
 
 Logger::Logger(const std::string& path)
- : m_file(0)
+ : m_file(nullptr)
 {
 	m_file = fopen(path.c_str(), "w");
 	if(!m_file)
@@ -38,7 +36,7 @@ Logger::~Logger()
 void Logger::log(const std::string& source, const std::string& msg)
 {
 	struct timeval tv;
-	gettimeofday(&tv, NULL);
+	gettimeofday(&tv, nullptr);
 
 	struct tm btime;
 	localtime_r(&tv.tv_sec, &btime);

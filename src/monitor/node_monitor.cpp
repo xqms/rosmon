@@ -3,23 +3,23 @@
 
 #include "node_monitor.h"
 
+#include <csignal>
+#include <cstdarg>
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <sstream>
+
+#include <fcntl.h>
+#include <glob.h>
+#include <pty.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
 #include <sys/prctl.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <pty.h>
 #include <wordexp.h>
-#include <glob.h>
-
-#include <sstream>
 
 #include <boost/tokenizer.hpp>
 #include <boost/range.hpp>
@@ -49,9 +49,9 @@ namespace rosmon
 namespace monitor
 {
 
-NodeMonitor::NodeMonitor(const launch::Node::ConstPtr& launchNode, const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh)
- : m_launchNode(launchNode)
- , m_fdWatcher(fdWatcher)
+NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWatcher, ros::NodeHandle& nh)
+ : m_launchNode(std::move(launchNode))
+ , m_fdWatcher(std::move(fdWatcher))
  , m_rxBuffer(4096)
  , m_pid(-1)
  , m_exitCode(0)
@@ -145,7 +145,7 @@ void NodeMonitor::start()
 
 	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
 
-	int pid = forkpty(&m_fd, NULL, NULL, NULL);
+	int pid = forkpty(&m_fd, nullptr, nullptr, nullptr);
 	if(pid < 0)
 		throw error("Could not fork with forkpty(): %s", strerror(errno));
 
@@ -306,7 +306,7 @@ void NodeMonitor::communicate()
 	{
 		int status;
 
-		while(1)
+		while(true)
 		{
 			if(waitpid(m_pid, &status, 0) > 0)
 				break;
@@ -420,10 +420,10 @@ corePatternFormatFinder(std::string::const_iterator begin, std::string::const_it
 	for(; begin != end && begin+1 != end; ++begin)
 	{
 		if(*begin == '%')
-			return boost::iterator_range<std::string::const_iterator>(begin, begin+2);
+			return {begin, begin+2};
 	}
 
-	return boost::iterator_range<std::string::const_iterator>(end, end);
+	return {end, end};
 }
 
 void NodeMonitor::gatherCoredump(int signal)
@@ -509,7 +509,7 @@ void NodeMonitor::gatherCoredump(int signal)
 	log("Determined pattern '%s'", coreGlob.c_str());
 
 	glob_t results;
-	int ret = glob(coreGlob.c_str(), GLOB_NOSORT, 0, &results);
+	int ret = glob(coreGlob.c_str(), GLOB_NOSORT, nullptr, &results);
 
 	if(ret != 0 || results.gl_pathc == 0)
 	{
@@ -550,7 +550,7 @@ void NodeMonitor::launchDebugger()
 		cmd = ss.str();
 	}
 
-	if(getenv("DISPLAY") == 0)
+	if(!getenv("DISPLAY"))
 	{
 		log("No X11 available, run gdb yourself: %s", cmd.c_str());
 	}

@@ -18,14 +18,14 @@ class MonGUI : public rqt_gui_cpp::Plugin
 {
 Q_OBJECT
 public:
-	MonGUI();
-	virtual ~MonGUI();
+	MonGUI() = default;
+	~MonGUI() override = default;
 
-	virtual void initPlugin(qt_gui_cpp::PluginContext &ctx) override;
-	virtual void shutdownPlugin() override;
+	void initPlugin(qt_gui_cpp::PluginContext &ctx) override;
+	void shutdownPlugin() override;
 
-	virtual void saveSettings(qt_gui_cpp::Settings& pluginSettings, qt_gui_cpp::Settings& instanceSettings) const override;
-	virtual void restoreSettings(const qt_gui_cpp::Settings& pluginSettings, const qt_gui_cpp::Settings& instanceSettings) override;
+	void saveSettings(qt_gui_cpp::Settings& pluginSettings, qt_gui_cpp::Settings& instanceSettings) const override;
+	void restoreSettings(const qt_gui_cpp::Settings& pluginSettings, const qt_gui_cpp::Settings& instanceSettings) override;
 private Q_SLOTS:
 	void showContextMenu(const QPoint& point);
 	void setNamespace(const QString& ns);
