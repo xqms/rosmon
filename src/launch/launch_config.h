@@ -54,7 +54,7 @@ public:
 
 	std::string evaluate(const std::string& tpl);
 
-	bool parseBool(const std::string& input, int line);
+	bool parseBool(const std::string& value, int line);
 
 	void clearArguments()
 	{
@@ -64,14 +64,14 @@ public:
 	inline const std::map<std::string, std::string>& arguments() const
 	{ return m_args; }
 
-	void setArg(const std::string& name, const std::string& argument, bool override);
+	void setArg(const std::string& name, const std::string& value, bool override);
 
 	void setEnvironment(const std::string& name, const std::string& value);
 
 	inline const std::map<std::string, std::string> environment() const
 	{ return m_environment; }
 
-	bool shouldSkip(TiXmlElement* element);
+	bool shouldSkip(TiXmlElement* e);
 
 	inline LaunchConfig* config()
 	{ return m_config; }
@@ -131,13 +131,13 @@ public:
 	std::string windowTitle() const
 	{ return m_windowTitle; }
 private:
-	void parse(TiXmlElement* element, ParseContext* context, bool onlyArguments = false);
-	void parseNode(TiXmlElement* element, ParseContext context);
-	void parseParam(TiXmlElement* element, ParseContext context);
-	void parseROSParam(TiXmlElement* element, ParseContext context);
-	void parseInclude(TiXmlElement* element, ParseContext context);
-	void parseArgument(TiXmlElement* element, ParseContext& context);
-	void parseEnv(TiXmlElement* element, ParseContext& context);
+	void parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments = false);
+	void parseNode(TiXmlElement* element, ParseContext ctx);
+	void parseParam(TiXmlElement* element, ParseContext ctx);
+	void parseROSParam(TiXmlElement* element, ParseContext ctx);
+	void parseInclude(TiXmlElement* element, ParseContext ctx);
+	void parseArgument(TiXmlElement* element, ParseContext& ctx);
+	void parseEnv(TiXmlElement* element, ParseContext& ctx);
 
 	void loadYAMLParams(const YAML::Node& n, const std::string& prefix);
 

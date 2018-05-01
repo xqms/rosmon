@@ -18,7 +18,7 @@ namespace rosmon
 Logger::Logger(const std::string& path)
  : m_file(nullptr)
 {
-	m_file = fopen(path.c_str(), "w");
+	m_file = fopen(path.c_str(), "we");
 	if(!m_file)
 	{
 		std::stringstream ss;
@@ -36,9 +36,11 @@ Logger::~Logger()
 void Logger::log(const std::string& source, const std::string& msg)
 {
 	struct timeval tv;
+	memset(&tv, 0, sizeof(tv));
 	gettimeofday(&tv, nullptr);
 
 	struct tm btime;
+	memset(&btime, 0, sizeof(tv));
 	localtime_r(&tv.tv_sec, &btime);
 
 	char timeString[100];

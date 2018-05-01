@@ -71,7 +71,8 @@ static py::object toPython(const std::string& value)
 {
 	if(value == "true" || value == "True")
 		return py::object(true);
-	else if(value == "false" || value == "False")
+
+	if(value == "false" || value == "False")
 		return py::object(false);
 
 	try { return py::object(boost::lexical_cast<int>(value)); }
@@ -174,11 +175,11 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 
 	py::extract<int> asInt(result);
 	if(asInt.check())
-		return boost::lexical_cast<std::string>(asInt());
+		return std::to_string(asInt());
 
 	py::extract<float> asFloat(result);
 	if(asFloat.check())
-		return boost::lexical_cast<std::string>(asFloat());
+		return boost::lexical_cast<std::string>(asFloat()); // to_string has low precision
 
 	throw error("$(eval '%s'): Got unknown python return type", input.c_str());
 }

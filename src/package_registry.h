@@ -24,9 +24,9 @@ public:
 	 * lookups.
 	 *
 	 * @param package ROS package name
-	 * @param file relative path inside the package
+	 * @param name relative path inside the package
 	 **/
-	static std::string findPathToFile(const std::string& package, const std::string& file);
+	static std::string findPathToFile(const std::string& package, const std::string& name);
 };
 
 }

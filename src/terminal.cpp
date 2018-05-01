@@ -10,11 +10,12 @@
 
 #include <cstdio>
 
-#include <boost/regex.hpp>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <boost/tokenizer.hpp>
 
 namespace rosmon
@@ -161,7 +162,7 @@ Terminal::Terminal()
 		}
 
 		char* vte_version = getenv("VTE_VERSION");
-		if(vte_version && atoi(vte_version) >= 3600)
+		if(vte_version && boost::lexical_cast<unsigned int>(vte_version) >= 3600)
 		{
 			m_256colors = true;
 			m_truecolor = true;

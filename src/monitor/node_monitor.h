@@ -189,8 +189,8 @@ private:
 
 	boost::circular_buffer<char> m_rxBuffer;
 
-	int m_pid;
-	int m_fd;
+	int m_pid = -1;
+	int m_fd = -1;
 	int m_exitCode;
 
 	ros::WallTimer m_stopCheckTimer;

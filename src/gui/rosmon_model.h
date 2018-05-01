@@ -14,7 +14,7 @@ class ROSMonModel : public QAbstractListModel
 {
 Q_OBJECT
 public:
-	ROSMonModel(QObject* parent = nullptr);
+	explicit ROSMonModel(QObject* parent = nullptr);
 	~ROSMonModel() override = default;
 
 	int rowCount(const QModelIndex & parent) const override;

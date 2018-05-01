@@ -68,7 +68,7 @@ public:
 		//! Apply the current internal state (colors) on the terminal
 		void apply(Terminal* term);
 	private:
-		void parseSetAttributes(const std::string& attrs);
+		void parseSetAttributes(const std::string& str);
 
 		enum State
 		{

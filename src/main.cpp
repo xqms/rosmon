@@ -29,7 +29,7 @@ namespace fs = boost::filesystem;
 
 bool g_shouldStop = false;
 
-static fs::path findFile(const fs::path& base, const std::string name)
+static fs::path findFile(const fs::path& base, const std::string& name)
 {
 	for(fs::directory_iterator it(base); it != fs::directory_iterator(); ++it)
 	{
@@ -214,6 +214,7 @@ int main(int argc, char** argv)
 
 			time_t t = time(nullptr);
 			tm currentTime;
+			memset(&currentTime, 0, sizeof(currentTime));
 			localtime_r(&t, &currentTime);
 
 			char buf[256];

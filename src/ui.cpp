@@ -194,9 +194,9 @@ void UI::drawStatusLine()
 	g_statusLines = std::max(lines, g_statusLines);
 }
 
-void UI::log(const std::string& channel, const std::string& log)
+void UI::log(const std::string& channel, const std::string& str)
 {
-	std::string clean = log;
+	std::string clean = str;
 
 	auto it = m_nodeColorMap.find(channel);
 

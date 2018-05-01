@@ -99,30 +99,33 @@ bool ParseContext::parseBool(const std::string& value, int line)
 
 	if(expansion == "1" || expansion == "true")
 		return true;
-	else if(expansion == "0" || expansion == "false")
+
+	if(expansion == "0" || expansion == "false")
 		return false;
-	else
-		throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), line, expansion.c_str());
+
+	throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), line, expansion.c_str());
 }
 
 bool ParseContext::shouldSkip(TiXmlElement* e)
 {
 	const char* if_cond = e->Attribute("if");
-	if(if_cond)
+	const char* unless_cond = e->Attribute("unless");
+
+	if(if_cond && unless_cond)
 	{
-		if(parseBool(if_cond, e->Row()))
-			return false;
-		else
-			return true;
+		throw error("%s:%d: both if= and unless= specified, don't know what to do",
+			filename().c_str(), e->Row()
+		);
 	}
 
-	const char* unless_cond = e->Attribute("unless");
+	if(if_cond)
+	{
+		return !parseBool(if_cond, e->Row());
+	}
+
 	if(unless_cond)
 	{
-		if(parseBool(unless_cond, e->Row()))
-			return true;
-		else
-			return false;
+		return parseBool(unless_cond, e->Row());
 	}
 
 	return false;
@@ -485,6 +488,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 				close(pipe_fd[1]);
 
 				timeval timeout;
+				memset(&timeout, 0, sizeof(timeout));
 				timeout.tv_sec = 0;
 				timeout.tv_usec = 500 * 1000;
 
@@ -673,9 +677,9 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const YAML::Node& n)
 	// Check if a YAML tag is present
 	if(n.Tag() == "!!int")
 		return XmlRpc::XmlRpcValue(n.as<int>());
-	else if(n.Tag() == "!!float")
+	if(n.Tag() == "!!float")
 		return XmlRpc::XmlRpcValue(n.as<double>());
-	else if(n.Tag() == "!!bool")
+	if(n.Tag() == "!!bool")
 		return XmlRpc::XmlRpcValue(n.as<bool>());
 
 	// Otherwise, we simply have to try things one by one...
