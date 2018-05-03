@@ -83,9 +83,10 @@ static std::string simplifyWhitespace(const std::string& input)
 
 std::string ParseContext::evaluate(const std::string& tpl)
 {
+	std::string simplified = simplifyWhitespace(tpl);
 	try
 	{
-		return parseSubstitutionArgs(tpl, *this);
+		return parseSubstitutionArgs(simplified, *this);
 	}
 	catch(SubstitutionException& e)
 	{
@@ -395,7 +396,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	if(value)
 	{
 		const char* type = element->Attribute("type");
-		std::string fullValue = ctx.evaluate(simplifyWhitespace(value));
+		std::string fullValue = ctx.evaluate(value);
 
 		XmlRpc::XmlRpcValue result;
 
@@ -789,12 +790,12 @@ void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
 
 	if(value)
 	{
-		std::string fullValue = ctx.evaluate(simplifyWhitespace(value));
+		std::string fullValue = ctx.evaluate(value);
 		ctx.setArg(name, fullValue, true);
 	}
 	else if(def)
 	{
-		std::string fullValue = ctx.evaluate(simplifyWhitespace(def));
+		std::string fullValue = ctx.evaluate(def);
 		ctx.setArg(name, fullValue, false);
 	}
 	else
