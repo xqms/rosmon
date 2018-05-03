@@ -24,5 +24,8 @@
 	<node name="test1" pkg="rosmon" type="test_node.py">
 		<remap from="~input" to="/test_input" />
 		<remap from="~output" to="/test_output" />
+
+		<param name="private_param1" value="hello_world" />
+		<param name="~private_param2" value="hello_world" />
 	</node>
 </launch>

@@ -80,6 +80,9 @@ class BasicTest(unittest.TestCase):
 		self.assertEqual(rospy.get_param("eval_argexpr"), True)
 		self.assertAlmostEqual(rospy.get_param("eval_radius_pi"), 0.5 * math.pi)
 
+		self.assertEqual(rospy.get_param("/test1/private_param1"), "hello_world")
+		self.assertEqual(rospy.get_param("/test1/private_param2"), "hello_world")
+
 	def test_arg_passing(self):
 		self.assertEqual(rospy.get_param("test_argument"), 123)
 
