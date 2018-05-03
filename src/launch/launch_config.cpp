@@ -5,6 +5,7 @@
 #include "substitution.h"
 
 #include <ros/package.h>
+#include <ros/names.h>
 
 #include <cctype>
 #include <fstream>
@@ -372,11 +373,26 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		);
 	}
 
-	std::string fullName;
-	if(name[0] == '/')
-		fullName = ctx.evaluate(name);
-	else
-		fullName = ctx.prefix() + ctx.evaluate(name);
+	std::string fullName = ctx.evaluate(name);
+
+	// Expand relative paths
+	if(fullName[0] != '/')
+	{
+		// We silently ignore "~" at the beginning of the name
+		if(fullName[0] == '~')
+			fullName = fullName.substr(1);
+
+		fullName = ctx.prefix() + fullName;
+	}
+
+	std::string errorStr;
+	if(!ros::names::validate(fullName, errorStr))
+	{
+		throw error("File %s:%d: expanded parameter name '%s' is invalid: %s\n",
+			ctx.filename().c_str(), element->Row(),
+			fullName.c_str(), errorStr.c_str()
+		);
+	}
 
 	if(value)
 	{
