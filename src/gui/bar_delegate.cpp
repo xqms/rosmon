@@ -15,10 +15,6 @@ BarDelegate::BarDelegate(QObject* parent)
 {
 }
 
-BarDelegate::~BarDelegate()
-{
-}
-
 void BarDelegate::setRange(double min, double max)
 {
 	m_min = min;

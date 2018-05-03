@@ -3,23 +3,23 @@
 
 #include "node_monitor.h"
 
+#include <cerrno>
+#include <csignal>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <sstream>
+
+#include <fcntl.h>
+#include <glob.h>
+#include <pty.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
 #include <sys/prctl.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <pty.h>
 #include <wordexp.h>
-#include <glob.h>
-
-#include <sstream>
 
 #include <boost/tokenizer.hpp>
 #include <boost/range.hpp>
@@ -49,11 +49,10 @@ namespace rosmon
 namespace monitor
 {
 
-NodeMonitor::NodeMonitor(const launch::Node::ConstPtr& launchNode, const FDWatcher::Ptr& fdWatcher, ros::NodeHandle& nh)
- : m_launchNode(launchNode)
- , m_fdWatcher(fdWatcher)
+NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWatcher, ros::NodeHandle& nh)
+ : m_launchNode(std::move(launchNode))
+ , m_fdWatcher(std::move(fdWatcher))
  , m_rxBuffer(4096)
- , m_pid(-1)
  , m_exitCode(0)
  , m_command(CMD_STOP) // we start in stopped state
  , m_restarting(false)
@@ -64,7 +63,7 @@ NodeMonitor::NodeMonitor(const launch::Node::ConstPtr& launchNode, const FDWatch
 	if(!g_coreIsRelative_valid)
 	{
 		char core_pattern[256];
-		int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY);
+		int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY | O_CLOEXEC);
 		if(core_fd < 0)
 		{
 			log("could not open /proc/sys/kernel/core_pattern: %s", strerror(errno));
@@ -145,7 +144,7 @@ void NodeMonitor::start()
 
 	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
 
-	int pid = forkpty(&m_fd, NULL, NULL, NULL);
+	int pid = forkpty(&m_fd, nullptr, nullptr, nullptr);
 	if(pid < 0)
 		throw error("Could not fork with forkpty(): %s", strerror(errno));
 
@@ -208,7 +207,7 @@ void NodeMonitor::start()
 		if(execvp(path, ptrs.data()) != 0)
 		{
 			std::stringstream ss;
-			for(auto part : cmd)
+			for(const auto& part : cmd)
 				ss << part << " ";
 
 			fprintf(stderr, "Could not execute '%s': %s\n", ss.str().c_str(), strerror(errno));
@@ -289,12 +288,14 @@ NodeMonitor::State NodeMonitor::state() const
 {
 	if(running())
 		return STATE_RUNNING;
-	else if(m_restarting)
+
+	if(m_restarting)
 		return STATE_WAITING;
-	else if(m_exitCode == 0)
+
+	if(m_exitCode == 0)
 		return STATE_IDLE;
-	else
-		return STATE_CRASHED;
+
+	return STATE_CRASHED;
 }
 
 void NodeMonitor::communicate()
@@ -306,17 +307,15 @@ void NodeMonitor::communicate()
 	{
 		int status;
 
-		while(1)
+		while(true)
 		{
 			if(waitpid(m_pid, &status, 0) > 0)
 				break;
-			else
-			{
-				if(errno == EINTR || errno == EAGAIN)
-					continue;
 
-				throw error("%s: Could not waitpid(): %s", m_launchNode->name().c_str(), strerror(errno));
-			}
+			if(errno == EINTR || errno == EAGAIN)
+				continue;
+
+			throw error("%s: Could not waitpid(): %s", m_launchNode->name().c_str(), strerror(errno));
 		}
 
 		if(WIFEXITED(status))
@@ -420,16 +419,16 @@ corePatternFormatFinder(std::string::const_iterator begin, std::string::const_it
 	for(; begin != end && begin+1 != end; ++begin)
 	{
 		if(*begin == '%')
-			return boost::iterator_range<std::string::const_iterator>(begin, begin+2);
+			return {begin, begin+2};
 	}
 
-	return boost::iterator_range<std::string::const_iterator>(end, end);
+	return {end, end};
 }
 
 void NodeMonitor::gatherCoredump(int signal)
 {
 	char core_pattern[256];
-	int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY);
+	int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY | O_CLOEXEC);
 	if(core_fd < 0)
 	{
 		log("could not open /proc/sys/kernel/core_pattern: %s", strerror(errno));
@@ -462,22 +461,23 @@ void NodeMonitor::gatherCoredump(int signal)
 			case '%':
 				return "%";
 			case 'p':
-				return boost::lexical_cast<std::string>(m_pid);
+				return std::to_string(m_pid);
 			case 'u':
-				return boost::lexical_cast<std::string>(getuid());
+				return std::to_string(getuid());
 			case 'g':
-				return boost::lexical_cast<std::string>(getgid());
+				return std::to_string(getgid());
 			case 's':
-				return boost::lexical_cast<std::string>(signal);
+				return std::to_string(signal);
 			case 't':
 				return "*"; // No chance
 			case 'h':
 			{
 				utsname uts;
-				if(uname(&uts) == 0)
-					return uts.nodename;
-				else
+				memset(&uts, 0, sizeof(uts));
+				if(uname(&uts) != 0)
 					return "*";
+
+				return uts.nodename;
 			}
 			case 'e':
 				return m_launchNode->type().substr(0, TASK_COMM_LEN-1);
@@ -490,10 +490,11 @@ void NodeMonitor::gatherCoredump(int signal)
 			case 'c':
 			{
 				rlimit limit;
+				memset(&limit, 0, sizeof(limit));
 				getrlimit(RLIMIT_CORE, &limit);
 
 				// core limit is set to the maximum above
-				return boost::lexical_cast<std::string>(limit.rlim_max);
+				return std::to_string(limit.rlim_max);
 			}
 			default:
 				return "*";
@@ -509,7 +510,8 @@ void NodeMonitor::gatherCoredump(int signal)
 	log("Determined pattern '%s'", coreGlob.c_str());
 
 	glob_t results;
-	int ret = glob(coreGlob.c_str(), GLOB_NOSORT, 0, &results);
+	memset(&results, 0, sizeof(results));
+	int ret = glob(coreGlob.c_str(), GLOB_NOSORT, nullptr, &results);
 
 	if(ret != 0 || results.gl_pathc == 0)
 	{
@@ -550,7 +552,7 @@ void NodeMonitor::launchDebugger()
 		cmd = ss.str();
 	}
 
-	if(getenv("DISPLAY") == 0)
+	if(!getenv("DISPLAY"))
 	{
 		log("No X11 available, run gdb yourself: %s", cmd.c_str());
 	}

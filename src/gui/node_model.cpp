@@ -26,10 +26,6 @@ NodeModel::NodeModel(ros::NodeHandle& nh, QObject* parent)
 	);
 }
 
-NodeModel::~NodeModel()
-{
-}
-
 void NodeModel::setNamespace(const QString& ns)
 {
 	m_namespace = ns;

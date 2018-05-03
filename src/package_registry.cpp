@@ -69,8 +69,8 @@ std::string PackageRegistry::getPath(const std::string& package)
 		g_cache[package] = path;
 		return path;
 	}
-	else
-		return it->second;
+
+	return it->second;
 }
 
 static std::string getExecutableInPath(const fs::path& path, const std::string& name)

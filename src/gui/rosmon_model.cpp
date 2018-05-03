@@ -16,13 +16,9 @@ ROSMonModel::ROSMonModel(QObject* parent)
 {
 	m_data << "[auto]";
 
-	QTimer* updateTimer = new QTimer(this);
+	auto updateTimer = new QTimer(this);
 	connect(updateTimer, SIGNAL(timeout()), SLOT(updateData()));
 	updateTimer->start(2000);
-}
-
-ROSMonModel::~ROSMonModel()
-{
 }
 
 int ROSMonModel::rowCount(const QModelIndex& parent) const

@@ -8,13 +8,14 @@
 #include <term.h>
 #include <curses.h>
 
-#include <stdio.h>
+#include <cstdio>
 
-#include <boost/regex.hpp>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <boost/tokenizer.hpp>
 
 namespace rosmon
@@ -38,7 +39,7 @@ void Terminal::Parser::parseSetAttributes(const std::string& str)
 	for(Tokenizer::iterator it = tok.begin(); it != tok.end(); ++it)
 	{
 		errno = 0;
-		char* endptr = const_cast<char*>(it->c_str());
+		auto endptr = const_cast<char*>(it->c_str());
 		int code = strtoul(it->c_str(), &endptr, 10);
 
 		if(errno != 0 || *endptr != 0)
@@ -123,7 +124,7 @@ Terminal::Terminal()
 {
 	// Override using environment variable
 	char* overrideMode = getenv("ROSMON_COLOR_MODE");
-	const char* termOverride = 0;
+	const char* termOverride = nullptr;
 	if(overrideMode)
 	{
 		if(strcasecmp(overrideMode, "truecolor") == 0)
@@ -161,7 +162,7 @@ Terminal::Terminal()
 		}
 
 		char* vte_version = getenv("VTE_VERSION");
-		if(vte_version && atoi(vte_version) >= 3600)
+		if(vte_version && boost::lexical_cast<unsigned int>(vte_version) >= 3600)
 		{
 			m_256colors = true;
 			m_truecolor = true;
@@ -205,10 +206,6 @@ Terminal::Terminal()
 	m_upStr = tigetstr("cuu");
 
 	m_boldStr = tigetstr("bold");
-}
-
-Terminal::~Terminal()
-{
 }
 
 bool Terminal::has256Colors() const

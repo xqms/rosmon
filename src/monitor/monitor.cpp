@@ -6,10 +6,9 @@
 #include <ros/package.h>
 #include <ros/node_handle.h>
 
+#include <cstdarg>
+#include <cstdio>
 #include <fstream>
-
-#include <stdarg.h>
-#include <stdio.h>
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -24,12 +23,12 @@ namespace rosmon
 namespace monitor
 {
 
-Monitor::Monitor(const launch::LaunchConfig::ConstPtr& config, const FDWatcher::Ptr& watcher)
- : m_config(config)
- , m_fdWatcher(watcher)
+Monitor::Monitor(launch::LaunchConfig::ConstPtr config, FDWatcher::Ptr watcher)
+ : m_config(std::move(config))
+ , m_fdWatcher(std::move(watcher))
  , m_ok(true)
 {
-	for(auto& launchNode : config->nodes())
+	for(auto& launchNode : m_config->nodes())
 	{
 		auto node = std::make_shared<NodeMonitor>(launchNode, m_fdWatcher, m_nh);
 
@@ -53,10 +52,6 @@ Monitor::Monitor(const launch::LaunchConfig::ConstPtr& config, const FDWatcher::
 		ros::WallDuration(1.0),
 		boost::bind(&Monitor::updateStats, this)
 	);
-}
-
-Monitor::~Monitor()
-{
 }
 
 void Monitor::setParameters()

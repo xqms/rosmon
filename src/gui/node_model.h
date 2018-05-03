@@ -28,14 +28,14 @@ public:
 		COL_COUNT
 	};
 
-	explicit NodeModel(ros::NodeHandle& nh, QObject* parent = 0);
-	virtual ~NodeModel();
+	explicit NodeModel(ros::NodeHandle& nh, QObject* parent = nullptr);
+	~NodeModel() override = default;
 
-	virtual int rowCount(const QModelIndex & parent) const override;
-	virtual int columnCount(const QModelIndex & parent) const override;
-	virtual QVariant data(const QModelIndex & index, int role) const override;
+	int rowCount(const QModelIndex & parent) const override;
+	int columnCount(const QModelIndex & parent) const override;
+	QVariant data(const QModelIndex & index, int role) const override;
 
-	virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+	QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 	inline QString namespaceString() const
 	{ return m_namespace; }

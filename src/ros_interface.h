@@ -17,7 +17,6 @@ class ROSInterface
 {
 public:
 	ROSInterface(monitor::Monitor* monitor);
-	~ROSInterface();
 
 	void shutdown();
 private:

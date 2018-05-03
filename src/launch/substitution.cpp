@@ -10,7 +10,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 
-#include <stdarg.h>
+#include <cstdarg>
 
 namespace fs = boost::filesystem;
 
@@ -19,8 +19,8 @@ namespace rosmon
 namespace launch
 {
 
-typedef std::function<std::string(const std::string&, const std::string&)> Handler;
-typedef std::map<std::string, Handler> HandlerMap;
+using Handler = std::function<std::string(const std::string&, const std::string&)>;
+using HandlerMap = std::map<std::string, Handler>;
 
 enum ParserState
 {
@@ -91,8 +91,8 @@ namespace substitutions
 		const char* envval = getenv(name.c_str());
 		if(envval)
 			return envval;
-		else
-			return defaultValue;
+
+		return defaultValue;
 	}
 
 	std::string find_stupid(const std::string& name)
@@ -156,7 +156,8 @@ static std::string parseOneElement(const std::string& input, const HandlerMap& h
 						*found = true;
 						return ss.str();
 					}
-					else if(strict)
+
+					if(strict)
 					{
 						throw error("Unknown substitution arg '%s'", name.c_str());
 					}

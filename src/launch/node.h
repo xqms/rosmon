@@ -23,8 +23,7 @@ public:
 	typedef std::shared_ptr<Node> Ptr;
 	typedef std::shared_ptr<const Node> ConstPtr;
 
-	Node(const std::string& name, const std::string& package, const std::string& type);
-	~Node();
+	Node(std::string name, std::string package, std::string type);
 
 	void addRemapping(const std::string& from, const std::string& to);
 	void addExtraArguments(const std::string& argString);

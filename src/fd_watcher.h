@@ -19,7 +19,6 @@ public:
 	typedef boost::shared_ptr<FDWatcher> Ptr;
 
 	FDWatcher();
-	~FDWatcher();
 
 	void registerFD(int fd, const boost::function<void(int)>& cb);
 	void removeFD(int fd);

@@ -21,10 +21,6 @@ ROSInterface::ROSInterface(monitor::Monitor* monitor)
 	m_srv_startStop = m_nh.advertiseService("start_stop", &ROSInterface::handleStartStop, this);
 }
 
-ROSInterface::~ROSInterface()
-{
-}
-
 void ROSInterface::update()
 {
 	rosmon::State state;

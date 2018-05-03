@@ -42,7 +42,7 @@ namespace substitutions
 	std::string find_stupid(const std::string& name);
 }
 
-std::string parseSubstitutionArgs(const std::string& string, ParseContext& context);
+std::string parseSubstitutionArgs(const std::string& input, ParseContext& context);
 
 }
 }

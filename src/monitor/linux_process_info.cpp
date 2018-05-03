@@ -4,8 +4,8 @@
 #include "linux_process_info.h"
 
 #include <unistd.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 namespace rosmon
 {
