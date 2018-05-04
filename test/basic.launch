@@ -27,6 +27,12 @@
 	<param name="multiple_lines2" command="echo -n first_line
 	second_line" />
 
+	<!-- Test YAML params -->
+<rosparam subst_value="true">
+yaml:
+  radius: $(arg radius)
+</rosparam>
+
 	<node name="test1" pkg="rosmon" type="test_node.py">
 		<remap from="~input" to="/test_input" />
 		<remap from="~output" to="/test_output" />

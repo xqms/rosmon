@@ -87,6 +87,9 @@ class BasicTest(unittest.TestCase):
 		self.assertEqual(rospy.get_param("multiple_lines1"), "first_line second_line")
 		self.assertEqual(rospy.get_param("multiple_lines2"), "first_line second_line")
 
+	def test_yaml(self):
+		self.assertAlmostEqual(rospy.get_param("yaml/radius"), 0.5)
+
 	def test_arg_passing(self):
 		self.assertEqual(rospy.get_param("test_argument"), 123)
 
