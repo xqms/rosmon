@@ -81,11 +81,17 @@ static std::string simplifyWhitespace(const std::string& input)
 	return output;
 }
 
-std::string ParseContext::evaluate(const std::string& tpl)
+std::string ParseContext::evaluate(const std::string& tpl, bool simplifyWhitespace)
 {
+	std::string simplified;
+	if(simplifyWhitespace)
+		simplified = rosmon::launch::simplifyWhitespace(tpl);
+	else
+		simplified = tpl;
+
 	try
 	{
-		return parseSubstitutionArgs(tpl, *this);
+		return parseSubstitutionArgs(simplified, *this);
 	}
 	catch(SubstitutionException& e)
 	{
@@ -395,7 +401,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	if(value)
 	{
 		const char* type = element->Attribute("type");
-		std::string fullValue = ctx.evaluate(simplifyWhitespace(value));
+		std::string fullValue = ctx.evaluate(value);
 
 		XmlRpc::XmlRpcValue result;
 
@@ -585,9 +591,17 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 
 		const char* subst_value = element->Attribute("subst_value");
 		if(subst_value && strcmp(subst_value, "true") == 0)
-			contents = ctx.evaluate(contents);
+			contents = ctx.evaluate(contents, false);
 
-		YAML::Node n = YAML::Load(contents);
+		YAML::Node n;
+		try
+		{
+			n = YAML::Load(contents);
+		}
+		catch(YAML::ParserException& e)
+		{
+			throw error("%s:%d: Could not parse YAML: %s", ctx.filename().c_str(), element->Row(), e.what());
+		}
 
 		const char* ns = element->Attribute("ns");
 		if(ns)
@@ -789,12 +803,12 @@ void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
 
 	if(value)
 	{
-		std::string fullValue = ctx.evaluate(simplifyWhitespace(value));
+		std::string fullValue = ctx.evaluate(value);
 		ctx.setArg(name, fullValue, true);
 	}
 	else if(def)
 	{
-		std::string fullValue = ctx.evaluate(simplifyWhitespace(def));
+		std::string fullValue = ctx.evaluate(def);
 		ctx.setArg(name, fullValue, false);
 	}
 	else
