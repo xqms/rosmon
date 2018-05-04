@@ -115,7 +115,8 @@ void UI::drawStatusLine()
 	for(auto& node : m_monitor->nodes())
 	{
 		char label[NODE_WIDTH+2];
-		int padding = std::max<int>(0, (NODE_WIDTH - node->name().length())/2);
+		auto nodeNameLen = static_cast<int>(node->name().length());
+		int padding = std::max<int>(0, (NODE_WIDTH - nodeNameLen)/2);
 
 		for(int i = 0; i < padding; ++i)
 			label[i] = ' ';
