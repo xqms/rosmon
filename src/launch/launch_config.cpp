@@ -81,6 +81,22 @@ static std::string simplifyWhitespace(const std::string& input)
 	return output;
 }
 
+/**
+ * @brief Check if string is whitespace only (includes '\n')
+ **/
+static bool isOnlyWhitespace(const std::string& input)
+{
+	for(const char& c: input)
+	{
+		// see http://en.cppreference.com/w/cpp/string/byte/isspace
+		// for reason for casting
+		if(!std::isspace(static_cast<unsigned char>(c)))
+			return false;
+	}
+
+	return true;
+}
+
 std::string ParseContext::evaluate(const std::string& tpl, bool simplifyWhitespace)
 {
 	std::string simplified;
@@ -587,7 +603,15 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 			contents = buffer.str();
 		}
 		else
-			contents = element->GetText();
+		{
+			if(const char* t = element->GetText())
+				contents = t;
+		}
+
+		// roslaunch silently ignores empty files (which are not valid YAML),
+		// so do the same here.
+		if(isOnlyWhitespace(contents))
+			return;
 
 		const char* subst_value = element->Attribute("subst_value");
 		if(subst_value && strcmp(subst_value, "true") == 0)
