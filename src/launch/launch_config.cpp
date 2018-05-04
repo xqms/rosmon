@@ -81,9 +81,14 @@ static std::string simplifyWhitespace(const std::string& input)
 	return output;
 }
 
-std::string ParseContext::evaluate(const std::string& tpl)
+std::string ParseContext::evaluate(const std::string& tpl, bool simplifyWhitespace)
 {
-	std::string simplified = simplifyWhitespace(tpl);
+	std::string simplified;
+	if(simplifyWhitespace)
+		simplified = rosmon::launch::simplifyWhitespace(tpl);
+	else
+		simplified = tpl;
+
 	try
 	{
 		return parseSubstitutionArgs(simplified, *this);
@@ -586,9 +591,17 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 
 		const char* subst_value = element->Attribute("subst_value");
 		if(subst_value && strcmp(subst_value, "true") == 0)
-			contents = ctx.evaluate(contents);
+			contents = ctx.evaluate(contents, false);
 
-		YAML::Node n = YAML::Load(contents);
+		YAML::Node n;
+		try
+		{
+			n = YAML::Load(contents);
+		}
+		catch(YAML::ParserException& e)
+		{
+			throw error("%s:%d: Could not parse YAML: %s", ctx.filename().c_str(), element->Row(), e.what());
+		}
 
 		const char* ns = element->Attribute("ns");
 		if(ns)

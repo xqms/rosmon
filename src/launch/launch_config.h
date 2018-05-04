@@ -52,7 +52,7 @@ public:
 		return ret;
 	}
 
-	std::string evaluate(const std::string& tpl);
+	std::string evaluate(const std::string& tpl, bool simplifyWhitespace = true);
 
 	bool parseBool(const std::string& value, int line);
 
