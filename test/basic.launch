@@ -21,6 +21,12 @@
 	<arg name="test_argument" default="123" />
 	<include file="$(dirname)/basic_sub.launch" pass_all_args="true" />
 
+	<!-- Test params over multiple lines -->
+	<param name="multiple_lines1" value="first_line
+	second_line" />
+	<param name="multiple_lines2" command="echo -n first_line
+	second_line" />
+
 	<node name="test1" pkg="rosmon" type="test_node.py">
 		<remap from="~input" to="/test_input" />
 		<remap from="~output" to="/test_output" />
