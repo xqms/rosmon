@@ -137,6 +137,17 @@ bool ParseContext::shouldSkip(TiXmlElement* e)
 	return false;
 }
 
+
+bool ParseContext::checkEmptyString(std::string str)
+{
+	for(char& c : str) {
+		if(!isspace(c) or c!='\n')
+			return false;
+	}
+	return true;
+}
+
+
 void ParseContext::setArg(const std::string& name, const std::string& value, bool override)
 {
 	auto it = m_args.find(name);
@@ -585,6 +596,13 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 			buffer << stream.rdbuf();
 
 			contents = buffer.str();
+
+			if(ctx.checkEmptyString(contents))
+			{
+				printf("File %s is empty, skipping...\n", fullFile.c_str());
+				return;
+			}
+
 		}
 		else
 			contents = element->GetText();

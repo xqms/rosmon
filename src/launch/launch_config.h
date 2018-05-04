@@ -56,6 +56,8 @@ public:
 
 	bool parseBool(const std::string& value, int line);
 
+	bool checkEmptyString(std::string str);
+
 	void clearArguments()
 	{
 		m_args.clear();
