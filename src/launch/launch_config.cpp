@@ -414,6 +414,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	const char* value = element->Attribute("value");
 	const char* command = element->Attribute("command");
 	const char* textfile = element->Attribute("textfile");
+	const char* binfile = element->Attribute("binfile");
 	const char* type = element->Attribute("type");
 
 	// Filename and line for error reporting
@@ -481,6 +482,32 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 			m_paramJobs.erase(fullName);
 		}
 
+		return;
+	}
+
+	if(binfile)
+	{
+		// Also simple - binary files are always mapped to base64 XmlRpcValue.
+
+		std::string fullFile = ctx.evaluate(binfile);
+
+		m_paramJobs[fullName] = std::async(std::launch::deferred,
+			[=]() -> XmlRpc::XmlRpcValue {
+				std::ifstream stream(fullFile, std::ios::binary | std::ios::ate);
+				if(stream.bad())
+					throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
+
+				std::vector<char> data(stream.tellg(), 0);
+				stream.seekg(0, std::ios::beg);
+
+				stream.read(data.data(), data.size());
+
+				// Creates base64 XmlRpcValue
+				return {data.data(), static_cast<int>(data.size())};
+			}
+		);
+
+		m_params.erase(fullName);
 		return;
 	}
 
@@ -590,7 +617,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	}
 	else
 	{
-		throw error("%s:%d: <param> needs either command, value or textfile",
+		throw error("%s:%d: <param> needs either command, value, binfile, or textfile",
 			ctx.filename().c_str(), element->Row()
 		);
 	}
