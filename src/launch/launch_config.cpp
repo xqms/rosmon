@@ -430,6 +430,14 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		);
 	}
 
+	int numCommands = (value ? 1 : 0) + (command ? 1 : 0) + (textfile ? 1 : 0) + (binfile ? 1 : 0);
+	if(numCommands > 1) // == 0 is checked below, don't duplicate.
+	{
+		throw error("File %s:%d: <param> tags need exactly one of value=, command=, textfile=, binfile= attributes.",
+			filename.c_str(), line
+		);
+	}
+
 	std::string fullName = ctx.evaluate(name);
 
 	// Expand relative paths
