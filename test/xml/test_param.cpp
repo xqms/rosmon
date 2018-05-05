@@ -161,6 +161,16 @@ TEST_CASE("param command", "[param]")
 	checkTypedParam<bool>(params, "/yaml_param/test_param", XmlRpc::XmlRpcValue::TypeBoolean, true);
 }
 
+TEST_CASE("param failing command", "[param]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(<launch><param name="test" command="false" /></launch>)EOF");
+	REQUIRE_THROWS_AS(
+		config.evaluateParameters(),
+		LaunchConfig::ParseException
+	);
+}
+
 TEST_CASE("param textfile", "[param]")
 {
 	LaunchConfig config;
@@ -205,4 +215,74 @@ TEST_CASE("param binfile", "[param]")
 	REQUIRE(expectedData.size() == data.size());
 	for(std::size_t i = 0; i < expectedData.size(); ++i)
 		REQUIRE(data[i] == expectedData[i]);
+}
+
+TEST_CASE("scoped params", "[param]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<param name="global/param" value="abc" />
+			<param name="/global/param2" value="def" />
+
+			<group ns="namespace">
+				<param name="test" value="val1" />
+				<param name="/test2" value="val2" />
+			</group>
+
+			<node name="test_node" pkg="rosmon" type="abort">
+				<param name="private" value="val3" />
+				<param name="~private2" value="val4" />
+			</node>
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto& params = config.parameters();
+
+	checkTypedParam<std::string>(params, "/global/param", XmlRpc::XmlRpcValue::TypeString, "abc");
+	checkTypedParam<std::string>(params, "/global/param2", XmlRpc::XmlRpcValue::TypeString, "def");
+
+	checkTypedParam<std::string>(params, "/namespace/test", XmlRpc::XmlRpcValue::TypeString, "val1");
+	checkTypedParam<std::string>(params, "/test2", XmlRpc::XmlRpcValue::TypeString, "val2");
+
+	checkTypedParam<std::string>(params, "/test_node/private", XmlRpc::XmlRpcValue::TypeString, "val3");
+	checkTypedParam<std::string>(params, "/test_node/private2", XmlRpc::XmlRpcValue::TypeString, "val4");
+}
+
+TEST_CASE("wrong param types", "[param]")
+{
+	REQUIRE_THROWS_AS(
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="abc" type="int" /></launch>)EOF"),
+		LaunchConfig::ParseException
+	);
+
+	REQUIRE_THROWS_AS(
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="0.5" type="int" /></launch>)EOF"),
+		LaunchConfig::ParseException
+	);
+
+	REQUIRE_THROWS_AS(
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="0.5" type="bool" /></launch>)EOF"),
+		LaunchConfig::ParseException
+	);
+
+	REQUIRE_THROWS_AS(
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="0.5" type="unknown_type" /></launch>)EOF"),
+		LaunchConfig::ParseException
+	);
+}
+
+TEST_CASE("invalid param input combinations", "[param]")
+{
+	REQUIRE_THROWS_AS(
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="abc" command="echo -ne test" /></launch>)EOF"),
+		LaunchConfig::ParseException
+	);
+
+	REQUIRE_THROWS_AS(
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" textfile="$(find rosmon)/test/textfile.txt" command="echo -ne test" /></launch>)EOF"),
+		LaunchConfig::ParseException
+	);
 }
