@@ -161,4 +161,48 @@ TEST_CASE("param command", "[param]")
 	checkTypedParam<bool>(params, "/yaml_param/test_param", XmlRpc::XmlRpcValue::TypeBoolean, true);
 }
 
+TEST_CASE("param textfile", "[param]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<param name="test" textfile="$(find rosmon)/test/textfile.txt" />
+		</launch>
+	)EOF");
 
+	config.evaluateParameters();
+
+	auto& params = config.parameters();
+
+	checkTypedParam<std::string>(params, "/test", XmlRpc::XmlRpcValue::TypeString, "hello_world");
+}
+
+TEST_CASE("param binfile", "[param]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<param name="test" binfile="$(find rosmon)/test/textfile.txt" />
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto& params = config.parameters();
+
+	CAPTURE(params);
+
+	auto it = params.find("/test");
+	REQUIRE(it != params.end());
+
+	XmlRpc::XmlRpcValue value = it->second;
+
+	REQUIRE(value.getType() == XmlRpc::XmlRpcValue::TypeBase64);
+
+	std::string expectedData = "hello_world";
+	auto& data = static_cast<XmlRpc::XmlRpcValue::BinaryData&>(value);
+
+	REQUIRE(expectedData.size() == data.size());
+	for(std::size_t i = 0; i < expectedData.size(); ++i)
+		REQUIRE(data[i] == expectedData[i]);
+}
