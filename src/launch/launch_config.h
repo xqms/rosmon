@@ -144,6 +144,7 @@ private:
 
 	void loadYAMLParams(const YAML::Node& n, const std::string& prefix);
 
+	XmlRpc::XmlRpcValue paramToXmlRpc(const std::string& filename, int line, const std::string& value, const std::string& type = "");
 	XmlRpc::XmlRpcValue yamlToXmlRpc(const YAML::Node& n);
 
 	ParseContext m_rootContext;

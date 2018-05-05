@@ -414,10 +414,15 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	const char* value = element->Attribute("value");
 	const char* command = element->Attribute("command");
 	const char* textfile = element->Attribute("textfile");
+	const char* type = element->Attribute("type");
+
+	// Filename and line for error reporting
+	std::string filename = ctx.filename();
+	int line = element->Row();
 
 	if(!name)
 	{
-		throw error("File %s:%d: name and value are mandatory for param elements\n",
+		throw error("File %s:%d: name is mandatory for param elements\n",
 			ctx.filename().c_str(), element->Row()
 		);
 	}
@@ -443,68 +448,21 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		);
 	}
 
+	std::string fullType;
+	if(type)
+		fullType = ctx.evaluate(type);
+
 	if(value)
 	{
-		const char* type = element->Attribute("type");
-		std::string fullValue = ctx.evaluate(value);
-
-		XmlRpc::XmlRpcValue result;
-
-		if(type)
-		{
-			// Fixed type.
-
-			try
-			{
-				if(strcmp(type, "int") == 0)
-					result = boost::lexical_cast<int>(fullValue);
-				else if(strcmp(type, "double") == 0)
-					result = boost::lexical_cast<double>(fullValue);
-				else if(strcmp(type, "bool") == 0 || strcmp(type, "boolean") == 0)
-				{
-					if(fullValue == "true")
-					{
-						// tricky: there is no operator= for bool, see #3
-						result = XmlRpc::XmlRpcValue(true);
-					}
-					else if(fullValue == "false")
-						result = XmlRpc::XmlRpcValue(false);
-					else
-					{
-						throw error("%s:%d: invalid boolean value '%s'",
-							ctx.filename().c_str(), element->Row(), fullValue.c_str()
-						);
-					}
-				}
-				else if(strcmp(type, "str") == 0 || strcmp(type, "string") == 0)
-					result = fullValue;
-				else
-				{
-					throw error("%s:%d: invalid param type '%s'",
-						ctx.filename().c_str(), element->Row(), type
-					);
-				}
-			}
-			catch(boost::bad_lexical_cast& e)
-			{
-				throw error("%s:%d: could not convert param value '%s' to type '%s'",
-					ctx.filename().c_str(), element->Row(), fullValue.c_str(), type
-				);
-			}
-		}
-		else
-		{
-			// Try to determine the type automatically.
-			result = autoXmlRpcValue(fullValue);
-		}
-
-		m_params[fullName] = result;
+		// Simple case - immediate value.
+		m_params[fullName] = paramToXmlRpc(ctx.filename(), element->Row(), ctx.evaluate(value), fullType);
 
 		// A dynamic parameter of the same name gets overwritten now
 		m_paramJobs.erase(fullName);
 	}
 	else if(command)
 	{
+		// Run a command and retrieve the results.
 		std::string fullCommand = ctx.evaluate(command);
 
 		// Commands may take a while - that is why we use std::async here.
@@ -574,7 +532,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 				close(pipe_fd[0]);
 
-				return buffer.str();
+				return paramToXmlRpc(filename, line, buffer.str(), fullType);
 			}
 		);
 
@@ -594,7 +552,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 				std::stringstream buffer;
 				buffer << stream.rdbuf();
 
-				return buffer.str();
+				return paramToXmlRpc(filename, line, buffer.str(), fullType);
 			}
 		);
 
@@ -605,6 +563,48 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	{
 		throw error("%s:%d: <param> needs either command, value or textfile",
 			ctx.filename().c_str(), element->Row()
+		);
+	}
+}
+
+XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const std::string& filename, int line, const std::string& value, const std::string& type)
+{
+	if(type.empty())
+		return autoXmlRpcValue(value);
+
+	// Fixed type.
+	try
+	{
+		if(type == "int")
+			return boost::lexical_cast<int>(value);
+		else if(type == "double")
+			return boost::lexical_cast<double>(value);
+		else if(type == "bool" || type == "boolean")
+		{
+			if(value == "true")
+				return true;
+			else if(value == "false")
+				return false;
+			else
+			{
+				throw error("%s:%d: invalid boolean value '%s'",
+					filename.c_str(), line, value.c_str()
+				);
+			}
+		}
+		else if(type == "str" || type == "string")
+			return value;
+		else
+		{
+			throw error("%s:%d: invalid param type '%s'",
+				filename.c_str(), line, type.c_str()
+			);
+		}
+	}
+	catch(boost::bad_lexical_cast& e)
+	{
+		throw error("%s:%d: could not convert param value '%s' to type '%s'",
+			filename.c_str(), line, value.c_str(), type.c_str()
 		);
 	}
 }
