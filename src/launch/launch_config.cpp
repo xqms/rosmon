@@ -1029,37 +1029,49 @@ void LaunchConfig::evaluateParameters()
 
 	std::mutex mutex;
 
+	bool caughtExceptionFlag = false;
+	ParseException caughtException("");
+
 	for(int i = 0; i < NUM_THREADS; ++i)
 	{
-		threads[i] = std::thread([this,i,NUM_THREADS,&mutex]() {
-			// Thread number i starts at position i and moves in NUM_THREADS
-			// increments.
-			auto it = m_paramJobs.begin();
-			safeAdvance(it, m_paramJobs.end(), i);
-
-			while(it != m_paramJobs.end())
+		threads[i] = std::thread([this,i,NUM_THREADS,&mutex,&caughtException,&caughtExceptionFlag]() {
+			try
 			{
-				XmlRpc::XmlRpcValue val = it->second.get();
+				// Thread number i starts at position i and moves in NUM_THREADS
+				// increments.
+				auto it = m_paramJobs.begin();
+				safeAdvance(it, m_paramJobs.end(), i);
+
+				while(it != m_paramJobs.end())
 				{
-					std::lock_guard<std::mutex> guard(mutex);
-					m_params[it->first] = val;
+					XmlRpc::XmlRpcValue val = it->second.get();
+					{
+						std::lock_guard<std::mutex> guard(mutex);
+						m_params[it->first] = val;
+					}
+					safeAdvance(it, m_paramJobs.end(), NUM_THREADS);
 				}
-				safeAdvance(it, m_paramJobs.end(), NUM_THREADS);
+
+				// YAML parameters have to be handled separately, since we may need
+				// to splice them into individual XmlRpcValues.
+				auto yamlIt = m_yamlParamJobs.begin();
+				safeAdvance(yamlIt, m_yamlParamJobs.end(), i);
+
+				while(yamlIt != m_yamlParamJobs.end())
+				{
+					YAMLResult yaml = yamlIt->get();
+					{
+						std::lock_guard<std::mutex> guard(mutex);
+						loadYAMLParams(yaml.yaml, yaml.name);
+					}
+					safeAdvance(yamlIt, m_yamlParamJobs.end(), NUM_THREADS);
+				}
 			}
-
-			// YAML parameters have to be handled separately, since we may need
-			// to splice them into individual XmlRpcValues.
-			auto yamlIt = m_yamlParamJobs.begin();
-			safeAdvance(yamlIt, m_yamlParamJobs.end(), i);
-
-			while(yamlIt != m_yamlParamJobs.end())
+			catch(ParseException& e)
 			{
-				YAMLResult yaml = yamlIt->get();
-				{
-					std::lock_guard<std::mutex> guard(mutex);
-					loadYAMLParams(yaml.yaml, yaml.name);
-				}
-				safeAdvance(yamlIt, m_yamlParamJobs.end(), NUM_THREADS);
+				std::lock_guard<std::mutex> guard(mutex);
+				caughtException = e;
+				caughtExceptionFlag = true;
 			}
 		});
 	}
@@ -1067,6 +1079,9 @@ void LaunchConfig::evaluateParameters()
 	// and wait for completion for the threads.
 	for(auto& t : threads)
 		t.join();
+
+	if(caughtExceptionFlag)
+		throw caughtException;
 
 	m_paramJobs.clear();
 }
