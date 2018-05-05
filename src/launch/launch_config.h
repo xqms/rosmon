@@ -150,9 +150,19 @@ private:
 	ParseContext m_rootContext;
 
 	std::vector<Node::Ptr> m_nodes;
-	typedef std::future<XmlRpc::XmlRpcValue> ParameterFuture;
-	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
+
+	using ParameterList = std::map<std::string, XmlRpc::XmlRpcValue>;
+	using ParameterFuture = std::future<XmlRpc::XmlRpcValue>;
+
+	struct YAMLResult
+	{
+		std::string name;
+		YAML::Node yaml;
+	};
+
+	ParameterList m_params;
 	std::map<std::string, ParameterFuture> m_paramJobs;
+	std::vector<std::future<YAMLResult>> m_yamlParamJobs;
 
 	std::map<std::string, std::string> m_anonNames;
 	std::mt19937_64 m_anonGen;

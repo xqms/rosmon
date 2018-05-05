@@ -455,19 +455,51 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	if(value)
 	{
 		// Simple case - immediate value.
-		m_params[fullName] = paramToXmlRpc(ctx.filename(), element->Row(), ctx.evaluate(value), fullType);
+		if(fullType == "yaml")
+		{
+			std::string fullValue = ctx.evaluate(value, false);
 
-		// A dynamic parameter of the same name gets overwritten now
-		m_paramJobs.erase(fullName);
+			YAML::Node n;
+			try
+			{
+				n = YAML::Load(fullValue);
+			}
+			catch(YAML::ParserException& e)
+			{
+				throw error("%s:%d: Invalid YAML: %s",
+					ctx.filename().c_str(), element->Row(), e.what()
+				);
+			}
+
+			loadYAMLParams(n, fullName);
+		}
+		else
+		{
+			m_params[fullName] = paramToXmlRpc(ctx.filename(), element->Row(), ctx.evaluate(value), fullType);
+
+			// A dynamic parameter of the same name gets overwritten now
+			m_paramJobs.erase(fullName);
+		}
+
+		return;
 	}
-	else if(command)
+
+	// Dynamic parameters are more complicated. We split the computation in
+	// two parts:
+	//  1) Compute the value as std::string
+	//  2) Convert to desired type (or dissect into multiple parameters in
+	//     case of YAML-typed parameters).
+
+	auto computeString = std::make_shared<std::future<std::string>>();
+
+	if(command)
 	{
 		// Run a command and retrieve the results.
 		std::string fullCommand = ctx.evaluate(command);
 
 		// Commands may take a while - that is why we use std::async here.
-		m_paramJobs[fullName] = std::async(std::launch::deferred,
-			[=]() -> XmlRpc::XmlRpcValue {
+		*computeString = std::async(std::launch::deferred,
+			[=]() -> std::string {
 				std::stringstream buffer;
 
 				int pipe_fd[2];
@@ -532,7 +564,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 				close(pipe_fd[0]);
 
-				return paramToXmlRpc(filename, line, buffer.str(), fullType);
+				return buffer.str();
 			}
 		);
 
@@ -543,8 +575,8 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	{
 		std::string fullFile = ctx.evaluate(textfile);
 
-		m_paramJobs[fullName] = std::async(std::launch::deferred,
-			[=]() -> XmlRpc::XmlRpcValue {
+		*computeString = std::async(std::launch::deferred,
+			[=]() -> std::string {
 				std::ifstream stream(fullFile);
 				if(stream.bad())
 					throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
@@ -552,18 +584,49 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 				std::stringstream buffer;
 				buffer << stream.rdbuf();
 
-				return paramToXmlRpc(filename, line, buffer.str(), fullType);
+				return buffer.str();
 			}
 		);
-
-		// A fixed parameter of the same name gets overwritten now
-		m_params.erase(fullName);
 	}
 	else
 	{
 		throw error("%s:%d: <param> needs either command, value or textfile",
 			ctx.filename().c_str(), element->Row()
 		);
+	}
+
+	if(fullType == "yaml")
+	{
+		m_yamlParamJobs.push_back(std::async(std::launch::deferred,
+			[=]() -> YAMLResult {
+				std::string yamlString = computeString->get();
+
+				YAML::Node n;
+				try
+				{
+					n = YAML::Load(yamlString);
+				}
+				catch(YAML::ParserException& e)
+				{
+					throw error("%s:%d: Read invalid YAML from process or file: %s",
+						filename.c_str(), line, e.what()
+					);
+				}
+
+				return {fullName, std::move(n)};
+			}
+		));
+	}
+	else
+	{
+		m_paramJobs[fullName] = std::async(std::launch::deferred,
+			[=]() -> XmlRpc::XmlRpcValue {
+				return paramToXmlRpc(filename, line, computeString->get(), fullType);
+			}
+		);
+
+		// A fixed parameter of the same name gets overwritten now
+		m_params.erase(fullName);
 	}
 }
 
@@ -942,6 +1005,21 @@ void LaunchConfig::evaluateParameters()
 					m_params[it->first] = val;
 				}
 				safeAdvance(it, m_paramJobs.end(), NUM_THREADS);
+			}
+
+			// YAML parameters have to be handled separately, since we may need
+			// to splice them into individual XmlRpcValues.
+			auto yamlIt = m_yamlParamJobs.begin();
+			safeAdvance(yamlIt, m_yamlParamJobs.end(), i);
+
+			while(yamlIt != m_yamlParamJobs.end())
+			{
+				YAMLResult yaml = yamlIt->get();
+				{
+					std::lock_guard<std::mutex> guard(mutex);
+					loadYAMLParams(yaml.yaml, yaml.name);
+				}
+				safeAdvance(yamlIt, m_yamlParamJobs.end(), NUM_THREADS);
 			}
 		});
 	}
