@@ -10,23 +10,6 @@ typedef std::map<std::string, XmlRpc::XmlRpcValue> ParameterMap;
 namespace Catch
 {
 	template<>
-	struct StringMaker<ParameterMap>
-	{
-		static std::string convert(const ParameterMap& value)
-		{
-			std::stringstream ss;
-			ss << "{";
-			for(auto& param : value)
-			{
-				ss << "\"" << param.first << "\"=XmlRpcValue, ";
-			}
-			ss << "}";
-
-			return ss.str();
-		}
-	};
-
-	template<>
 	struct StringMaker<XmlRpc::XmlRpcValue>
 	{
 		static std::string convert(const XmlRpc::XmlRpcValue& value)
@@ -46,7 +29,7 @@ namespace Catch
 					ss << "<bool>(" << static_cast<bool>(copy) << ")";
 					break;
 				case XmlRpc::XmlRpcValue::TypeString:
-					ss << "<string>(" << static_cast<std::string>(copy) << ")";
+					ss << "<string>('" << static_cast<std::string>(copy) << "')";
 					break;
 				case XmlRpc::XmlRpcValue::TypeDouble:
 					ss << "<double>(" << static_cast<double>(copy) << ")";
@@ -55,6 +38,23 @@ namespace Catch
 					ss << "<unknown>()";
 					break;
 			}
+
+			return ss.str();
+		}
+	};
+
+	template<>
+	struct StringMaker<ParameterMap>
+	{
+		static std::string convert(const ParameterMap& value)
+		{
+			std::stringstream ss;
+			ss << "{";
+			for(auto& param : value)
+			{
+				ss << "\"" << param.first << "\"=" << StringMaker<XmlRpc::XmlRpcValue>::convert(param.second) << ", ";
+			}
+			ss << "}";
 
 			return ss.str();
 		}
@@ -94,14 +94,10 @@ void checkTypedParam(const ParameterMap& parameters, const std::string& name, Xm
 	XmlRpc::XmlRpcValue value = it->second;
 
 	REQUIRE(value.getType() == expectedType);
-
-	CAPTURE(parameters);
-	CAPTURE(name);
-
 	REQUIRE(static_cast<T>(value) == expected);
 }
 
-TEST_CASE("param_types" "[param]")
+TEST_CASE("param_types", "[param]")
 {
 	LaunchConfig config;
 	config.parseString(R"EOF(
@@ -119,6 +115,7 @@ TEST_CASE("param_types" "[param]")
 			<param name="bool_param_forced" value="true" type="boolean" />
 
 			<param name="yaml_param" type="yaml" value="test_param: true" />
+			<param name="yaml_param_scalar" type="yaml" value="true" />
 		</launch>
 	)EOF");
 
@@ -138,4 +135,30 @@ TEST_CASE("param_types" "[param]")
 	checkTypedParam<bool>(params, "/bool_param_forced", XmlRpc::XmlRpcValue::TypeBoolean, true);
 
 	checkTypedParam<bool>(params, "/yaml_param/test_param", XmlRpc::XmlRpcValue::TypeBoolean, true);
+	checkTypedParam<bool>(params, "/yaml_param_scalar", XmlRpc::XmlRpcValue::TypeBoolean, true);
 }
+
+TEST_CASE("param command", "[param]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<param name="test" command="echo -n hello_world" />
+
+			<param name="multiline" command="echo -ne hello\\nworld" />
+
+			<param name="yaml_param" type="yaml" command="echo test_param: true" />
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto& params = config.parameters();
+
+	checkTypedParam<std::string>(params, "/test", XmlRpc::XmlRpcValue::TypeString, "hello_world");
+	checkTypedParam<std::string>(params, "/multiline", XmlRpc::XmlRpcValue::TypeString, "hello\nworld");
+
+	checkTypedParam<bool>(params, "/yaml_param/test_param", XmlRpc::XmlRpcValue::TypeBoolean, true);
+}
+
+
