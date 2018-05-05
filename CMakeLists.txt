@@ -191,7 +191,7 @@ add_executable(abort_really_long_executable
 if(CATKIN_ENABLE_TESTING)
 	# Integration tests
 	find_package(rostest REQUIRED)
-	add_rostest(test/basic.test)
+	add_rostest(test/basic.test DEPENDENCIES rosmon)
 
 	# XML parsing test suite
 	find_package(catch_ros)
