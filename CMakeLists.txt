@@ -189,8 +189,25 @@ add_executable(abort_really_long_executable
 
 # Register unit tests
 if(CATKIN_ENABLE_TESTING)
+	# Integration tests
 	find_package(rostest REQUIRED)
 	add_rostest(test/basic.test)
+
+	# XML parsing test suite
+	find_package(catch_ros)
+	if(catch_ros_FOUND)
+		include_directories(${catch_ros_INCLUDE_DIRS})
+
+		catch_add_test(test_xml_loading
+			test/xml/test_param.cpp
+		)
+		target_link_libraries(test_xml_loading
+			rosmon_launch_config
+			${catch_ros_LIBRARIES}
+		)
+	else()
+		message(WARNING "Install catch_ros to enable XML unit tests")
+	endif()
 endif()
 
 # Version 1.4 (increment this comment to trigger a CMake update)
