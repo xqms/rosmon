@@ -67,19 +67,28 @@ if(BUILD_FOR_COVERAGE)
 	endif()
 endif()
 
-add_executable(rosmon
-	src/main.cpp
+add_library(rosmon_launch_config
 	src/launch/node.cpp
 	src/launch/launch_config.cpp
 	src/launch/substitution.cpp
 	src/launch/substitution_python.cpp
+	src/package_registry.cpp
+)
+target_link_libraries(rosmon_launch_config
+	${catkin_LIBRARIES}
+	${TinyXML_LIBRARIES}
+	${Boost_LIBRARIES}
+	yaml-cpp
+)
+
+add_executable(rosmon
+	src/main.cpp
 	src/monitor/node_monitor.cpp
 	src/monitor/monitor.cpp
 	src/monitor/linux_process_info.cpp
 	src/ui.cpp
 	src/husl/husl.c
 	src/ros_interface.cpp
-	src/package_registry.cpp
 	src/fd_watcher.cpp
 	src/logger.cpp
 	src/terminal.cpp
@@ -91,6 +100,7 @@ target_link_libraries(rosmon
 	${Boost_LIBRARIES}
 	yaml-cpp
 	util
+	rosmon_launch_config
 )
 add_dependencies(rosmon
 	${PROJECT_NAME}_generate_messages_cpp
@@ -189,7 +199,7 @@ catkin_add_env_hooks(50-rosmon
 	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks
 )
 
-install(TARGETS rosmon
+install(TARGETS rosmon rosmon_launch_config
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -111,6 +111,7 @@ public:
 	void setArgument(const std::string& name, const std::string& value);
 
 	void parse(const std::string& filename, bool onlyArguments = false);
+	void parseString(const std::string& input, bool onlyArguments = false);
 
 	void evaluateParameters();
 
@@ -131,6 +132,8 @@ public:
 	std::string windowTitle() const
 	{ return m_windowTitle; }
 private:
+	void parseTopLevelAttributes(TiXmlElement* element);
+
 	void parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments = false);
 	void parseNode(TiXmlElement* element, ParseContext ctx);
 	void parseParam(TiXmlElement* element, ParseContext ctx);

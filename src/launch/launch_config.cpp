@@ -194,16 +194,45 @@ void LaunchConfig::parse(const std::string& filename, bool onlyArguments)
 	parse(document.RootElement(), &m_rootContext, onlyArguments);
 
 	// Parse top-level rosmon-specific attributes
-	const char* name = document.RootElement()->Attribute("rosmon-name");
-	if(name)
-		m_rosmonNodeName = name;
-
-	const char* windowTitle = document.RootElement()->Attribute("rosmon-window-title");
-	if(windowTitle)
-		m_windowTitle = windowTitle;
+	parseTopLevelAttributes(document.RootElement());
 
 	if(!onlyArguments)
 		printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
+}
+
+void LaunchConfig::parseString(const std::string& input, bool onlyArguments)
+{
+	TiXmlDocument document;
+
+	TiXmlBase::SetCondenseWhiteSpace(false);
+
+	document.Parse(input.c_str());
+
+	if(document.Error())
+	{
+		throw error("Could not parse string input: %s\n", document.ErrorDesc());
+	}
+
+	ros::WallTime start = ros::WallTime::now();
+	m_rootContext.setFilename("[string]");
+	parse(document.RootElement(), &m_rootContext, onlyArguments);
+
+	// Parse top-level rosmon-specific attributes
+	parseTopLevelAttributes(document.RootElement());
+
+	if(!onlyArguments)
+		printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
+}
+
+void LaunchConfig::parseTopLevelAttributes(TiXmlElement* element)
+{
+	const char* name = element->Attribute("rosmon-name");
+	if(name)
+		m_rosmonNodeName = name;
+
+	const char* windowTitle = element->Attribute("rosmon-window-title");
+	if(windowTitle)
+		m_windowTitle = windowTitle;
 }
 
 void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments)
