@@ -57,6 +57,16 @@ if(${pluginlib_VERSION} VERSION_GREATER 1.11.1)
 	add_definitions(-DHAVE_PLUGINLIB_NEW_HEADERS=1)
 endif()
 
+# Are we building with test coverage instrumentation?
+set(BUILD_FOR_COVERAGE OFF CACHE BOOL "Build with coverage instrumentation?")
+if(BUILD_FOR_COVERAGE)
+	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+	else()
+		message(WARNING "Coverage build is only supported with clang")
+	endif()
+endif()
+
 add_executable(rosmon
 	src/main.cpp
 	src/launch/node.cpp
