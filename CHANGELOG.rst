@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.3 (2018-05-05)
+------------------
 * launch_config: ignore empty YAML data in <rosparam> tags
   See `#12 <https://github.com/xqms/rosmon/issues/12>`_ for discussion as to why this is necessary.
   TL;DR: roslaunch does it.
