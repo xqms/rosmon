@@ -12,6 +12,8 @@
 #include <cstdio>
 #include <fstream>
 
+#include <sys/wait.h>
+
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -590,6 +592,17 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 				}
 
 				close(pipe_fd[0]);
+
+				int status = 0;
+				if(waitpid(pid, &status, 0) < 0)
+					throw error("Could not waitpid(): %s", strerror(errno));
+
+				if(!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+				{
+					throw error("%s:%d: <param> command failed (exit status %d)",
+						filename.c_str(), line, status
+					);
+				}
 
 				return buffer.str();
 			}
