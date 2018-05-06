@@ -71,6 +71,10 @@ TEST_CASE("rosparam naming", "[rosparam]")
 
 			<arg name="whitelist" default="[3, 2]"/>
 			<rosparam param="whitelist" subst_value="True">$(arg whitelist)</rosparam>
+
+<rosparam ns="namespace">
+a: false
+</rosparam>
 		</launch>
 	)EOF");
 
@@ -101,4 +105,6 @@ TEST_CASE("rosparam naming", "[rosparam]")
 		REQUIRE(value.getType() == XmlRpc::XmlRpcValue::TypeArray);
 		REQUIRE(value.size() == 2);
 	}
+
+	checkTypedParam<bool>(config.parameters(), "/namespace/a", XmlRpc::XmlRpcValue::TypeBoolean, false);
 }

@@ -102,4 +102,18 @@ void checkTypedParam(const ParameterMap& parameters, const std::string& name, Xm
 	REQUIRE(static_cast<T>(value) == expected);
 }
 
+template<class T>
+T getTypedParam(const ParameterMap& parameters, const std::string& name)
+{
+	CAPTURE(parameters);
+	CAPTURE(name);
+
+	auto it = parameters.find(name);
+	REQUIRE(it != parameters.end());
+
+	XmlRpc::XmlRpcValue value = it->second;
+
+	return static_cast<T>(value);
+}
+
 #endif
