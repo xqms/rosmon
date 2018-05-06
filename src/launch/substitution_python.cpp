@@ -148,14 +148,30 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 		PyObject *e, *v, *t;
 		PyErr_Fetch(&e, &v, &t);
 
-		// A NULL e means that there is not available Python
-		// exception
-		if(v)
+		try
 		{
-			std::string strErrorMessage = py::extract<std::string>(v);
-			ss << strErrorMessage;
+			py::object t = py::extract<py::object>(e);
+			py::object t_name = t.attr("__name__");
+			std::string typestr = py::extract<std::string>(t_name);
+
+			ss << typestr << ": ";
 		}
-		throw error(ss.str().c_str());
+		catch(py::error_already_set const &)
+		{}
+
+		try
+		{
+			py::object vo = py::extract<py::object>(v);
+			std::string valuestr = py::extract<std::string>(vo.attr("__str__")());
+
+			ss << valuestr;
+		}
+		catch(py::error_already_set const &)
+		{
+			ss << "<no str() handler>";
+		}
+
+		throw error("%s", ss.str().c_str());
 	}
 
 	py::extract<std::string> asString(result);
