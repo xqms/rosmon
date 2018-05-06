@@ -218,4 +218,25 @@ TEST_CASE("invalid param input combinations", "[param]")
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" textfile="$(find rosmon)/test/textfile.txt" command="echo -ne test" /></launch>)EOF"),
 		LaunchConfig::ParseException
 	);
+
+	REQUIRE_THROWS_AS(
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" /></launch>)EOF"),
+		LaunchConfig::ParseException
+	);
 }
+
+TEST_CASE("invalid param names", "[param]")
+{
+	using Catch::Matchers::Contains;
+
+	REQUIRE_THROWS_WITH(
+		LaunchConfig().parseString(R"EOF(<launch><param name="$%*" value="abc" /></launch>)EOF"),
+		Contains("$%*")
+	);
+
+	REQUIRE_THROWS_WITH(
+		LaunchConfig().parseString(R"EOF(<launch><param value="abc" /></launch>)EOF"),
+		Contains("name")
+	);
+}
+
