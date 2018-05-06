@@ -169,3 +169,121 @@ TEST_CASE("anon", "[subst]")
 		);
 	}
 }
+
+TEST_CASE("arg", "[subst]")
+{
+	SECTION("basic use")
+	{
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<arg name="test_arg" default="hello" />
+				<param name="test" value="$(arg test_arg)" />
+			</launch>
+		)EOF");
+
+		config.evaluateParameters();
+
+		CHECK(getTypedParam<std::string>(config.parameters(), "/test") == "hello");
+	}
+
+	SECTION("unknown arg")
+	{
+		REQUIRE_THROWS_AS(
+			LaunchConfig().parseString(R"EOF(
+				<launch>
+					<arg name="test_arg" default="hello" />
+					<param name="test" value="$(arg test_arg_unknown)" />
+				</launch>
+			)EOF"),
+			LaunchConfig::ParseException
+		);
+	}
+
+	// more complicated tests may be in test_arg.cpp
+}
+
+TEST_CASE("eval", "[subst]")
+{
+	SECTION("example 1")
+	{
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<arg name="radius" default="2.0" />
+				<param name="circumference" value="$(eval 2.* pi * arg('radius'))"/>
+			</launch>
+		)EOF");
+
+		config.evaluateParameters();
+
+		auto value = getTypedParam<double>(config.parameters(), "/circumference");
+		CHECK(value == Approx(2.0 * M_PI * 2.0));
+	}
+
+	SECTION("example 2")
+	{
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<arg name="foo" default="test" />
+				<param name="test" value="$(eval arg('foo') + env('PATH') + 'bar' + find('rosmon'))"/>
+			</launch>
+		)EOF");
+
+		config.evaluateParameters();
+
+		auto value = getTypedParam<std::string>(config.parameters(), "/test");
+		CHECK(value == std::string("test") + getenv("PATH") + "bar" + ros::package::getPath("rosmon"));
+	}
+
+	SECTION("example 3")
+	{
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<arg name="foo" default="test" />
+				<param name="test" value="$(eval foo + env('PATH') + 'bar' + find('rosmon'))"/>
+			</launch>
+		)EOF");
+
+		config.evaluateParameters();
+
+		auto value = getTypedParam<std::string>(config.parameters(), "/test");
+		CHECK(value == std::string("test") + getenv("PATH") + "bar" + ros::package::getPath("rosmon"));
+	}
+
+	SECTION("python errors")
+	{
+		using Catch::Matchers::Contains;
+
+		REQUIRE_THROWS_WITH(
+			LaunchConfig().parseString(R"EOF(
+				<launch>
+					<arg name="foo" default="test" />
+					<param name="test" value="$(eval )))"/>
+				</launch>
+			)EOF"),
+			Contains("SyntaxError")
+		);
+	}
+}
+
+TEST_CASE("dirname", "[subst]")
+{
+	SECTION("basic usage")
+	{
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<param name="test" value="$(dirname)" />
+			</launch>
+		)EOF");
+
+		config.evaluateParameters();
+
+		auto value = getTypedParam<std::string>(config.parameters(), "/test");
+
+		CHECK(fs::path(value) == fs::current_path());
+	}
+}
