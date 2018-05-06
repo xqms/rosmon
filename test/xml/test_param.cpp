@@ -202,6 +202,22 @@ TEST_CASE("wrong param types", "[param]")
 	);
 
 	REQUIRE_THROWS_AS(
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="invalid: {{ yaml}} here" type="yaml" /></launch>)EOF"),
+		LaunchConfig::ParseException
+	);
+
+	{
+		LaunchConfig config;
+
+		config.parseString(R"EOF(<launch><param name="test" command="echo -ne invalid: {{ yaml}} here" type="yaml" /></launch>)EOF");
+
+		REQUIRE_THROWS_AS(
+			config.evaluateParameters(),
+			LaunchConfig::ParseException
+		);
+	}
+
+	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="0.5" type="unknown_type" /></launch>)EOF"),
 		LaunchConfig::ParseException
 	);
