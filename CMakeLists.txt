@@ -199,9 +199,10 @@ if(CATKIN_ENABLE_TESTING)
 		include_directories(${catch_ros_INCLUDE_DIRS})
 
 		catch_add_test(test_xml_loading
-			test/xml/test_param.cpp
-			test/xml/test_if_unless.cpp
 			test/xml/test_basic.cpp
+			test/xml/test_if_unless.cpp
+			test/xml/test_param.cpp
+			test/xml/test_rosparam.cpp
 		)
 		target_link_libraries(test_xml_loading
 			rosmon_launch_config

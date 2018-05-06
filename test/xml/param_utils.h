@@ -13,6 +13,27 @@ typedef std::map<std::string, XmlRpc::XmlRpcValue> ParameterMap;
 namespace Catch
 {
 	template<>
+	struct StringMaker<XmlRpc::XmlRpcValue::Type>
+	{
+		static std::string convert(const XmlRpc::XmlRpcValue::Type& value)
+		{
+			switch(value)
+			{
+				case XmlRpc::XmlRpcValue::TypeInvalid: return "TypeInvalid";
+				case XmlRpc::XmlRpcValue::TypeBoolean: return "TypeBoolean";
+				case XmlRpc::XmlRpcValue::TypeInt: return "TypeInt";
+				case XmlRpc::XmlRpcValue::TypeDouble: return "TypeDouble";
+				case XmlRpc::XmlRpcValue::TypeString: return "TypeString";
+				case XmlRpc::XmlRpcValue::TypeDateTime: return "TypeDateTime";
+				case XmlRpc::XmlRpcValue::TypeBase64: return "TypeBase64";
+				case XmlRpc::XmlRpcValue::TypeArray: return "TypeArray";
+				case XmlRpc::XmlRpcValue::TypeStruct: return "TypeStruct";
+				default: return "unknown type";
+			}
+		}
+	};
+
+	template<>
 	struct StringMaker<XmlRpc::XmlRpcValue>
 	{
 		static std::string convert(const XmlRpc::XmlRpcValue& value)
@@ -38,7 +59,9 @@ namespace Catch
 					ss << "<double>(" << static_cast<double>(copy) << ")";
 					break;
 				default:
-					ss << "<unknown>()";
+					ss << "<"
+						<< StringMaker<XmlRpc::XmlRpcValue::Type>::convert(value.getType())
+						<< ">(?)";
 					break;
 			}
 

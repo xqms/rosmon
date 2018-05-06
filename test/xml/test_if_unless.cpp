@@ -17,6 +17,9 @@ TEST_CASE("if/unless basic", "[if_unless]")
 			<param if="false" name="test_if" value="hello" />
 			<param if="true" name="test_if" value="world" />
 
+			<param if="1" name="test_if_number" value="hello" />
+			<param if="0" name="test_if_number" value="world" />
+
 			<param unless="false" name="test_unless" value="hello" />
 			<param unless="true" name="test_unless" value="world" />
 		</launch>
@@ -28,6 +31,7 @@ TEST_CASE("if/unless basic", "[if_unless]")
 
 	auto& params = config.parameters();
 	checkTypedParam<std::string>(params, "/test_if", XmlRpc::XmlRpcValue::TypeString, "world");
+	checkTypedParam<std::string>(params, "/test_if_number", XmlRpc::XmlRpcValue::TypeString, "hello");
 	checkTypedParam<std::string>(params, "/test_unless", XmlRpc::XmlRpcValue::TypeString, "hello");
 }
 
