@@ -121,10 +121,16 @@ bool ParseContext::parseBool(const std::string& value, int line)
 {
 	std::string expansion = evaluate(value);
 
-	if(expansion == "1" || expansion == "true")
+	// We are lenient here and accept the pythonic forms "True" and "False"
+	// as well, since roslaunch seems to do the same. Even the roslaunch/XML
+	// spec mentions True/False in the examples, even though they are not
+	// valid options for if/unless and other boolean attributes...
+	// http://wiki.ros.org/roslaunch/XML/rosparam
+
+	if(expansion == "1" || expansion == "true" || expansion == "True")
 		return true;
 
-	if(expansion == "0" || expansion == "false")
+	if(expansion == "0" || expansion == "false" || expansion == "False")
 		return false;
 
 	throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), line, expansion.c_str());
@@ -754,7 +760,7 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 			return;
 
 		const char* subst_value = element->Attribute("subst_value");
-		if(subst_value && strcmp(subst_value, "true") == 0)
+		if(subst_value && ctx.parseBool(subst_value, element->Row()))
 			contents = ctx.evaluate(contents, false);
 
 		YAML::Node n;
