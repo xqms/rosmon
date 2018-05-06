@@ -328,6 +328,20 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type)
 	);
 
+	// Check name uniqueness
+	{
+		auto it = std::find_if(m_nodes.begin(), m_nodes.end(), [&](const Node::Ptr& n) {
+			return n->name() == node->name();
+		});
+
+		if(it != m_nodes.end())
+		{
+			throw error("%s:%d: node name '%s' is not unique",
+				ctx.filename().c_str(), element->Row(), node->name().c_str()
+			);
+		}
+	}
+
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));
 
