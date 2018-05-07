@@ -202,6 +202,7 @@ if(CATKIN_ENABLE_TESTING)
 			test/xml/test_env.cpp
 			test/xml/test_basic.cpp
 			test/xml/test_if_unless.cpp
+			test/xml/test_node.cpp
 			test/xml/test_param.cpp
 			test/xml/test_rosparam.cpp
 			test/xml/test_subst.cpp
