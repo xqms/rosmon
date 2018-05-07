@@ -38,6 +38,8 @@ public:
 
 	void setWorkingDirectory(const std::string& workingDirectory);
 
+	void setClearParams(bool on);
+
 	std::string name() const
 	{ return m_name; }
 
@@ -81,6 +83,9 @@ public:
 
 	std::string workingDirectory() const
 	{ return m_workingDirectory; }
+
+	bool clearParams() const
+	{ return m_clearParams; }
 private:
 	std::string m_name;
 	std::string m_package;
@@ -105,6 +110,8 @@ private:
 	bool m_coredumpsEnabled;
 
 	std::string m_workingDirectory;
+
+	bool m_clearParams;
 };
 
 }

@@ -42,6 +42,7 @@ Node::Node(std::string name, std::string package, std::string type)
 
  , m_required(false)
  , m_coredumpsEnabled(true)
+ , m_clearParams(false)
 {
 	m_executable = PackageRegistry::getExecutable(m_package, m_type);
 }
@@ -134,6 +135,11 @@ void Node::setCoredumpsEnabled(bool on)
 void Node::setWorkingDirectory(const std::string& cwd)
 {
 	m_workingDirectory = cwd;
+}
+
+void Node::setClearParams(bool on)
+{
+	m_clearParams = on;
 }
 
 }

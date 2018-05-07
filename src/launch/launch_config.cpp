@@ -309,6 +309,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* launchPrefix = element->Attribute("launch-prefix");
 	const char* coredumpsEnabled = element->Attribute("enable-coredumps");
 	const char* cwd = element->Attribute("cwd");
+	const char* clearParams = element->Attribute("clear_params");
 
 	if(!name || !pkg || !type)
 	{
@@ -412,6 +413,9 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	if(cwd)
 		node->setWorkingDirectory(ctx.evaluate(cwd));
+
+	if(clearParams)
+		node->setClearParams(ctx.parseBool(clearParams, element->Row()));
 
 	m_nodes.push_back(node);
 }

@@ -214,12 +214,14 @@ TEST_CASE("node ns", "[node]")
 	}
 }
 
-TEST_CASE("node clear_params", "[node][!mayfail]")
+TEST_CASE("node clear_params", "[node]")
 {
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort" clear_params="true" />
+			<node name="test_node_on" pkg="rosmon" type="abort" clear_params="true" />
+			<node name="test_node_off" pkg="rosmon" type="abort" clear_params="false" />
+			<node name="test_node_def" pkg="rosmon" type="abort" />
 		</launch>
 	)EOF");
 
@@ -228,9 +230,9 @@ TEST_CASE("node clear_params", "[node][!mayfail]")
 	auto nodes = config.nodes();
 	CAPTURE(nodes);
 
-	auto node = getNode(nodes, "test_node");
-
-	FAIL("not implemented");
+	CHECK(getNode(nodes, "test_node_on")->clearParams() == true);
+	CHECK(getNode(nodes, "test_node_off")->clearParams() == false);
+	CHECK(getNode(nodes, "test_node_def")->clearParams() == false);
 }
 
 TEST_CASE("node cwd", "[node]")
