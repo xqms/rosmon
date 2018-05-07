@@ -39,6 +39,19 @@ namespace Catch
 	};
 }
 
+static std::string printMapping(const std::map<std::string, std::string>& mapping)
+{
+	std::stringstream ss;
+	ss << "{ ";
+	for(auto& pair : mapping)
+	{
+		ss << "'" << pair.first << "':='" << pair.second << "', ";
+	}
+	ss << "}";
+
+	return ss.str();
+}
+
 Node::Ptr getNode(const std::vector<Node::Ptr>& nodes, const std::string& name, const std::string& namespaceString="")
 {
 	Node::Ptr ret;
@@ -263,6 +276,33 @@ TEST_CASE("node launch-prefix", "[node]")
 	CHECK(prefix[1] == "my");
 	CHECK(prefix[2] == "command");
 	CHECK(prefix[3] == "is:");
+}
+
+TEST_CASE("node remap", "[remap]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<node name="test_node" pkg="rosmon" type="abort">
+				<remap from="private1" to="/global_target" />
+				<remap from="private2" to="local_target" />
+			</node>
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto nodes = config.nodes();
+	CAPTURE(nodes);
+
+	auto node = getNode(nodes, "test_node");
+
+	auto remappings = node->remappings();
+	CAPTURE(printMapping(remappings));
+
+	CHECK(remappings.size() == 2);
+	CHECK(remappings.at("private1") == "/global_target");
+	CHECK(remappings.at("private2") == "local_target");
 }
 
 // rosmon extensions
