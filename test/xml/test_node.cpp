@@ -264,3 +264,24 @@ TEST_CASE("node launch-prefix", "[node]")
 	CHECK(prefix[2] == "command");
 	CHECK(prefix[3] == "is:");
 }
+
+// rosmon extensions
+
+TEST_CASE("node enable-coredumps", "[node]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<node name="test_node_on" pkg="rosmon" type="abort" enable-coredumps="true" />
+			<node name="test_node_off" pkg="rosmon" type="abort" enable-coredumps="false" />
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto nodes = config.nodes();
+	CAPTURE(nodes);
+
+	CHECK(getNode(nodes, "test_node_on")->coredumpsEnabled() == true);
+	CHECK(getNode(nodes, "test_node_off")->coredumpsEnabled() == false);
+}
