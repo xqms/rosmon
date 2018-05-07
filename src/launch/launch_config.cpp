@@ -308,6 +308,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* required = element->Attribute("required");
 	const char* launchPrefix = element->Attribute("launch-prefix");
 	const char* coredumpsEnabled = element->Attribute("enable-coredumps");
+	const char* cwd = element->Attribute("cwd");
 
 	if(!name || !pkg || !type)
 	{
@@ -408,6 +409,9 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	if(coredumpsEnabled)
 		node->setCoredumpsEnabled(ctx.parseBool(coredumpsEnabled, element->Row()));
+
+	if(cwd)
+		node->setWorkingDirectory(ctx.evaluate(cwd));
 
 	m_nodes.push_back(node);
 }

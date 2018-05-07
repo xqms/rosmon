@@ -220,7 +220,7 @@ TEST_CASE("node clear_params", "[node][!mayfail]")
 	FAIL("not implemented");
 }
 
-TEST_CASE("node cwd", "[node][!mayfail]")
+TEST_CASE("node cwd", "[node]")
 {
 	LaunchConfig config;
 	config.parseString(R"EOF(
@@ -236,7 +236,7 @@ TEST_CASE("node cwd", "[node][!mayfail]")
 
 	auto node = getNode(nodes, "test_node");
 
-	FAIL("not implemented");
+	CHECK(node->workingDirectory() == "/my_cwd/");
 }
 
 TEST_CASE("node launch-prefix", "[node]")

@@ -60,6 +60,8 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
 	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&NodeMonitor::start, this), false, false);
 	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&NodeMonitor::checkStop, this));
 
+	m_processWorkingDirectory = m_launchNode->workingDirectory();
+
 	if(!g_coreIsRelative_valid)
 	{
 		char core_pattern[256];
@@ -134,12 +136,13 @@ void NodeMonitor::start()
 	if(running())
 		return;
 
-	if(m_launchNode->coredumpsEnabled() && g_coreIsRelative)
+	if(m_launchNode->coredumpsEnabled() && g_coreIsRelative && m_processWorkingDirectory.empty())
 	{
 		char tmpfile[256];
 		strncpy(tmpfile, "/tmp/rosmon-node-XXXXXX", sizeof(tmpfile));
 		tmpfile[sizeof(tmpfile)-1] = 0;
 		m_processWorkingDirectory = mkdtemp(tmpfile);
+		m_processWorkingDirectoryCreated = true;
 	}
 
 	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
@@ -347,7 +350,7 @@ void NodeMonitor::communicate()
 		}
 #endif
 
-		if(!m_processWorkingDirectory.empty())
+		if(m_processWorkingDirectoryCreated)
 		{
 			if(rmdir(m_processWorkingDirectory.c_str()) != 0)
 			{

@@ -131,6 +131,11 @@ void Node::setCoredumpsEnabled(bool on)
 	m_coredumpsEnabled = on;
 }
 
+void Node::setWorkingDirectory(const std::string& cwd)
+{
+	m_workingDirectory = cwd;
+}
+
 }
 
 }
