@@ -78,7 +78,7 @@ TEST_CASE("param command", "[param]")
 		<launch>
 			<param name="test" command="echo -n hello_world" />
 
-			<param name="multiline" command="echo -ne hello\\nworld" />
+			<param name="multiline" command="echo -n hello\\nworld" />
 
 			<param name="yaml_param" type="yaml" command="echo test_param: true" />
 		</launch>
