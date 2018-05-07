@@ -331,7 +331,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	// Check name uniqueness
 	{
 		auto it = std::find_if(m_nodes.begin(), m_nodes.end(), [&](const Node::Ptr& n) {
-			return n->name() == node->name();
+			return n->namespaceString() == fullNamespace && n->name() == node->name();
 		});
 
 		if(it != m_nodes.end())
