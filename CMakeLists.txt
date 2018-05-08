@@ -199,6 +199,7 @@ if(CATKIN_ENABLE_TESTING)
 		include_directories(${catch_ros_INCLUDE_DIRS})
 
 		catch_add_test(test_xml_loading
+			test/xml/test_arg.cpp
 			test/xml/test_env.cpp
 			test/xml/test_basic.cpp
 			test/xml/test_if_unless.cpp
