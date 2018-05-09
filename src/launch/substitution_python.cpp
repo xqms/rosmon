@@ -174,28 +174,29 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 		throw error("%s", ss.str().c_str());
 	}
 
-	py::extract<std::string> asString(result);
-	if(asString.check())
-	{
-		return asString();
-	}
+	if(PyString_Check(result.ptr()))
+		return py::extract<std::string>(result);
 
-	py::extract<bool> asBool(result);
-	if(asBool.check())
+	if(PyBool_Check(result.ptr()))
 	{
-		if(asBool())
+		if(py::extract<bool>(result))
 			return "true";
 		else
 			return "false";
 	}
 
-	py::extract<int> asInt(result);
-	if(asInt.check())
-		return std::to_string(asInt());
+	if(PyInt_Check(result.ptr()))
+	{
+		return std::to_string(py::extract<int>(result));
+	}
 
-	py::extract<float> asFloat(result);
-	if(asFloat.check())
-		return boost::lexical_cast<std::string>(asFloat()); // to_string has low precision
+	if(PyFloat_Check(result.ptr()))
+	{
+		// std::to_string has low precision here, so use boost::lexical_cast
+		return boost::lexical_cast<std::string>(
+			py::extract<float>(result)()
+		);
+	}
 
 	throw error("$(eval '%s'): Got unknown python return type", input.c_str());
 }
