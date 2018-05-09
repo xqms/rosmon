@@ -99,34 +99,49 @@ TEST_CASE("optenv", "[subst]")
 
 TEST_CASE("find", "[subst]")
 {
-	LaunchConfig config;
-	config.parseString(R"EOF(
-		<launch>
-			<param name="path_to_rosmon" value="$(find rosmon)" />
-			<param name="path_to_launch_file" value="$(find rosmon)/test/basic.launch" />
-			<param name="path_to_rosmon_executable" value="$(find rosmon)/rosmon" />
-		</launch>
-	)EOF");
-
-	config.evaluateParameters();
-
-	CAPTURE(config.parameters());
-
-	checkTypedParam<std::string>(config.parameters(), "/path_to_rosmon", XmlRpc::XmlRpcValue::TypeString, ros::package::getPath("rosmon"));
-	checkTypedParam<std::string>(config.parameters(), "/path_to_launch_file", XmlRpc::XmlRpcValue::TypeString, ros::package::getPath("rosmon") + "/test/basic.launch");
-
+	SECTION("regular use")
 	{
-		INFO("Looking for /path_to_rosmon_executable");
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<param name="path_to_rosmon" value="$(find rosmon)" />
+				<param name="path_to_launch_file" value="$(find rosmon)/test/basic.launch" />
+				<param name="path_to_rosmon_executable" value="$(find rosmon)/rosmon" />
+			</launch>
+		)EOF");
 
-		auto it = config.parameters().find("/path_to_rosmon_executable");
-		REQUIRE(it != config.parameters().end());
+		config.evaluateParameters();
 
-		auto value = it->second;
+		CAPTURE(config.parameters());
 
-		REQUIRE(value.getType() == XmlRpc::XmlRpcValue::TypeString);
-		auto string = static_cast<std::string>(value);
+		checkTypedParam<std::string>(config.parameters(), "/path_to_rosmon", XmlRpc::XmlRpcValue::TypeString, ros::package::getPath("rosmon"));
+		checkTypedParam<std::string>(config.parameters(), "/path_to_launch_file", XmlRpc::XmlRpcValue::TypeString, ros::package::getPath("rosmon") + "/test/basic.launch");
 
-		CHECK((fs::status(string).permissions() & fs::owner_exe));
+		{
+			INFO("Looking for /path_to_rosmon_executable");
+
+			auto it = config.parameters().find("/path_to_rosmon_executable");
+			REQUIRE(it != config.parameters().end());
+
+			auto value = it->second;
+
+			REQUIRE(value.getType() == XmlRpc::XmlRpcValue::TypeString);
+			auto string = static_cast<std::string>(value);
+
+			CHECK((fs::status(string).permissions() & fs::owner_exe));
+		}
+	}
+
+	SECTION("unknown package")
+	{
+		REQUIRE_THROWS_AS(
+			LaunchConfig().parseString(R"EOF(
+				<launch>
+					<param name="test" value="$(find rosmon_this_package_is_unlikely_to_be_there)" />
+				</launch>
+			)EOF"),
+			LaunchConfig::ParseException
+		);
 	}
 }
 
@@ -253,6 +268,22 @@ TEST_CASE("eval", "[subst]")
 		CHECK(value == std::string("test") + getenv("PATH") + "bar" + ros::package::getPath("rosmon"));
 	}
 
+	SECTION("example 4")
+	{
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<arg name="foo" default="test" />
+				<param name="test" value="$(eval 2 * 20)"/>
+			</launch>
+		)EOF");
+
+		config.evaluateParameters();
+
+		auto value = getTypedParam<int>(config.parameters(), "/test");
+		CHECK(value == 2*20);
+	}
+
 	SECTION("python errors")
 	{
 		using Catch::Matchers::Contains;
@@ -265,6 +296,16 @@ TEST_CASE("eval", "[subst]")
 				</launch>
 			)EOF"),
 			Contains("SyntaxError")
+		);
+
+		REQUIRE_THROWS_AS(
+			LaunchConfig().parseString(R"EOF(
+				<launch>
+					<arg name="foo" default="test" />
+					<param name="test" value="$(eval acos)"/>
+				</launch>
+			)EOF"),
+			LaunchConfig::ParseException
 		);
 	}
 }
@@ -285,5 +326,20 @@ TEST_CASE("dirname", "[subst]")
 		auto value = getTypedParam<std::string>(config.parameters(), "/test");
 
 		CHECK(fs::path(value) == fs::current_path());
+	}
+}
+
+TEST_CASE("subst invalid", "[subst]")
+{
+	SECTION("unknown subst")
+	{
+		REQUIRE_THROWS_AS(
+			LaunchConfig().parseString(R"EOF(
+				<launch>
+					<param name="test" value="$(unknown_subst parameter)" />
+				</launch>
+			)EOF"),
+			LaunchConfig::ParseException
+		);
 	}
 }
