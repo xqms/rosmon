@@ -937,9 +937,17 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 	const char* file = element->Attribute("file");
 	const char* ns = element->Attribute("ns");
 	const char* passAllArgs = element->Attribute("pass_all_args");
+	const char* clearParams = element->Attribute("clear_params");
 
 	if(!file)
 		throw error("%s:%d: file attribute is mandatory", ctx.filename().c_str(), element->Row());
+
+	if(clearParams && ctx.parseBool(clearParams, element->Row()))
+	{
+		throw error("%s:%d: <include clear_params=\"true\" /> is not supported and probably a bad idea.",
+			ctx.filename().c_str(), element->Row()
+		);
+	}
 
 	std::string fullFile = ctx.evaluate(file);
 
