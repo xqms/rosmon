@@ -12,6 +12,8 @@
 #include <cstdio>
 #include <fstream>
 
+#include <sys/wait.h>
+
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -119,10 +121,16 @@ bool ParseContext::parseBool(const std::string& value, int line)
 {
 	std::string expansion = evaluate(value);
 
-	if(expansion == "1" || expansion == "true")
+	// We are lenient here and accept the pythonic forms "True" and "False"
+	// as well, since roslaunch seems to do the same. Even the roslaunch/XML
+	// spec mentions True/False in the examples, even though they are not
+	// valid options for if/unless and other boolean attributes...
+	// http://wiki.ros.org/roslaunch/XML/rosparam
+
+	if(expansion == "1" || expansion == "true" || expansion == "True")
 		return true;
 
-	if(expansion == "0" || expansion == "false")
+	if(expansion == "0" || expansion == "false" || expansion == "False")
 		return false;
 
 	throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), line, expansion.c_str());
@@ -194,16 +202,45 @@ void LaunchConfig::parse(const std::string& filename, bool onlyArguments)
 	parse(document.RootElement(), &m_rootContext, onlyArguments);
 
 	// Parse top-level rosmon-specific attributes
-	const char* name = document.RootElement()->Attribute("rosmon-name");
-	if(name)
-		m_rosmonNodeName = name;
-
-	const char* windowTitle = document.RootElement()->Attribute("rosmon-window-title");
-	if(windowTitle)
-		m_windowTitle = windowTitle;
+	parseTopLevelAttributes(document.RootElement());
 
 	if(!onlyArguments)
 		printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
+}
+
+void LaunchConfig::parseString(const std::string& input, bool onlyArguments)
+{
+	TiXmlDocument document;
+
+	TiXmlBase::SetCondenseWhiteSpace(false);
+
+	document.Parse(input.c_str());
+
+	if(document.Error())
+	{
+		throw error("Could not parse string input: %s\n", document.ErrorDesc());
+	}
+
+	ros::WallTime start = ros::WallTime::now();
+	m_rootContext.setFilename("[string]");
+	parse(document.RootElement(), &m_rootContext, onlyArguments);
+
+	// Parse top-level rosmon-specific attributes
+	parseTopLevelAttributes(document.RootElement());
+
+	if(!onlyArguments)
+		printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
+}
+
+void LaunchConfig::parseTopLevelAttributes(TiXmlElement* element)
+{
+	const char* name = element->Attribute("rosmon-name");
+	if(name)
+		m_rosmonNodeName = name;
+
+	const char* windowTitle = element->Attribute("rosmon-window-title");
+	if(windowTitle)
+		m_windowTitle = windowTitle;
 }
 
 void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments)
@@ -271,6 +308,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* required = element->Attribute("required");
 	const char* launchPrefix = element->Attribute("launch-prefix");
 	const char* coredumpsEnabled = element->Attribute("enable-coredumps");
+	const char* cwd = element->Attribute("cwd");
+	const char* clearParams = element->Attribute("clear_params");
 
 	if(!name || !pkg || !type)
 	{
@@ -290,6 +329,20 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	Node::Ptr node = std::make_shared<Node>(
 		ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type)
 	);
+
+	// Check name uniqueness
+	{
+		auto it = std::find_if(m_nodes.begin(), m_nodes.end(), [&](const Node::Ptr& n) {
+			return n->namespaceString() == fullNamespace && n->name() == node->name();
+		});
+
+		if(it != m_nodes.end())
+		{
+			throw error("%s:%d: node name '%s' is not unique",
+				ctx.filename().c_str(), element->Row(), node->name().c_str()
+			);
+		}
+	}
 
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));
@@ -358,6 +411,12 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	if(coredumpsEnabled)
 		node->setCoredumpsEnabled(ctx.parseBool(coredumpsEnabled, element->Row()));
 
+	if(cwd)
+		node->setWorkingDirectory(ctx.evaluate(cwd));
+
+	if(clearParams)
+		node->setClearParams(ctx.parseBool(clearParams, element->Row()));
+
 	m_nodes.push_back(node);
 }
 
@@ -385,11 +444,25 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	const char* value = element->Attribute("value");
 	const char* command = element->Attribute("command");
 	const char* textfile = element->Attribute("textfile");
+	const char* binfile = element->Attribute("binfile");
+	const char* type = element->Attribute("type");
+
+	// Filename and line for error reporting
+	std::string filename = ctx.filename();
+	int line = element->Row();
 
 	if(!name)
 	{
-		throw error("File %s:%d: name and value are mandatory for param elements\n",
+		throw error("File %s:%d: name is mandatory for param elements\n",
 			ctx.filename().c_str(), element->Row()
+		);
+	}
+
+	int numCommands = (value ? 1 : 0) + (command ? 1 : 0) + (textfile ? 1 : 0) + (binfile ? 1 : 0);
+	if(numCommands > 1) // == 0 is checked below, don't duplicate.
+	{
+		throw error("File %s:%d: <param> tags need exactly one of value=, command=, textfile=, binfile= attributes.",
+			filename.c_str(), line
 		);
 	}
 
@@ -414,73 +487,84 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 		);
 	}
 
+	std::string fullType;
+	if(type)
+		fullType = ctx.evaluate(type);
+
 	if(value)
 	{
-		const char* type = element->Attribute("type");
-		std::string fullValue = ctx.evaluate(value);
-
-		XmlRpc::XmlRpcValue result;
-
-		if(type)
+		// Simple case - immediate value.
+		if(fullType == "yaml")
 		{
-			// Fixed type.
+			std::string fullValue = ctx.evaluate(value, false);
 
+			YAML::Node n;
 			try
 			{
-				if(strcmp(type, "int") == 0)
-					result = boost::lexical_cast<int>(fullValue);
-				else if(strcmp(type, "double") == 0)
-					result = boost::lexical_cast<double>(fullValue);
-				else if(strcmp(type, "bool") == 0 || strcmp(type, "boolean") == 0)
-				{
-					if(fullValue == "true")
-					{
-						// tricky: there is no operator= for bool, see #3
-						result = XmlRpc::XmlRpcValue(true);
-					}
-					else if(fullValue == "false")
-						result = XmlRpc::XmlRpcValue(false);
-					else
-					{
-						throw error("%s:%d: invalid boolean value '%s'",
-							ctx.filename().c_str(), element->Row(), fullValue.c_str()
-						);
-					}
-				}
-				else if(strcmp(type, "str") == 0 || strcmp(type, "string") == 0)
-					result = fullValue;
-				else
-				{
-					throw error("%s:%d: invalid param type '%s'",
-						ctx.filename().c_str(), element->Row(), type
-					);
-				}
+				n = YAML::Load(fullValue);
 			}
-			catch(boost::bad_lexical_cast& e)
+			catch(YAML::ParserException& e)
 			{
-				throw error("%s:%d: could not convert param value '%s' to type '%s'",
-					ctx.filename().c_str(), element->Row(), fullValue.c_str(), type
+				throw error("%s:%d: Invalid YAML: %s",
+					ctx.filename().c_str(), element->Row(), e.what()
 				);
 			}
+
+			loadYAMLParams(n, fullName);
 		}
 		else
 		{
-			// Try to determine the type automatically.
-			result = autoXmlRpcValue(fullValue);
+			m_params[fullName] = paramToXmlRpc(ctx.filename(), element->Row(), ctx.evaluate(value), fullType);
+
+			// A dynamic parameter of the same name gets overwritten now
+			m_paramJobs.erase(fullName);
 		}
 
-		m_params[fullName] = result;
-
-		// A dynamic parameter of the same name gets overwritten now
-		m_paramJobs.erase(fullName);
+		return;
 	}
-	else if(command)
+
+	if(binfile)
 	{
+		// Also simple - binary files are always mapped to base64 XmlRpcValue.
+
+		std::string fullFile = ctx.evaluate(binfile);
+
+		m_paramJobs[fullName] = std::async(std::launch::deferred,
+			[=]() -> XmlRpc::XmlRpcValue {
+				std::ifstream stream(fullFile, std::ios::binary | std::ios::ate);
+				if(stream.bad())
+					throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
+
+				std::vector<char> data(stream.tellg(), 0);
+				stream.seekg(0, std::ios::beg);
+
+				stream.read(data.data(), data.size());
+
+				// Creates base64 XmlRpcValue
+				return {data.data(), static_cast<int>(data.size())};
+			}
+		);
+
+		m_params.erase(fullName);
+		return;
+	}
+
+	// Dynamic parameters are more complicated. We split the computation in
+	// two parts:
+	//  1) Compute the value as std::string
+	//  2) Convert to desired type (or dissect into multiple parameters in
+	//     case of YAML-typed parameters).
+
+	auto computeString = std::make_shared<std::future<std::string>>();
+
+	if(command)
+	{
+		// Run a command and retrieve the results.
 		std::string fullCommand = ctx.evaluate(command);
 
 		// Commands may take a while - that is why we use std::async here.
-		m_paramJobs[fullName] = std::async(std::launch::deferred,
-			[=]() -> XmlRpc::XmlRpcValue {
+		*computeString = std::async(std::launch::deferred,
+			[=]() -> std::string {
 				std::stringstream buffer;
 
 				int pipe_fd[2];
@@ -545,6 +629,17 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 				close(pipe_fd[0]);
 
+				int status = 0;
+				if(waitpid(pid, &status, 0) < 0)
+					throw error("Could not waitpid(): %s", strerror(errno));
+
+				if(!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+				{
+					throw error("%s:%d: <param> command failed (exit status %d)",
+						filename.c_str(), line, status
+					);
+				}
+
 				return buffer.str();
 			}
 		);
@@ -556,8 +651,8 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	{
 		std::string fullFile = ctx.evaluate(textfile);
 
-		m_paramJobs[fullName] = std::async(std::launch::deferred,
-			[=]() -> XmlRpc::XmlRpcValue {
+		*computeString = std::async(std::launch::deferred,
+			[=]() -> std::string {
 				std::ifstream stream(fullFile);
 				if(stream.bad())
 					throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
@@ -568,14 +663,87 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 				return buffer.str();
 			}
 		);
+	}
+	else
+	{
+		throw error("%s:%d: <param> needs either command, value, binfile, or textfile",
+			ctx.filename().c_str(), element->Row()
+		);
+	}
+
+	if(fullType == "yaml")
+	{
+		m_yamlParamJobs.push_back(std::async(std::launch::deferred,
+			[=]() -> YAMLResult {
+				std::string yamlString = computeString->get();
+
+				YAML::Node n;
+				try
+				{
+					n = YAML::Load(yamlString);
+				}
+				catch(YAML::ParserException& e)
+				{
+					throw error("%s:%d: Read invalid YAML from process or file: %s",
+						filename.c_str(), line, e.what()
+					);
+				}
+
+				return {fullName, std::move(n)};
+			}
+		));
+	}
+	else
+	{
+		m_paramJobs[fullName] = std::async(std::launch::deferred,
+			[=]() -> XmlRpc::XmlRpcValue {
+				return paramToXmlRpc(filename, line, computeString->get(), fullType);
+			}
+		);
 
 		// A fixed parameter of the same name gets overwritten now
 		m_params.erase(fullName);
 	}
-	else
+}
+
+XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const std::string& filename, int line, const std::string& value, const std::string& type)
+{
+	if(type.empty())
+		return autoXmlRpcValue(value);
+
+	// Fixed type.
+	try
 	{
-		throw error("%s:%d: <param> needs either command, value or textfile",
-			ctx.filename().c_str(), element->Row()
+		if(type == "int")
+			return boost::lexical_cast<int>(value);
+		else if(type == "double")
+			return boost::lexical_cast<double>(value);
+		else if(type == "bool" || type == "boolean")
+		{
+			if(value == "true")
+				return true;
+			else if(value == "false")
+				return false;
+			else
+			{
+				throw error("%s:%d: invalid boolean value '%s'",
+					filename.c_str(), line, value.c_str()
+				);
+			}
+		}
+		else if(type == "str" || type == "string")
+			return value;
+		else
+		{
+			throw error("%s:%d: invalid param type '%s'",
+				filename.c_str(), line, type.c_str()
+			);
+		}
+	}
+	catch(boost::bad_lexical_cast& e)
+	{
+		throw error("%s:%d: could not convert param value '%s' to type '%s'",
+			filename.c_str(), line, value.c_str(), type.c_str()
 		);
 	}
 }
@@ -614,7 +782,7 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 			return;
 
 		const char* subst_value = element->Attribute("subst_value");
-		if(subst_value && strcmp(subst_value, "true") == 0)
+		if(subst_value && ctx.parseBool(subst_value, element->Row()))
 			contents = ctx.evaluate(contents, false);
 
 		YAML::Node n;
@@ -769,9 +937,17 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 	const char* file = element->Attribute("file");
 	const char* ns = element->Attribute("ns");
 	const char* passAllArgs = element->Attribute("pass_all_args");
+	const char* clearParams = element->Attribute("clear_params");
 
 	if(!file)
 		throw error("%s:%d: file attribute is mandatory", ctx.filename().c_str(), element->Row());
+
+	if(clearParams && ctx.parseBool(clearParams, element->Row()))
+	{
+		throw error("%s:%d: <include clear_params=\"true\" /> is not supported and probably a bad idea.",
+			ctx.filename().c_str(), element->Row()
+		);
+	}
 
 	std::string fullFile = ctx.evaluate(file);
 
@@ -897,22 +1073,49 @@ void LaunchConfig::evaluateParameters()
 
 	std::mutex mutex;
 
+	bool caughtExceptionFlag = false;
+	ParseException caughtException("");
+
 	for(int i = 0; i < NUM_THREADS; ++i)
 	{
-		threads[i] = std::thread([this,i,NUM_THREADS,&mutex]() {
-			// Thread number i starts at position i and moves in NUM_THREADS
-			// increments.
-			auto it = m_paramJobs.begin();
-			safeAdvance(it, m_paramJobs.end(), i);
-
-			while(it != m_paramJobs.end())
+		threads[i] = std::thread([this,i,NUM_THREADS,&mutex,&caughtException,&caughtExceptionFlag]() {
+			try
 			{
-				XmlRpc::XmlRpcValue val = it->second.get();
+				// Thread number i starts at position i and moves in NUM_THREADS
+				// increments.
+				auto it = m_paramJobs.begin();
+				safeAdvance(it, m_paramJobs.end(), i);
+
+				while(it != m_paramJobs.end())
 				{
-					std::lock_guard<std::mutex> guard(mutex);
-					m_params[it->first] = val;
+					XmlRpc::XmlRpcValue val = it->second.get();
+					{
+						std::lock_guard<std::mutex> guard(mutex);
+						m_params[it->first] = val;
+					}
+					safeAdvance(it, m_paramJobs.end(), NUM_THREADS);
 				}
-				safeAdvance(it, m_paramJobs.end(), NUM_THREADS);
+
+				// YAML parameters have to be handled separately, since we may need
+				// to splice them into individual XmlRpcValues.
+				auto yamlIt = m_yamlParamJobs.begin();
+				safeAdvance(yamlIt, m_yamlParamJobs.end(), i);
+
+				while(yamlIt != m_yamlParamJobs.end())
+				{
+					YAMLResult yaml = yamlIt->get();
+					{
+						std::lock_guard<std::mutex> guard(mutex);
+						loadYAMLParams(yaml.yaml, yaml.name);
+					}
+					safeAdvance(yamlIt, m_yamlParamJobs.end(), NUM_THREADS);
+				}
+			}
+			catch(ParseException& e)
+			{
+				std::lock_guard<std::mutex> guard(mutex);
+				caughtException = e;
+				caughtExceptionFlag = true;
 			}
 		});
 	}
@@ -920,6 +1123,9 @@ void LaunchConfig::evaluateParameters()
 	// and wait for completion for the threads.
 	for(auto& t : threads)
 		t.join();
+
+	if(caughtExceptionFlag)
+		throw caughtException;
 
 	m_paramJobs.clear();
 }

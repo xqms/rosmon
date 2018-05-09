@@ -36,6 +36,10 @@ public:
 
 	void setLaunchPrefix(const std::string& launchPrefix);
 
+	void setWorkingDirectory(const std::string& workingDirectory);
+
+	void setClearParams(bool on);
+
 	std::string name() const
 	{ return m_name; }
 
@@ -76,6 +80,12 @@ public:
 
 	bool coredumpsEnabled() const
 	{ return m_coredumpsEnabled; }
+
+	std::string workingDirectory() const
+	{ return m_workingDirectory; }
+
+	bool clearParams() const
+	{ return m_clearParams; }
 private:
 	std::string m_name;
 	std::string m_package;
@@ -98,6 +108,10 @@ private:
 	std::vector<std::string> m_launchPrefix;
 
 	bool m_coredumpsEnabled;
+
+	std::string m_workingDirectory;
+
+	bool m_clearParams;
 };
 
 }

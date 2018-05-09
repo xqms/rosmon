@@ -211,6 +211,7 @@ private:
 	uint64_t m_memory = 0;
 
 	std::string m_processWorkingDirectory;
+	bool m_processWorkingDirectoryCreated = false;
 };
 
 }

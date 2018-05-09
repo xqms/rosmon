@@ -111,6 +111,7 @@ public:
 	void setArgument(const std::string& name, const std::string& value);
 
 	void parse(const std::string& filename, bool onlyArguments = false);
+	void parseString(const std::string& input, bool onlyArguments = false);
 
 	void evaluateParameters();
 
@@ -131,6 +132,8 @@ public:
 	std::string windowTitle() const
 	{ return m_windowTitle; }
 private:
+	void parseTopLevelAttributes(TiXmlElement* element);
+
 	void parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments = false);
 	void parseNode(TiXmlElement* element, ParseContext ctx);
 	void parseParam(TiXmlElement* element, ParseContext ctx);
@@ -141,14 +144,25 @@ private:
 
 	void loadYAMLParams(const YAML::Node& n, const std::string& prefix);
 
+	XmlRpc::XmlRpcValue paramToXmlRpc(const std::string& filename, int line, const std::string& value, const std::string& type = "");
 	XmlRpc::XmlRpcValue yamlToXmlRpc(const YAML::Node& n);
 
 	ParseContext m_rootContext;
 
 	std::vector<Node::Ptr> m_nodes;
-	typedef std::future<XmlRpc::XmlRpcValue> ParameterFuture;
-	std::map<std::string, XmlRpc::XmlRpcValue> m_params;
+
+	using ParameterList = std::map<std::string, XmlRpc::XmlRpcValue>;
+	using ParameterFuture = std::future<XmlRpc::XmlRpcValue>;
+
+	struct YAMLResult
+	{
+		std::string name;
+		YAML::Node yaml;
+	};
+
+	ParameterList m_params;
 	std::map<std::string, ParameterFuture> m_paramJobs;
+	std::vector<std::future<YAMLResult>> m_yamlParamJobs;
 
 	std::map<std::string, std::string> m_anonNames;
 	std::mt19937_64 m_anonGen;

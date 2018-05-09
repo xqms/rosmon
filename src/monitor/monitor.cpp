@@ -5,6 +5,7 @@
 
 #include <ros/package.h>
 #include <ros/node_handle.h>
+#include <ros/param.h>
 
 #include <cstdarg>
 #include <cstdio>
@@ -17,6 +18,20 @@
 #include <yaml-cpp/yaml.h>
 
 #include "linux_process_info.h"
+
+static std::runtime_error error(const char* fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	char str[1024];
+
+	vsnprintf(str, sizeof(str), fmt, args);
+
+	va_end(args);
+
+	return std::runtime_error(str);
+}
 
 namespace rosmon
 {
@@ -56,6 +71,34 @@ Monitor::Monitor(launch::LaunchConfig::ConstPtr config, FDWatcher::Ptr watcher)
 
 void Monitor::setParameters()
 {
+	{
+		std::vector<std::string> paramNames;
+
+		for(auto& node : m_config->nodes())
+		{
+			if(node->clearParams())
+			{
+				std::string paramNamespace = node->namespaceString() + "/" + node->name() + "/";
+
+				log("Deleting parameters in namespace %s", paramNamespace.c_str());
+
+				if(paramNames.empty())
+				{
+					if(!ros::param::getParamNames(paramNames))
+						throw error("Could not get list of parameters for clear_param");
+				}
+
+				for(auto& param : paramNames)
+				{
+					if(param.substr(0, paramNamespace.length()) == paramNamespace)
+					{
+						ros::param::del(param);
+					}
+				}
+			}
+		}
+	}
+
 	for(auto& param : m_config->parameters())
 		m_nh.setParam(param.first, param.second);
 }

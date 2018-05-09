@@ -57,19 +57,38 @@ if(${pluginlib_VERSION} VERSION_GREATER 1.11.1)
 	add_definitions(-DHAVE_PLUGINLIB_NEW_HEADERS=1)
 endif()
 
-add_executable(rosmon
-	src/main.cpp
+# Are we building with test coverage instrumentation?
+set(BUILD_FOR_COVERAGE OFF CACHE BOOL "Build with coverage instrumentation?")
+if(BUILD_FOR_COVERAGE)
+	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+	else()
+		message(WARNING "Coverage build is only supported with clang")
+	endif()
+endif()
+
+add_library(rosmon_launch_config
 	src/launch/node.cpp
 	src/launch/launch_config.cpp
 	src/launch/substitution.cpp
 	src/launch/substitution_python.cpp
+	src/package_registry.cpp
+)
+target_link_libraries(rosmon_launch_config
+	${catkin_LIBRARIES}
+	${TinyXML_LIBRARIES}
+	${Boost_LIBRARIES}
+	yaml-cpp
+)
+
+add_executable(rosmon
+	src/main.cpp
 	src/monitor/node_monitor.cpp
 	src/monitor/monitor.cpp
 	src/monitor/linux_process_info.cpp
 	src/ui.cpp
 	src/husl/husl.c
 	src/ros_interface.cpp
-	src/package_registry.cpp
 	src/fd_watcher.cpp
 	src/logger.cpp
 	src/terminal.cpp
@@ -81,6 +100,7 @@ target_link_libraries(rosmon
 	${Boost_LIBRARIES}
 	yaml-cpp
 	util
+	rosmon_launch_config
 )
 add_dependencies(rosmon
 	${PROJECT_NAME}_generate_messages_cpp
@@ -169,8 +189,33 @@ add_executable(abort_really_long_executable
 
 # Register unit tests
 if(CATKIN_ENABLE_TESTING)
+	# Integration tests
 	find_package(rostest REQUIRED)
-	add_rostest(test/basic.test)
+	add_rostest(test/basic.test DEPENDENCIES rosmon)
+
+	# XML parsing test suite
+	find_package(catch_ros)
+	if(catch_ros_FOUND)
+		include_directories(${catch_ros_INCLUDE_DIRS})
+
+		catch_add_test(test_xml_loading
+			test/xml/test_arg.cpp
+			test/xml/test_env.cpp
+			test/xml/test_basic.cpp
+			test/xml/test_if_unless.cpp
+			test/xml/test_include.cpp
+			test/xml/test_node.cpp
+			test/xml/test_param.cpp
+			test/xml/test_rosparam.cpp
+			test/xml/test_subst.cpp
+		)
+		target_link_libraries(test_xml_loading
+			rosmon_launch_config
+			${catch_ros_LIBRARIES}
+		)
+	else()
+		message(WARNING "Install catch_ros to enable XML unit tests")
+	endif()
 endif()
 
 # Version 1.4 (increment this comment to trigger a CMake update)
@@ -179,7 +224,7 @@ catkin_add_env_hooks(50-rosmon
 	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks
 )
 
-install(TARGETS rosmon
+install(TARGETS rosmon rosmon_launch_config
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
