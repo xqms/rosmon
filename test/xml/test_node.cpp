@@ -5,6 +5,8 @@
 
 #include "../../src/launch/launch_config.h"
 
+#include <boost/filesystem.hpp>
+
 #include "param_utils.h"
 
 using namespace rosmon::launch;
@@ -95,6 +97,14 @@ TEST_CASE("node basic", "[node]")
 	CHECK(node->name() == "test_node");
 	CHECK(node->package() == "rosmon");
 	CHECK(node->type() == "abort");
+
+	{
+		namespace fs = boost::filesystem;
+
+		fs::path executable = node->executable();
+		CAPTURE(executable.string());
+		CHECK((fs::status(executable).permissions() & fs::owner_exe));
+	}
 }
 
 TEST_CASE("node invalid", "[node]")
