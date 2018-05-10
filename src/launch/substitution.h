@@ -7,6 +7,8 @@
 #include <string>
 #include <stdexcept>
 
+#include <fmt/format.h>
+
 namespace rosmon
 {
 namespace launch
@@ -26,6 +28,12 @@ public:
 
 	virtual const char* what() const noexcept override
 	{ return m_msg.c_str(); }
+
+	template<typename... Args>
+	static SubstitutionException format(const char* format, const Args& ... args)
+	{
+		return SubstitutionException(fmt::format(format, args...));
+	}
 private:
 	std::string m_msg;
 };

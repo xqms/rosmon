@@ -21,20 +21,6 @@ namespace rosmon
 namespace launch
 {
 
-static SubstitutionException error(const char* fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	char str[1024];
-
-	vsnprintf(str, sizeof(str), fmt, args);
-
-	va_end(args);
-
-	return SubstitutionException(str);
-}
-
 #if HAVE_PYTHON
 
 template<class F>
@@ -171,7 +157,7 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 			ss << "<no str() handler>";
 		}
 
-		throw error("%s", ss.str().c_str());
+		throw SubstitutionException(ss.str());
 	}
 
 	if(PyString_Check(result.ptr()))
@@ -198,7 +184,7 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 		);
 	}
 
-	throw error("$(eval '%s'): Got unknown python return type", input.c_str());
+	throw SubstitutionException::format("$(eval '{}'): Got unknown python return type", input);
 }
 
 #else // HAVE_PYTHON
