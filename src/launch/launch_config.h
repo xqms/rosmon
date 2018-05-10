@@ -58,6 +58,9 @@ public:
 	void setFilename(const std::string& filename)
 	{ m_filename = filename; }
 
+	void setCurrentElement(TiXmlElement* e)
+	{ m_currentElement = e; }
+
 	ParseContext enterScope(const std::string& prefix)
 	{
 		ParseContext ret = *this;
@@ -96,6 +99,7 @@ private:
 
 	std::string m_prefix;
 	std::string m_filename;
+	TiXmlElement* m_currentElement = 0;
 	std::map<std::string, std::string> m_args;
 	std::map<std::string, std::string> m_environment;
 };

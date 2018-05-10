@@ -255,6 +255,8 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArgu
 		if(ctx->shouldSkip(e))
 			continue;
 
+		ctx->setCurrentElement(e);
+
 		if(e->ValueStr() == "arg")
 			parseArgument(e, *ctx);
 	}
@@ -271,6 +273,8 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArgu
 
 		if(ctx->shouldSkip(e))
 			continue;
+
+		ctx->setCurrentElement(e);
 
 		if(e->ValueStr() == "node")
 			parseNode(e, *ctx);
@@ -384,6 +388,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		if(ctx.shouldSkip(e))
 			continue;
 
+		ctx.setCurrentElement(e);
+
 		if(e->ValueStr() == "param")
 			parseParam(e, ctx);
 		else if(e->ValueStr() == "rosparam")
@@ -401,6 +407,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		else if(e->ValueStr() == "env")
 			parseEnv(e, ctx);
 	}
+
+	ctx.setCurrentElement(element);
 
 	// Set environment *after* parsing the node children (may contain env tags)
 	node->setExtraEnvironment(ctx.environment());
