@@ -7,10 +7,11 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
-#include <sstream>
 #include <stdexcept>
 
 #include <sys/time.h>
+
+#include <fmt/format.h>
 
 namespace rosmon
 {
@@ -21,9 +22,9 @@ Logger::Logger(const std::string& path)
 	m_file = fopen(path.c_str(), "we");
 	if(!m_file)
 	{
-		std::stringstream ss;
-		ss << "Could not open log file: " << strerror(errno);
-		throw std::runtime_error(ss.str());
+		throw std::runtime_error(fmt::format(
+			"Could not open log file: {}", strerror(errno)
+		));
 	}
 }
 
@@ -50,7 +51,7 @@ void Logger::log(const std::string& source, const std::string& msg)
 	while(len != 0 && (msg[len-1] == '\n' || msg[len-1] == '\r'))
 		len--;
 
-	fprintf(m_file, "%s.%03ld: %20s: ",
+	fmt::print(m_file, "{}.{:03d}: {:>20}: ",
 		timeString, tv.tv_usec / 1000,
 		source.c_str()
 	);

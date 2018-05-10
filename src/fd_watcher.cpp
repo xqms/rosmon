@@ -9,19 +9,12 @@
 #include <sys/types.h>
 #include <sys/select.h>
 
+#include <fmt/format.h>
 
-static std::runtime_error error(const char* fmt, ...)
+template<typename... Args>
+std::runtime_error error(const char* fmt, const Args& ... args)
 {
-	va_list args;
-	va_start(args, fmt);
-
-	char str[1024];
-
-	vsnprintf(str, sizeof(str), fmt, args);
-
-	va_end(args);
-
-	return std::runtime_error(str);
+	return std::runtime_error(fmt::format(fmt, args...));
 }
 
 namespace rosmon
@@ -63,7 +56,7 @@ void FDWatcher::wait(const ros::WallDuration& duration)
 		if(errno == EINTR || errno == EAGAIN)
 			return;
 
-		throw error("Could not select(): %s", strerror(errno));
+		throw error("Could not select(): {}", strerror(errno));
 	}
 
 	if(ret != 0)
