@@ -16,6 +16,8 @@
 #include <tinyxml.h>
 #include <yaml-cpp/yaml.h>
 
+#include <fmt/format.h>
+
 namespace rosmon
 {
 namespace launch
@@ -35,6 +37,12 @@ public:
 
 	virtual const char* what() const noexcept
 	{ return m_msg.c_str(); }
+
+	template<typename... Args>
+	ParseException format(const char* format, const Args& ... args)
+	{
+		return ParseException(fmt::format(format, args...));
+	}
 private:
 	std::string m_msg;
 };
@@ -59,7 +67,15 @@ public:
 	{ m_filename = filename; }
 
 	void setCurrentElement(TiXmlElement* e)
-	{ m_currentElement = e; }
+	{
+		// NOTE: We should not keep a reference to the TiXmlElement here,
+		// since the ParseContext might be around longer than the DOM tree.
+		// See evaluateParameters().
+		if(e)
+			m_currentLine = e->Row();
+		else
+			m_currentLine = -1;
+	}
 
 	ParseContext enterScope(const std::string& prefix)
 	{
@@ -94,12 +110,29 @@ public:
 
 	inline LaunchConfig* config()
 	{ return m_config; }
+
+	template<typename... Args>
+	ParseException error(const char* fmt, const Args& ... args) const
+	{
+		std::string msg = fmt::format(fmt, args...);
+
+		if(m_currentLine >= 0)
+		{
+			return ParseException(fmt::format("{}:{}: {}",
+				m_filename, m_currentLine, msg
+			));
+		}
+		else
+		{
+			return ParseException(fmt::format("{}: {}", m_filename, msg));
+		}
+	}
 private:
 	LaunchConfig* m_config;
 
 	std::string m_prefix;
 	std::string m_filename;
-	TiXmlElement* m_currentElement = 0;
+	int m_currentLine = -1;
 	std::map<std::string, std::string> m_args;
 	std::map<std::string, std::string> m_environment;
 };
@@ -146,10 +179,10 @@ private:
 	void parseArgument(TiXmlElement* element, ParseContext& ctx);
 	void parseEnv(TiXmlElement* element, ParseContext& ctx);
 
-	void loadYAMLParams(const YAML::Node& n, const std::string& prefix);
+	void loadYAMLParams(const ParseContext& ctx, const YAML::Node& n, const std::string& prefix);
 
-	XmlRpc::XmlRpcValue paramToXmlRpc(const std::string& filename, int line, const std::string& value, const std::string& type = "");
-	XmlRpc::XmlRpcValue yamlToXmlRpc(const YAML::Node& n);
+	XmlRpc::XmlRpcValue paramToXmlRpc(const ParseContext& ctx, const std::string& value, const std::string& type = "");
+	XmlRpc::XmlRpcValue yamlToXmlRpc(const ParseContext& ctx, const YAML::Node& n);
 
 	ParseContext m_rootContext;
 
