@@ -183,7 +183,7 @@ std::string parseSubstitutionArgs(const std::string& input, ParseContext& contex
 			return substitutions::env(args);
 		}},
 		{"optenv", [](const std::string& args, const std::string&) -> std::string{
-			auto pos = args.find(" ");
+			auto pos = args.find(' ');
 			std::string defaultValue;
 			std::string name = args;
 			if(pos != std::string::npos)

@@ -666,7 +666,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 					);
 				}
 
-				return {fullName, std::move(n)};
+				return {fullName, n};
 			}
 		));
 	}
