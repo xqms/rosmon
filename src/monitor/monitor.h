@@ -51,7 +51,8 @@ private:
 		bool active;
 	};
 
-	void log(const char* fmt, ...) __attribute__((format (printf, 2, 3)));
+	template<typename... Args>
+	void log(const char* fmt, const Args& ... args);
 
 	void handleRequiredNodeExit(const std::string& name);
 
