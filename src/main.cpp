@@ -257,7 +257,7 @@ int main(int argc, char** argv)
 		config->parse(launchFilePath, onlyArguments);
 		config->evaluateParameters();
 	}
-	catch(rosmon::launch::LaunchConfig::ParseException& e)
+	catch(rosmon::launch::ParseException& e)
 	{
 		fprintf(stderr, "Could not load launch file: %s\n", e.what());
 		return 1;

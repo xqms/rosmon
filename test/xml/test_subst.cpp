@@ -41,7 +41,7 @@ TEST_CASE("env", "[subst]")
 					<param name="env_test" value="$(env ROSMON_UNLIKELY_TO_BE_SET)" />
 				</launch>
 			)EOF"),
-			LaunchConfig::ParseException
+			ParseException
 		);
 	}
 }
@@ -140,7 +140,7 @@ TEST_CASE("find", "[subst]")
 					<param name="test" value="$(find rosmon_this_package_is_unlikely_to_be_there)" />
 				</launch>
 			)EOF"),
-			LaunchConfig::ParseException
+			ParseException
 		);
 	}
 }
@@ -180,7 +180,7 @@ TEST_CASE("anon", "[subst]")
 					<node name="$(anon foo)" pkg="rospy_tutorials" type="talker.py" />
 				</launch>
 			)EOF"),
-			LaunchConfig::ParseException
+			ParseException
 		);
 	}
 }
@@ -211,7 +211,7 @@ TEST_CASE("arg", "[subst]")
 					<param name="test" value="$(arg test_arg_unknown)" />
 				</launch>
 			)EOF"),
-			LaunchConfig::ParseException
+			ParseException
 		);
 	}
 
@@ -305,7 +305,7 @@ TEST_CASE("eval", "[subst]")
 					<param name="test" value="$(eval acos)"/>
 				</launch>
 			)EOF"),
-			LaunchConfig::ParseException
+			ParseException
 		);
 	}
 }
@@ -339,7 +339,7 @@ TEST_CASE("subst invalid", "[subst]")
 					<param name="test" value="$(unknown_subst parameter)" />
 				</launch>
 			)EOF"),
-			LaunchConfig::ParseException
+			ParseException
 		);
 	}
 }

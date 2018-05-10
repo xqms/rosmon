@@ -46,6 +46,6 @@ TEST_CASE("if/unless invalid", "[if_unless]")
 
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param if="unknown_value" name="test" value="test" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 }

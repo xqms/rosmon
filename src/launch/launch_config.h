@@ -23,6 +23,22 @@ namespace launch
 
 class LaunchConfig;
 
+class ParseException : public std::exception
+{
+public:
+	explicit ParseException(const std::string& msg)
+		: m_msg(msg)
+	{}
+
+	virtual ~ParseException() throw()
+	{}
+
+	virtual const char* what() const noexcept
+	{ return m_msg.c_str(); }
+private:
+	std::string m_msg;
+};
+
 extern const char* UNSET_MARKER;
 
 class ParseContext
@@ -89,22 +105,6 @@ class LaunchConfig
 public:
 	typedef std::shared_ptr<LaunchConfig> Ptr;
 	typedef std::shared_ptr<const LaunchConfig> ConstPtr;
-
-	class ParseException : public std::exception
-	{
-	public:
-		explicit ParseException(const std::string& msg)
-		 : m_msg(msg)
-		{}
-
-		virtual ~ParseException() throw()
-		{}
-
-		virtual const char* what() const noexcept
-		{ return m_msg.c_str(); }
-	private:
-		std::string m_msg;
-	};
 
 	LaunchConfig();
 
