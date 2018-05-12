@@ -202,6 +202,7 @@ if(CATKIN_ENABLE_TESTING)
 		include_directories(${catch_ros_INCLUDE_DIRS})
 
 		catch_add_test(test_xml_loading
+			test/xml/node_utils.cpp
 			test/xml/test_arg.cpp
 			test/xml/test_env.cpp
 			test/xml/test_basic.cpp
@@ -209,6 +210,7 @@ if(CATKIN_ENABLE_TESTING)
 			test/xml/test_include.cpp
 			test/xml/test_node.cpp
 			test/xml/test_param.cpp
+			test/xml/test_remap.cpp
 			test/xml/test_rosparam.cpp
 			test/xml/test_subst.cpp
 		)
