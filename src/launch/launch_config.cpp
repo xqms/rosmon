@@ -27,20 +27,6 @@ namespace launch
 
 const char* UNSET_MARKER = "~~~~~ ROSMON-UNSET ~~~~~";
 
-static LaunchConfig::ParseException error(const char* fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	char str[1024];
-
-	vsnprintf(str, sizeof(str), fmt, args);
-
-	va_end(args);
-
-	return LaunchConfig::ParseException(str);
-}
-
 /**
  * @brief Compress any sequence of whitespace to single spaces.
  *
@@ -113,7 +99,7 @@ std::string ParseContext::evaluate(const std::string& tpl, bool simplifyWhitespa
 	}
 	catch(SubstitutionException& e)
 	{
-		throw error("%s: %s", filename().c_str(), e.what());
+		throw error("Substitution error: {}", e.what());
 	}
 }
 
@@ -133,7 +119,7 @@ bool ParseContext::parseBool(const std::string& value, int line)
 	if(expansion == "0" || expansion == "false" || expansion == "False")
 		return false;
 
-	throw error("%s:%d: Unknown truth value '%s'", filename().c_str(), line, expansion.c_str());
+	throw error("Unknown truth value '%s'", expansion.c_str());
 }
 
 bool ParseContext::shouldSkip(TiXmlElement* e)
@@ -143,9 +129,7 @@ bool ParseContext::shouldSkip(TiXmlElement* e)
 
 	if(if_cond && unless_cond)
 	{
-		throw error("%s:%d: both if= and unless= specified, don't know what to do",
-			filename().c_str(), e->Row()
-		);
+		throw error("both if= and unless= specified, don't know what to do");
 	}
 
 	if(if_cond)
@@ -188,28 +172,31 @@ void LaunchConfig::setArgument(const std::string& name, const std::string& value
 
 void LaunchConfig::parse(const std::string& filename, bool onlyArguments)
 {
+	m_rootContext.setFilename(filename);
+
 	TiXmlDocument document(filename);
 
 	TiXmlBase::SetCondenseWhiteSpace(false);
 
 	if(!document.LoadFile())
 	{
-		throw error("Could not load launch file '%s'. Exiting...\n", filename.c_str());
+		throw m_rootContext.error("Could not load launch file: {}", document.ErrorDesc());
 	}
 
 	ros::WallTime start = ros::WallTime::now();
-	m_rootContext.setFilename(filename);
 	parse(document.RootElement(), &m_rootContext, onlyArguments);
 
 	// Parse top-level rosmon-specific attributes
 	parseTopLevelAttributes(document.RootElement());
 
 	if(!onlyArguments)
-		printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
+		fmt::print("Loaded launch file in {:f}s\n", (ros::WallTime::now() - start).toSec());
 }
 
 void LaunchConfig::parseString(const std::string& input, bool onlyArguments)
 {
+	m_rootContext.setFilename("[string]");
+
 	TiXmlDocument document;
 
 	TiXmlBase::SetCondenseWhiteSpace(false);
@@ -218,18 +205,17 @@ void LaunchConfig::parseString(const std::string& input, bool onlyArguments)
 
 	if(document.Error())
 	{
-		throw error("Could not parse string input: %s\n", document.ErrorDesc());
+		throw m_rootContext.error("Could not parse string input: {}", document.ErrorDesc());
 	}
 
 	ros::WallTime start = ros::WallTime::now();
-	m_rootContext.setFilename("[string]");
 	parse(document.RootElement(), &m_rootContext, onlyArguments);
 
 	// Parse top-level rosmon-specific attributes
 	parseTopLevelAttributes(document.RootElement());
 
 	if(!onlyArguments)
-		printf("Loaded launch file in %fs\n", (ros::WallTime::now() - start).toSec());
+		fmt::print("Loaded launch file in {:f}s\n", (ros::WallTime::now() - start).toSec());
 }
 
 void LaunchConfig::parseTopLevelAttributes(TiXmlElement* element)
@@ -255,6 +241,8 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArgu
 		if(ctx->shouldSkip(e))
 			continue;
 
+		ctx->setCurrentElement(e);
+
 		if(e->ValueStr() == "arg")
 			parseArgument(e, *ctx);
 	}
@@ -271,6 +259,8 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArgu
 
 		if(ctx->shouldSkip(e))
 			continue;
+
+		ctx->setCurrentElement(e);
 
 		if(e->ValueStr() == "node")
 			parseNode(e, *ctx);
@@ -313,9 +303,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	if(!name || !pkg || !type)
 	{
-		throw error("File %s:%d: name, pkg, type are mandatory for node elements!\n",
-			ctx.filename().c_str(), element->Row()
-		);
+		throw ctx.error("name, pkg, type are mandatory for node elements!");
 	}
 
 	if(ns)
@@ -338,9 +326,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 		if(it != m_nodes.end())
 		{
-			throw error("%s:%d: node name '%s' is not unique",
-				ctx.filename().c_str(), element->Row(), node->name().c_str()
-			);
+			throw ctx.error("node name '{}' is not unique", node->name());
 		}
 	}
 
@@ -363,7 +349,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 			}
 			catch(boost::bad_lexical_cast&)
 			{
-				throw error("%s:%d: bad respawn_delay value", ctx.filename().c_str(), element->Row());
+				throw ctx.error("bad respawn_delay value '{}'", respawnDelay);
 			}
 
 			node->setRespawnDelay(ros::WallDuration(seconds));
@@ -384,6 +370,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		if(ctx.shouldSkip(e))
 			continue;
 
+		ctx.setCurrentElement(e);
+
 		if(e->ValueStr() == "param")
 			parseParam(e, ctx);
 		else if(e->ValueStr() == "rosparam")
@@ -394,13 +382,15 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 			const char* to = e->Attribute("to");
 
 			if(!from || !to)
-				throw error("%s:%d: remap needs 'from' and 'to' arguments", ctx.filename().c_str(), e->Row());
+				throw ctx.error("remap needs 'from' and 'to' arguments");
 
 			node->addRemapping(ctx.evaluate(from), ctx.evaluate(to));
 		}
 		else if(e->ValueStr() == "env")
 			parseEnv(e, ctx);
 	}
+
+	ctx.setCurrentElement(element);
 
 	// Set environment *after* parsing the node children (may contain env tags)
 	node->setExtraEnvironment(ctx.environment());
@@ -447,23 +437,15 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	const char* binfile = element->Attribute("binfile");
 	const char* type = element->Attribute("type");
 
-	// Filename and line for error reporting
-	std::string filename = ctx.filename();
-	int line = element->Row();
-
 	if(!name)
 	{
-		throw error("File %s:%d: name is mandatory for param elements\n",
-			ctx.filename().c_str(), element->Row()
-		);
+		throw ctx.error("name is mandatory for param elements");
 	}
 
 	int numCommands = (value ? 1 : 0) + (command ? 1 : 0) + (textfile ? 1 : 0) + (binfile ? 1 : 0);
 	if(numCommands > 1) // == 0 is checked below, don't duplicate.
 	{
-		throw error("File %s:%d: <param> tags need exactly one of value=, command=, textfile=, binfile= attributes.",
-			filename.c_str(), line
-		);
+		throw ctx.error("<param> tags need exactly one of value=, command=, textfile=, binfile= attributes.");
 	}
 
 	std::string fullName = ctx.evaluate(name);
@@ -481,9 +463,8 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	std::string errorStr;
 	if(!ros::names::validate(fullName, errorStr))
 	{
-		throw error("File %s:%d: expanded parameter name '%s' is invalid: %s\n",
-			ctx.filename().c_str(), element->Row(),
-			fullName.c_str(), errorStr.c_str()
+		throw ctx.error("Expanded parameter name '{}' is invalid: {}",
+			fullName, errorStr
 		);
 	}
 
@@ -505,16 +486,14 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 			}
 			catch(YAML::ParserException& e)
 			{
-				throw error("%s:%d: Invalid YAML: %s",
-					ctx.filename().c_str(), element->Row(), e.what()
-				);
+				throw ctx.error("Invalid YAML: {}", e.what());
 			}
 
-			loadYAMLParams(n, fullName);
+			loadYAMLParams(ctx, n, fullName);
 		}
 		else
 		{
-			m_params[fullName] = paramToXmlRpc(ctx.filename(), element->Row(), ctx.evaluate(value), fullType);
+			m_params[fullName] = paramToXmlRpc(ctx, ctx.evaluate(value), fullType);
 
 			// A dynamic parameter of the same name gets overwritten now
 			m_paramJobs.erase(fullName);
@@ -533,7 +512,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 			[=]() -> XmlRpc::XmlRpcValue {
 				std::ifstream stream(fullFile, std::ios::binary | std::ios::ate);
 				if(stream.bad())
-					throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
+					throw ctx.error("Could not open file '{}'", fullFile);
 
 				std::vector<char> data(stream.tellg(), 0);
 				stream.seekg(0, std::ios::beg);
@@ -569,11 +548,11 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 				int pipe_fd[2];
 				if(pipe(pipe_fd) != 0)
-					throw error("Could not create pipe: %s", strerror(errno));
+					throw ctx.error("Could not create pipe: {}", strerror(errno));
 
 				int pid = fork();
 				if(pid < 0)
-					throw error("Could not fork: %s", strerror(errno));
+					throw ctx.error("Could not fork: {}", strerror(errno));
 
 				if(pid == 0)
 				{
@@ -588,7 +567,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 					char* argp[] = {strdup("sh"), strdup("-c"), strdup(fullCommand.c_str()), nullptr};
 
 					execvp("sh", argp); // should never return
-					throw error("Could not execvp '%s': %s", fullCommand.c_str(), strerror(errno));
+					throw ctx.error("Could not execvp '{}': {}", fullCommand, strerror(errno));
 				}
 
 				close(pipe_fd[1]);
@@ -606,11 +585,11 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 					int ret = select(pipe_fd[0]+1, &fds, nullptr, nullptr, &timeout);
 					if(ret < 0)
-						throw error("Could not select(): %s", strerror(errno));
+						throw ctx.error("Could not select(): {}", strerror(errno));
 
 					if(ret == 0)
 					{
-						printf("Still loading parameter '%s'...\n", fullName.c_str());
+						fmt::print("Still loading parameter '{}'...\n", fullName);
 
 						timeout.tv_sec = 3;
 						continue;
@@ -619,7 +598,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 					char buf[1024];
 					ret = read(pipe_fd[0], buf, sizeof(buf)-1);
 					if(ret < 0)
-						throw error("Could not read: %s", strerror(errno));
+						throw ctx.error("Could not read: {}", strerror(errno));
 					if(ret == 0)
 						break;
 
@@ -631,12 +610,12 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 
 				int status = 0;
 				if(waitpid(pid, &status, 0) < 0)
-					throw error("Could not waitpid(): %s", strerror(errno));
+					throw ctx.error("Could not waitpid(): {}", strerror(errno));
 
 				if(!WIFEXITED(status) || WEXITSTATUS(status) != 0)
 				{
-					throw error("%s:%d: <param> command failed (exit status %d)",
-						filename.c_str(), line, status
+					throw ctx.error("<param> command failed (exit status {})",
+						WEXITSTATUS(status)
 					);
 				}
 
@@ -655,7 +634,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 			[=]() -> std::string {
 				std::ifstream stream(fullFile);
 				if(stream.bad())
-					throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
+					throw ctx.error("Could not open file '{}'", fullFile);
 
 				std::stringstream buffer;
 				buffer << stream.rdbuf();
@@ -666,9 +645,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	}
 	else
 	{
-		throw error("%s:%d: <param> needs either command, value, binfile, or textfile",
-			ctx.filename().c_str(), element->Row()
-		);
+		throw ctx.error("<param> needs either command, value, binfile, or textfile");
 	}
 
 	if(fullType == "yaml")
@@ -684,12 +661,12 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 				}
 				catch(YAML::ParserException& e)
 				{
-					throw error("%s:%d: Read invalid YAML from process or file: %s",
-						filename.c_str(), line, e.what()
+					throw ctx.error("Read invalid YAML from process or file: {}",
+						e.what()
 					);
 				}
 
-				return {fullName, std::move(n)};
+				return {fullName, n};
 			}
 		));
 	}
@@ -697,7 +674,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	{
 		m_paramJobs[fullName] = std::async(std::launch::deferred,
 			[=]() -> XmlRpc::XmlRpcValue {
-				return paramToXmlRpc(filename, line, computeString->get(), fullType);
+				return paramToXmlRpc(ctx, computeString->get(), fullType);
 			}
 		);
 
@@ -706,7 +683,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	}
 }
 
-XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const std::string& filename, int line, const std::string& value, const std::string& type)
+XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const ParseContext& ctx, const std::string& value, const std::string& type)
 {
 	if(type.empty())
 		return autoXmlRpcValue(value);
@@ -726,24 +703,20 @@ XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const std::string& filename, int
 				return false;
 			else
 			{
-				throw error("%s:%d: invalid boolean value '%s'",
-					filename.c_str(), line, value.c_str()
-				);
+				throw ctx.error("invalid boolean value '{}'", value);
 			}
 		}
 		else if(type == "str" || type == "string")
 			return value;
 		else
 		{
-			throw error("%s:%d: invalid param type '%s'",
-				filename.c_str(), line, type.c_str()
-			);
+			throw ctx.error("invalid param type '{}'", type);
 		}
 	}
 	catch(boost::bad_lexical_cast& e)
 	{
-		throw error("%s:%d: could not convert param value '%s' to type '%s'",
-			filename.c_str(), line, value.c_str(), type.c_str()
+		throw ctx.error("could not convert param value '{}' to type '{}'",
+			value, type
 		);
 	}
 }
@@ -763,7 +736,7 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 			fullFile = ctx.evaluate(file);
 			std::ifstream stream(fullFile);
 			if(stream.bad())
-				throw error("%s:%d: Could not open file '%s'", ctx.filename().c_str(), element->Row(), fullFile.c_str());
+				throw ctx.error("Could not open file '{}'", fullFile);
 
 			std::stringstream buffer;
 			buffer << stream.rdbuf();
@@ -792,7 +765,7 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 		}
 		catch(YAML::ParserException& e)
 		{
-			throw error("%s:%d: Could not parse YAML: %s", ctx.filename().c_str(), element->Row(), e.what());
+			throw ctx.error("Could not parse YAML: {}", e.what());
 		}
 
 		const char* ns = element->Attribute("ns");
@@ -806,23 +779,26 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 		// Remove trailing / from prefix to get param name
 		try
 		{
-			loadYAMLParams(n, ctx.prefix().substr(0, ctx.prefix().length()-1));
+			loadYAMLParams(ctx, n, ctx.prefix().substr(0, ctx.prefix().length()-1));
 		}
 		catch(ParseException& e)
 		{
-			std::stringstream ss;
-			ss << ctx.filename() << ": ";
 			if(file)
-				ss << "Error while parsing rosparam input file '" << fullFile << "': ";
+			{
+				throw ctx.error("error while parsing rosparam input file {}: {}",
+					fullFile, e.what()
+				);
+			}
 			else
-				ss << "Error while parsing YAML input from launch file: ";
-
-			ss << e.what();
-			throw ParseException(ss.str());
+			{
+				throw ctx.error("error while parsing YAML input from launch file: {}",
+					e.what()
+				);
+			}
 		}
 	}
 	else
-		throw error("Unsupported rosparam command '%s'", command);
+		throw ctx.error("Unsupported rosparam command '{}'", command);
 }
 
 
@@ -848,7 +824,7 @@ public:
 };
 
 
-XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const YAML::Node& n)
+XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const ParseContext& ctx, const YAML::Node& n)
 {
 	if(n.Type() != YAML::NodeType::Scalar)
 	{
@@ -859,7 +835,7 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const YAML::Node& n)
 				std::map<std::string, XmlRpc::XmlRpcValue> members;
 				for(YAML::const_iterator it = n.begin(); it != n.end(); ++it)
 				{
-					members[it->first.as<std::string>()] = yamlToXmlRpc(it->second);
+					members[it->first.as<std::string>()] = yamlToXmlRpc(ctx, it->second);
 				}
 				return XmlRpcValueCreator::createStruct(members);
 			}
@@ -868,12 +844,12 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const YAML::Node& n)
 				std::vector<XmlRpc::XmlRpcValue> values;
 				for(YAML::const_iterator it = n.begin(); it != n.end(); ++it)
 				{
-					values.push_back(yamlToXmlRpc(*it));
+					values.push_back(yamlToXmlRpc(ctx, *it));
 				}
 				return XmlRpcValueCreator::createArray(values);
 			}
 			default:
-				throw error("Invalid YAML node type");
+				throw ctx.error("Invalid YAML node type");
 		}
 	}
 
@@ -901,10 +877,10 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const YAML::Node& n)
 	try { return XmlRpc::XmlRpcValue(n.as<std::string>()); }
 	catch(YAML::Exception&) {}
 
-	throw error("Could not convert YAML value");
+	throw ctx.error("Could not convert YAML value");
 }
 
-void LaunchConfig::loadYAMLParams(const YAML::Node& n, const std::string& prefix)
+void LaunchConfig::loadYAMLParams(const ParseContext& ctx, const YAML::Node& n, const std::string& prefix)
 {
 	switch(n.Type())
 	{
@@ -912,14 +888,14 @@ void LaunchConfig::loadYAMLParams(const YAML::Node& n, const std::string& prefix
 		{
 			for(YAML::const_iterator it = n.begin(); it != n.end(); ++it)
 			{
-				loadYAMLParams(it->second, prefix + "/" + it->first.as<std::string>());
+				loadYAMLParams(ctx, it->second, prefix + "/" + it->first.as<std::string>());
 			}
 			break;
 		}
 		case YAML::NodeType::Sequence:
 		case YAML::NodeType::Scalar:
 		{
-			m_params[prefix] = yamlToXmlRpc(n);
+			m_params[prefix] = yamlToXmlRpc(ctx, n);
 
 			// A dynamic parameter of the same name gets overwritten now
 			m_paramJobs.erase(prefix);
@@ -927,7 +903,7 @@ void LaunchConfig::loadYAMLParams(const YAML::Node& n, const std::string& prefix
 		}
 		default:
 		{
-			throw error("invalid yaml node type");
+			throw ctx.error("invalid yaml node type");
 		}
 	}
 }
@@ -940,13 +916,11 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 	const char* clearParams = element->Attribute("clear_params");
 
 	if(!file)
-		throw error("%s:%d: file attribute is mandatory", ctx.filename().c_str(), element->Row());
+		throw ctx.error("<include> file attribute is mandatory");
 
 	if(clearParams && ctx.parseBool(clearParams, element->Row()))
 	{
-		throw error("%s:%d: <include clear_params=\"true\" /> is not supported and probably a bad idea.",
-			ctx.filename().c_str(), element->Row()
-		);
+		throw ctx.error("<include clear_params=\"true\" /> is not supported and probably a bad idea.");
 	}
 
 	std::string fullFile = ctx.evaluate(file);
@@ -977,7 +951,7 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 			const char* value = e->Attribute("value");
 
 			if(!name || !value)
-				throw error("%s:%d: <arg> inside include needs name and value", ctx.filename().c_str(), element->Row());
+				throw ctx.error("<arg> inside include needs name and value");
 
 			childCtx.setArg(ctx.evaluate(name), ctx.evaluate(value), true);
 		}
@@ -985,7 +959,7 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 
 	TiXmlDocument document(fullFile);
 	if(!document.LoadFile())
-		throw error("Could not load launch file '%s'. Exiting...\n", fullFile.c_str());
+		throw ctx.error("Could not load launch file '{}': {}", fullFile, document.ErrorDesc());
 
 	childCtx.setFilename(fullFile);
 
@@ -999,7 +973,7 @@ void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
 	const char* def = element->Attribute("default");
 
 	if(!name)
-		throw error("%s:%d: <arg> needs name attribute", ctx.filename().c_str(), element->Row());
+		throw ctx.error("<arg> needs name attribute");
 
 	if(value)
 	{
@@ -1023,7 +997,7 @@ void LaunchConfig::parseEnv(TiXmlElement* element, ParseContext& ctx)
 	const char* value = element->Attribute("value");
 
 	if(!name || !value)
-		throw error("%s:%d: <env> needs name, value attributes", ctx.filename().c_str(), element->Row());
+		throw ctx.error("<env> needs name, value attributes");
 
 	ctx.setEnvironment(ctx.evaluate(name), ctx.evaluate(value));
 }
@@ -1106,7 +1080,7 @@ void LaunchConfig::evaluateParameters()
 					YAMLResult yaml = yamlIt->get();
 					{
 						std::lock_guard<std::mutex> guard(mutex);
-						loadYAMLParams(yaml.yaml, yaml.name);
+						loadYAMLParams(m_rootContext, yaml.yaml, yaml.name);
 					}
 					safeAdvance(yamlIt, m_yamlParamJobs.end(), NUM_THREADS);
 				}

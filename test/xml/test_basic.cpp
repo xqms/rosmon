@@ -26,7 +26,7 @@ TEST_CASE("basic: invalid XML", "[basic]")
 			<launch><abc>
 			</launch>
 		)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 }
 

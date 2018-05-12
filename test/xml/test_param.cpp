@@ -100,7 +100,7 @@ TEST_CASE("param failing command", "[param]")
 	config.parseString(R"EOF(<launch><param name="test" command="false" /></launch>)EOF");
 	REQUIRE_THROWS_AS(
 		config.evaluateParameters(),
-		LaunchConfig::ParseException
+		ParseException
 	);
 }
 
@@ -188,22 +188,22 @@ TEST_CASE("wrong param types", "[param]")
 {
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="abc" type="int" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="0.5" type="int" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="0.5" type="bool" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="invalid: {{ yaml}} here" type="yaml" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 
 	{
@@ -213,13 +213,13 @@ TEST_CASE("wrong param types", "[param]")
 
 		REQUIRE_THROWS_AS(
 			config.evaluateParameters(),
-			LaunchConfig::ParseException
+			ParseException
 		);
 	}
 
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="0.5" type="unknown_type" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 }
 
@@ -227,17 +227,17 @@ TEST_CASE("invalid param input combinations", "[param]")
 {
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" value="abc" command="echo -ne test" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" textfile="$(find rosmon)/test/textfile.txt" command="echo -ne test" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 
 	REQUIRE_THROWS_AS(
 		LaunchConfig().parseString(R"EOF(<launch><param name="test" /></launch>)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 }
 

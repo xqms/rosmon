@@ -63,7 +63,7 @@ TEST_CASE("arg unset", "[arg]")
 				<param name="test" value="$(arg arg1)" />
 			</launch>
 		)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 
 	REQUIRE_THROWS_AS(
@@ -73,6 +73,6 @@ TEST_CASE("arg unset", "[arg]")
 				<param name="test" value="$(arg arg1)" />
 			</launch>
 		)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 }

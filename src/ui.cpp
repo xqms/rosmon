@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <ros/node_handle.h>
 
+#include <fmt/format.h>
+
 static unsigned int g_statusLines = 2;
 static std::string g_windowTitle;
 
@@ -103,9 +105,9 @@ void UI::drawStatusLine()
 
 	// Print menu if a node is selected
 	if(m_selectedNode != -1)
-		printf("Actions: s: start, k: stop, d: debug");
+		fmt::print("Actions: s: start, k: stop, d: debug");
 
-	printf("\n");
+	fmt::print("\n");
 
 	int col = 0;
 
@@ -114,17 +116,6 @@ void UI::drawStatusLine()
 
 	for(auto& node : m_monitor->nodes())
 	{
-		char label[NODE_WIDTH+2];
-		auto nodeNameLen = static_cast<int>(node->name().length());
-		int padding = std::max<int>(0, (NODE_WIDTH - nodeNameLen)/2);
-
-		for(int i = 0; i < padding; ++i)
-			label[i] = ' ';
-		int c = snprintf(label+padding, NODE_WIDTH+1-padding, "%s", node->name().c_str());
-		for(int i = padding + c; i < NODE_WIDTH; ++i)
-			label[i] = ' ';
-		label[NODE_WIDTH] = 0;
-
 		// Print key with grey background
 		m_term.setSimpleForeground(Terminal::Black);
 
@@ -132,7 +123,7 @@ void UI::drawStatusLine()
 			m_term.setBackgroundColor(0xC8C8C8);
 		else
 			m_term.setSimpleBackground(Terminal::White);
-		printf("%c", key);
+		fmt::print("{:c}", key);
 
 		switch(node->state())
 		{
@@ -150,10 +141,11 @@ void UI::drawStatusLine()
 				break;
 		}
 
+		std::string label = node->name().substr(0, NODE_WIDTH);
 		if(i == m_selectedNode)
-			printf("[%s]", label);
+			fmt::print("[{:^{}}]", label, NODE_WIDTH);
 		else
-			printf(" %s ", label);
+			fmt::print(" {:^{}} ", label, NODE_WIDTH);
 		m_term.setStandardColors();
 
 		// Primitive wrapping control
@@ -214,7 +206,7 @@ void UI::log(const std::string& channel, const std::string& str)
 		m_term.setSimplePair(Terminal::Black, Terminal::White);
 	}
 
-	printf("%20s:", channel.c_str());
+	fmt::print("{:>20}:", channel);
 	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	putchar(' ');

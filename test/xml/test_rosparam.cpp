@@ -58,7 +58,7 @@ hello: {{ invalid }} test
 </rosparam>
 			</launch>
 		)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 }
 

@@ -10,18 +10,13 @@
 
 #include <cstdarg>
 
-static std::runtime_error error(const char* fmt, ...)
+#include <fmt/format.h>
+
+template<typename... Args>
+std::runtime_error error(const char* format, const Args& ... args)
 {
-	va_list args;
-	va_start(args, fmt);
-
-	char str[1024];
-
-	vsnprintf(str, sizeof(str), fmt, args);
-
-	va_end(args);
-
-	return std::runtime_error(str);
+	std::string msg = fmt::format(format, args...);
+	return std::runtime_error(msg);
 }
 
 namespace rosmon
@@ -69,7 +64,7 @@ void Node::addExtraArguments(const std::string& argString)
 	//   any case), I think we can use wordexp here.
 	int ret = wordexp(clean.c_str(), &tokens, WRDE_NOCMD);
 	if(ret != 0)
-		throw error("You're supplying something strange in 'args': '%s' (wordexp ret %d)", clean.c_str(), ret);
+		throw error("You're supplying something strange in 'args': '{}' (wordexp ret {})", clean, ret);
 
 	for(unsigned int i = 0; i < tokens.we_wordc; ++i)
 		m_extraArgs.emplace_back(tokens.we_wordv[i]);
@@ -119,7 +114,7 @@ void Node::setLaunchPrefix(const std::string& launchPrefix)
 	//   any case), I think we can use wordexp here.
 	int ret = wordexp(clean.c_str(), &tokens, WRDE_NOCMD);
 	if(ret != 0)
-		throw error("You're supplying something strange in 'launch-prefix': '%s' (wordexp ret %d)", clean.c_str(), ret);
+		throw error("You're supplying something strange in 'launch-prefix': '{}' (wordexp ret {})", clean, ret);
 
 	for(unsigned int i = 0; i < tokens.we_wordc; ++i)
 		m_launchPrefix.emplace_back(tokens.we_wordv[i]);

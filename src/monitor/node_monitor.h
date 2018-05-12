@@ -179,7 +179,8 @@ private:
 
 	void communicate();
 
-	void log(const char* fmt, ...) __attribute__ (( format (printf, 2, 3) ));
+	template<typename... Args>
+	void log(const char* format, const Args& ... args);
 	void checkStop();
 	void gatherCoredump(int signal);
 

@@ -115,7 +115,7 @@ TEST_CASE("node invalid", "[node]")
 				<node name="test_node" />
 			</launch>
 		)EOF"),
-		LaunchConfig::ParseException
+		ParseException
 	);
 }
 

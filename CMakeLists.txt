@@ -67,6 +67,8 @@ if(BUILD_FOR_COVERAGE)
 	endif()
 endif()
 
+add_subdirectory(contrib/fmt)
+
 add_library(rosmon_launch_config
 	src/launch/node.cpp
 	src/launch/launch_config.cpp
@@ -78,6 +80,7 @@ target_link_libraries(rosmon_launch_config
 	${catkin_LIBRARIES}
 	${TinyXML_LIBRARIES}
 	${Boost_LIBRARIES}
+	rosmon_fmt
 	yaml-cpp
 )
 

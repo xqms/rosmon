@@ -17,20 +17,14 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <fmt/format.h>
+
 #include "linux_process_info.h"
 
-static std::runtime_error error(const char* fmt, ...)
+template<typename... Args>
+std::runtime_error error(const char* fmt, const Args& ... args)
 {
-	va_list args;
-	va_start(args, fmt);
-
-	char str[1024];
-
-	vsnprintf(str, sizeof(str), fmt, args);
-
-	va_end(args);
-
-	return std::runtime_error(str);
+	return std::runtime_error(fmt::format(fmt, args...));
 }
 
 namespace rosmon
@@ -80,7 +74,7 @@ void Monitor::setParameters()
 			{
 				std::string paramNamespace = node->namespaceString() + "/" + node->name() + "/";
 
-				log("Deleting parameters in namespace %s", paramNamespace.c_str());
+				log("Deleting parameters in namespace {}", paramNamespace.c_str());
 
 				if(paramNames.empty())
 				{
@@ -124,7 +118,7 @@ void Monitor::forceExit()
 	{
 		if(node->running())
 		{
-			log(" - %s\n", node->name().c_str());
+			log(" - {}\n", node->name());
 			node->forceExit();
 		}
 	}
@@ -144,22 +138,17 @@ bool Monitor::allShutdown()
 
 void Monitor::handleRequiredNodeExit(const std::string& name)
 {
-	log("Required node '%s' exited, shutting down...", name.c_str());
+	log("Required node '{}' exited, shutting down...", name);
 	m_ok = false;
 }
 
-void Monitor::log(const char* fmt, ...)
+template<typename... Args>
+void Monitor::log(const char* fmt, const Args& ... args)
 {
-	static char buf[512];
-
-	va_list v;
-	va_start(v, fmt);
-
-	vsnprintf(buf, sizeof(buf), fmt, v);
-
-	va_end(v);
-
-	logMessageSignal("[rosmon]", buf);
+	logMessageSignal(
+		"[rosmon]",
+		fmt::format(fmt, args...)
+	);
 }
 
 void Monitor::updateStats()

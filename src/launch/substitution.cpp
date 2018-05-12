@@ -29,20 +29,6 @@ enum ParserState
 	PARSER_INSIDE,
 };
 
-static SubstitutionException error(const char* fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	char str[1024];
-
-	vsnprintf(str, sizeof(str), fmt, args);
-
-	va_end(args);
-
-	return SubstitutionException(str);
-}
-
 namespace substitutions
 {
 	std::string anon(const std::string& name, ParseContext& context)
@@ -57,14 +43,14 @@ namespace substitutions
 	{
 		auto it = context.arguments().find(name);
 		if(it == context.arguments().end())
-			throw error("$(arg %s): Unknown arg", name.c_str());
+			throw SubstitutionException::format("$(arg {}): Unknown arg", name);
 
 		std::string value = it->second;
 
 		if(value == UNSET_MARKER)
 		{
-			throw error(
-				"$(arg %s): Accessing unset argument '%s', please specify as parameter.", name.c_str(), name.c_str()
+			throw SubstitutionException::format(
+				"$(arg {}): Accessing unset argument '{}', please specify as parameter.", name, name
 			);
 		}
 
@@ -81,7 +67,7 @@ namespace substitutions
 	{
 		const char* envval = getenv(name.c_str());
 		if(!envval)
-			throw error("$(env %s): Environment variable not set!", name.c_str());
+			throw SubstitutionException::format("$(env {}): Environment variable not set!", name);
 
 		return envval;
 	}
@@ -101,7 +87,7 @@ namespace substitutions
 		if(!path.empty())
 			return path;
 
-		throw error("$(find %s): Could not find package", name.c_str());
+		throw SubstitutionException::format("$(find {}): Could not find package", name);
 	}
 }
 
@@ -159,7 +145,7 @@ static std::string parseOneElement(const std::string& input, const HandlerMap& h
 
 					if(strict)
 					{
-						throw error("Unknown substitution arg '%s'", name.c_str());
+						throw SubstitutionException::format("Unknown substitution arg '{}'", name);
 					}
 
 					state = PARSER_IDLE;
@@ -197,7 +183,7 @@ std::string parseSubstitutionArgs(const std::string& input, ParseContext& contex
 			return substitutions::env(args);
 		}},
 		{"optenv", [](const std::string& args, const std::string&) -> std::string{
-			auto pos = args.find(" ");
+			auto pos = args.find(' ');
 			std::string defaultValue;
 			std::string name = args;
 			if(pos != std::string::npos)
@@ -235,7 +221,7 @@ std::string parseSubstitutionArgs(const std::string& input, ParseContext& contex
 			if(!path.empty())
 				return path;
 
-			throw error("$(find %s): Could not find package", args.c_str());
+			throw SubstitutionException::format("$(find {}): Could not find package", args);
 		}},
 	};
 
