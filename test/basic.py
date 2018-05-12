@@ -35,9 +35,11 @@ class BasicTest(unittest.TestCase):
 		except rospy.ROSException:
 			self.fail('Did not get state msg on /rosmon_uut/state' + repr(rospy.client.get_published_topics()))
 
-		self.assertEqual(len(state.nodes), 1)
-		self.assertEqual(state.nodes[0].name, 'test1')
-		self.assertEqual(state.nodes[0].state, NodeState.RUNNING)
+		self.assertEqual(len(state.nodes), 2)
+
+		test1 = [ n for n in state.nodes if n.name == 'test1' ]
+		self.assertEqual(len(test1), 1)
+		self.assertEqual(test1[0].state, NodeState.RUNNING)
 
 	def test_remapping(self):
 		pub = rospy.Publisher('/test_input', String, queue_size=5)
@@ -92,6 +94,29 @@ class BasicTest(unittest.TestCase):
 
 	def test_arg_passing(self):
 		self.assertEqual(rospy.get_param("test_argument"), 123)
+
+	def test_global_remapping(self):
+		pub = rospy.Publisher('/remapped_test_input', String, queue_size=5)
+
+		wfm = _WFM()
+		sub = rospy.Subscriber('/remapped_test_output', String, wfm.cb)
+
+		time.sleep(1);
+
+		self.assertGreater(pub.get_num_connections(), 0)
+		self.assertGreater(sub.get_num_connections(), 0)
+		pub.publish('Hello world!')
+
+		timeout_t = time.time() + 5
+		while wfm.msg is None:
+				rospy.rostime.wallsleep(0.01)
+				if time.time() >= timeout_t:
+						self.fail('No reply to test message')
+
+		self.assertEqual(wfm.msg.data, 'Hello world!')
+
+		sub.unregister()
+		pub.unregister()
 
 if __name__ == '__main__':
 	rospy.init_node('basic_test')
