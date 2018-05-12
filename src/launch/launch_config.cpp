@@ -159,6 +159,11 @@ void ParseContext::setEnvironment(const std::string& name, const std::string& va
 	m_environment[name] = value;
 }
 
+void ParseContext::setRemap(const std::string& from, const std::string& to)
+{
+	m_remappings[from] = to;
+}
+
 LaunchConfig::LaunchConfig()
  : m_rootContext(this)
  , m_anonGen(std::random_device()())
@@ -283,6 +288,8 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArgu
 			parseInclude(e, *ctx);
 		else if(e->ValueStr() == "env")
 			parseEnv(e, *ctx);
+		else if(e->ValueStr() == "remap")
+			parseRemap(e, *ctx);
 	}
 }
 
@@ -377,15 +384,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		else if(e->ValueStr() == "rosparam")
 			parseROSParam(e, ctx);
 		else if(e->ValueStr() == "remap")
-		{
-			const char* from = e->Attribute("from");
-			const char* to = e->Attribute("to");
-
-			if(!from || !to)
-				throw ctx.error("remap needs 'from' and 'to' arguments");
-
-			node->addRemapping(ctx.evaluate(from), ctx.evaluate(to));
-		}
+			parseRemap(e, ctx);
 		else if(e->ValueStr() == "env")
 			parseEnv(e, ctx);
 	}
@@ -406,6 +405,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	if(clearParams)
 		node->setClearParams(ctx.parseBool(clearParams, element->Row()));
+
+	node->setRemappings(ctx.remappings());
 
 	m_nodes.push_back(node);
 }
@@ -1000,6 +1001,17 @@ void LaunchConfig::parseEnv(TiXmlElement* element, ParseContext& ctx)
 		throw ctx.error("<env> needs name, value attributes");
 
 	ctx.setEnvironment(ctx.evaluate(name), ctx.evaluate(value));
+}
+
+void LaunchConfig::parseRemap(TiXmlElement* element, ParseContext& ctx)
+{
+	const char* from = element->Attribute("from");
+	const char* to = element->Attribute("to");
+
+	if(!from || !to)
+		throw ctx.error("remap needs 'from' and 'to' arguments");
+
+	ctx.setRemap(ctx.evaluate(from), ctx.evaluate(to));
 }
 
 std::string LaunchConfig::anonName(const std::string& base)

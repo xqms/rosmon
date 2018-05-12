@@ -111,6 +111,10 @@ public:
 	inline LaunchConfig* config()
 	{ return m_config; }
 
+	void setRemap(const std::string& from, const std::string& to);
+	const std::map<std::string, std::string>& remappings()
+	{ return m_remappings; }
+
 	template<typename... Args>
 	ParseException error(const char* fmt, const Args& ... args) const
 	{
@@ -135,6 +139,7 @@ private:
 	int m_currentLine = -1;
 	std::map<std::string, std::string> m_args;
 	std::map<std::string, std::string> m_environment;
+	std::map<std::string, std::string> m_remappings;
 };
 
 class LaunchConfig
@@ -178,6 +183,7 @@ private:
 	void parseInclude(TiXmlElement* element, ParseContext ctx);
 	void parseArgument(TiXmlElement* element, ParseContext& ctx);
 	void parseEnv(TiXmlElement* element, ParseContext& ctx);
+	void parseRemap(TiXmlElement* element, ParseContext& ctx);
 
 	void loadYAMLParams(const ParseContext& ctx, const YAML::Node& n, const std::string& prefix);
 

@@ -42,9 +42,9 @@ Node::Node(std::string name, std::string package, std::string type)
 	m_executable = PackageRegistry::getExecutable(m_package, m_type);
 }
 
-void Node::addRemapping(const std::string& from, const std::string& to)
+void Node::setRemappings(const std::map<std::string, std::string>& remappings)
 {
-	m_remappings[from] = to;
+	m_remappings = remappings;
 }
 
 void Node::addExtraArguments(const std::string& argString)
