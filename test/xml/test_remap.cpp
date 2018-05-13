@@ -37,3 +37,26 @@ TEST_CASE("remap", "[remap]")
 
 	CHECK(maps.find("topic_c") == maps.end());
 }
+
+TEST_CASE("remap scoped", "[remap]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch rosmon-name="rosmon_uut">
+				<group ns="namespace">
+					<remap from="topic_a" to="topic_b" />
+				</group>
+
+				<node name="test" pkg="rosmon" type="abort">
+				</node>
+		</launch>
+	)EOF");
+
+	auto node = getNode(config.nodes(), "test");
+
+	CAPTURE(printMapping(node->remappings()));
+
+	auto maps = node->remappings();
+
+	CHECK(maps.find("topic_a") == maps.end());
+}
