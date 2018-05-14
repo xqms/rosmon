@@ -7,74 +7,10 @@
 
 #include <boost/filesystem.hpp>
 
+#include "node_utils.h"
 #include "param_utils.h"
 
 using namespace rosmon::launch;
-
-namespace Catch
-{
-	template<>
-	struct StringMaker<Node::Ptr>
-	{
-		static std::string convert(const Node::Ptr& node)
-		{
-			if(node)
-				return "NodePtr(name='" + node->name() + "', namespace='" + node->namespaceString() + "')";
-			else
-				return "NodePtr()";
-		}
-	};
-
-	template<>
-	struct StringMaker<std::vector<Node::Ptr>>
-	{
-		static std::string convert(const std::vector<Node::Ptr>& nodes)
-		{
-			std::stringstream ss;
-			ss << "{ ";
-			for(auto& n : nodes)
-				ss << StringMaker<Node::Ptr>::convert(n) << ", ";
-			ss << "}";
-
-			return ss.str();
-		}
-	};
-}
-
-static std::string printMapping(const std::map<std::string, std::string>& mapping)
-{
-	std::stringstream ss;
-	ss << "{ ";
-	for(auto& pair : mapping)
-	{
-		ss << "'" << pair.first << "':='" << pair.second << "', ";
-	}
-	ss << "}";
-
-	return ss.str();
-}
-
-Node::Ptr getNode(const std::vector<Node::Ptr>& nodes, const std::string& name, const std::string& namespaceString="")
-{
-	Node::Ptr ret;
-
-	INFO("Looking for node '" << name << "' in namespace '" << namespaceString << "'");
-
-	for(auto& node : nodes)
-	{
-		if(node->namespaceString() != namespaceString)
-			continue;
-
-		if(node->name() == name)
-		{
-			REQUIRE(!ret);
-			ret = node;
-		}
-	}
-
-	REQUIRE(ret);
-	return ret;
-}
 
 TEST_CASE("node basic", "[node]")
 {

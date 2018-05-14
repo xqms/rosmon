@@ -25,7 +25,7 @@ public:
 
 	Node(std::string name, std::string package, std::string type);
 
-	void addRemapping(const std::string& from, const std::string& to);
+	void setRemappings(const std::map<std::string, std::string>& remappings);
 	void addExtraArguments(const std::string& argString);
 	void setNamespace(const std::string& ns);
 	void setExtraEnvironment(const std::map<std::string, std::string>& env);

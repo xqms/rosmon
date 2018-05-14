@@ -46,4 +46,12 @@ yaml:
 		<param name="private_param1" value="hello_world" />
 		<param name="~private_param2" value="hello_world" />
 	</node>
+
+	<!-- Test global remapping -->
+	<remap from="original_test_input" to="remapped_test_input" />
+	<remap from="original_test_output" to="remapped_test_output" />
+	<node name="test2" pkg="rosmon" type="test_node.py">
+			<remap from="~input" to="/original_test_input" />
+			<remap from="~output" to="/original_test_output" />
+	</node>
 </launch>
