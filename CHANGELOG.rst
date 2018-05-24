@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.4 (2018-05-24)
+------------------
 * Merge pull request `#30 <https://github.com/xqms/rosmon/issues/30>`_ from xqms/feature/global_remap
   Support <remap> in other scopes than <node>. Fixes `#28 <https://github.com/xqms/rosmon/issues/28>`_.
 * Merge pull request `#29 <https://github.com/xqms/rosmon/issues/29>`_ from xqms/feature/fmt
