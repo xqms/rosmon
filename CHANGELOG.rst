@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.5 (2018-05-25)
+------------------
 * test/xml: avoid multiline Catch captures in exception tests
   These trigger some weird bug between g++ 5.4 and ccache, which is used
   in the ROS buildfarm. [...]
