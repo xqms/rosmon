@@ -2,6 +2,14 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* test/xml: avoid multiline Catch captures in exception tests
+  These trigger some weird bug between g++ 5.4 and ccache, which is used
+  in the ROS buildfarm. [...]
+  This should fix compilation on the build farm.
+* Contributors: Max Schwarz
+
 1.0.4 (2018-05-24)
 ------------------
 * Merge pull request `#30 <https://github.com/xqms/rosmon/issues/30>`_ from xqms/feature/global_remap
