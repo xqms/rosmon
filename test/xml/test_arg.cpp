@@ -5,6 +5,7 @@
 
 #include "../../src/launch/launch_config.h"
 
+#include "core_utils.h"
 #include "param_utils.h"
 
 using namespace rosmon::launch;
@@ -57,22 +58,16 @@ TEST_CASE("arg from external", "[arg]")
 
 TEST_CASE("arg unset", "[arg]")
 {
-	REQUIRE_THROWS_AS(
-		LaunchConfig().parseString(R"EOF(
-			<launch>
-				<param name="test" value="$(arg arg1)" />
-			</launch>
-		)EOF"),
-		ParseException
-	);
+	requireParsingException(R"EOF(
+		<launch>
+			<param name="test" value="$(arg arg1)" />
+		</launch>
+	)EOF");
 
-	REQUIRE_THROWS_AS(
-		LaunchConfig().parseString(R"EOF(
-			<launch>
-				<arg name="arg1" />
-				<param name="test" value="$(arg arg1)" />
-			</launch>
-		)EOF"),
-		ParseException
-	);
+	requireParsingException(R"EOF(
+		<launch>
+			<arg name="arg1" />
+			<param name="test" value="$(arg arg1)" />
+		</launch>
+	)EOF");
 }

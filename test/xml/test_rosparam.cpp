@@ -5,6 +5,7 @@
 
 #include "../../src/launch/launch_config.h"
 
+#include "core_utils.h"
 #include "param_utils.h"
 
 using namespace rosmon::launch;
@@ -50,16 +51,13 @@ TEST_CASE("rosparam empty", "[rosparam]")
 
 TEST_CASE("rosparam invalid YAML", "[rosparam]")
 {
-	REQUIRE_THROWS_AS(
-		LaunchConfig().parseString(R"EOF(
-			<launch>
+	requireParsingException(R"EOF(
+		<launch>
 <rosparam>
 hello: {{ invalid }} test
 </rosparam>
-			</launch>
-		)EOF"),
-		ParseException
-	);
+		</launch>
+	)EOF");
 }
 
 TEST_CASE("rosparam naming", "[rosparam]")

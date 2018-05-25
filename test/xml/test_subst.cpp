@@ -7,6 +7,7 @@
 
 #include "../../src/launch/launch_config.h"
 
+#include "core_utils.h"
 #include "param_utils.h"
 
 #include <ros/package.h>
@@ -35,14 +36,11 @@ TEST_CASE("env", "[subst]")
 
 	SECTION("failure")
 	{
-		REQUIRE_THROWS_AS(
-			LaunchConfig().parseString(R"EOF(
-				<launch>
-					<param name="env_test" value="$(env ROSMON_UNLIKELY_TO_BE_SET)" />
-				</launch>
-			)EOF"),
-			ParseException
-		);
+		requireParsingException(R"EOF(
+			<launch>
+				<param name="env_test" value="$(env ROSMON_UNLIKELY_TO_BE_SET)" />
+			</launch>
+		)EOF");
 	}
 }
 

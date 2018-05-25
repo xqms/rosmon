@@ -5,6 +5,7 @@
 
 #include "../../src/launch/launch_config.h"
 
+#include "core_utils.h"
 #include "param_utils.h"
 
 using namespace rosmon::launch;
@@ -20,14 +21,10 @@ TEST_CASE("basic", "[basic]")
 
 TEST_CASE("basic: invalid XML", "[basic]")
 {
-	LaunchConfig config;
-	REQUIRE_THROWS_AS(
-		config.parseString(R"EOF(
-			<launch><abc>
-			</launch>
-		)EOF"),
-		ParseException
-	);
+	requireParsingException(R"EOF(
+		<launch><abc>
+		</launch>
+	)EOF");
 }
 
 TEST_CASE("basic: top-level attributes", "[basic]")
