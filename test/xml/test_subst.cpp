@@ -132,14 +132,11 @@ TEST_CASE("find", "[subst]")
 
 	SECTION("unknown package")
 	{
-		REQUIRE_THROWS_AS(
-			LaunchConfig().parseString(R"EOF(
-				<launch>
-					<param name="test" value="$(find rosmon_this_package_is_unlikely_to_be_there)" />
-				</launch>
-			)EOF"),
-			ParseException
-		);
+		requireParsingException(R"EOF(
+			<launch>
+				<param name="test" value="$(find rosmon_this_package_is_unlikely_to_be_there)" />
+			</launch>
+		)EOF");
 	}
 }
 
@@ -171,15 +168,12 @@ TEST_CASE("anon", "[subst]")
 	SECTION("clash example")
 	{
 		// from http://wiki.ros.org/roslaunch/XML
-		REQUIRE_THROWS_AS(
-			LaunchConfig().parseString(R"EOF(
-				<launch>
-					<node name="$(anon foo)" pkg="rospy_tutorials" type="talker.py" />
-					<node name="$(anon foo)" pkg="rospy_tutorials" type="talker.py" />
-				</launch>
-			)EOF"),
-			ParseException
-		);
+		requireParsingException(R"EOF(
+			<launch>
+				<node name="$(anon foo)" pkg="rospy_tutorials" type="talker.py" />
+				<node name="$(anon foo)" pkg="rospy_tutorials" type="talker.py" />
+			</launch>
+		)EOF");
 	}
 }
 
@@ -202,15 +196,12 @@ TEST_CASE("arg", "[subst]")
 
 	SECTION("unknown arg")
 	{
-		REQUIRE_THROWS_AS(
-			LaunchConfig().parseString(R"EOF(
-				<launch>
-					<arg name="test_arg" default="hello" />
-					<param name="test" value="$(arg test_arg_unknown)" />
-				</launch>
-			)EOF"),
-			ParseException
-		);
+		requireParsingException(R"EOF(
+			<launch>
+				<arg name="test_arg" default="hello" />
+				<param name="test" value="$(arg test_arg_unknown)" />
+			</launch>
+		)EOF");
 	}
 
 	// more complicated tests may be in test_arg.cpp
@@ -286,25 +277,25 @@ TEST_CASE("eval", "[subst]")
 	{
 		using Catch::Matchers::Contains;
 
+		std::string input = R"EOF(
+			<launch>
+				<arg name="foo" default="test" />
+				<param name="test" value="$(eval )))"/>
+			</launch>
+		)EOF";
+		CAPTURE(input);
+
 		REQUIRE_THROWS_WITH(
-			LaunchConfig().parseString(R"EOF(
-				<launch>
-					<arg name="foo" default="test" />
-					<param name="test" value="$(eval )))"/>
-				</launch>
-			)EOF"),
+			LaunchConfig().parseString(input),
 			Contains("SyntaxError")
 		);
 
-		REQUIRE_THROWS_AS(
-			LaunchConfig().parseString(R"EOF(
-				<launch>
-					<arg name="foo" default="test" />
-					<param name="test" value="$(eval acos)"/>
-				</launch>
-			)EOF"),
-			ParseException
-		);
+		requireParsingException(R"EOF(
+			<launch>
+				<arg name="foo" default="test" />
+				<param name="test" value="$(eval acos)"/>
+			</launch>
+		)EOF");
 	}
 }
 
@@ -331,13 +322,10 @@ TEST_CASE("subst invalid", "[subst]")
 {
 	SECTION("unknown subst")
 	{
-		REQUIRE_THROWS_AS(
-			LaunchConfig().parseString(R"EOF(
-				<launch>
-					<param name="test" value="$(unknown_subst parameter)" />
-				</launch>
-			)EOF"),
-			ParseException
-		);
+		requireParsingException(R"EOF(
+			<launch>
+				<param name="test" value="$(unknown_subst parameter)" />
+			</launch>
+		)EOF");
 	}
 }

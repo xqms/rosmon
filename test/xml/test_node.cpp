@@ -7,6 +7,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include "core_utils.h"
 #include "node_utils.h"
 #include "param_utils.h"
 
@@ -45,14 +46,11 @@ TEST_CASE("node basic", "[node]")
 
 TEST_CASE("node invalid", "[node]")
 {
-	REQUIRE_THROWS_AS(
-		LaunchConfig().parseString(R"EOF(
-			<launch>
-				<node name="test_node" />
-			</launch>
-		)EOF"),
-		ParseException
-	);
+	requireParsingException(R"EOF(
+		<launch>
+			<node name="test_node" />
+		</launch>
+	)EOF");
 }
 
 TEST_CASE("node args", "[node]")
