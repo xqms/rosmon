@@ -5,7 +5,7 @@
 		for the roslaunch tool, focused on performance, remote
 		monitoring, and usability.
 	</description>
-	<version>1.0.5</version>
+	<version>1.0.6</version>
 	<license>BSD</license>
 	<author email="max.schwarz@uni-bonn.de">Max Schwarz</author>
 	<maintainer email="max.schwarz@uni-bonn.de">Max Schwarz</maintainer>

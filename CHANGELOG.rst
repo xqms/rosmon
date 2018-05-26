@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.6 (2018-05-26)
+------------------
 * test/xml: replace more multiline string Catch captures
   Sorry, somehow these slipped through - and I didn't have a good way of
   testing these locally without the buildfarm. I'm testing with gcc 4.8
