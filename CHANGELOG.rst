@@ -2,6 +2,14 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* test/xml: replace more multiline string Catch captures
+  Sorry, somehow these slipped through - and I didn't have a good way of
+  testing these locally without the buildfarm. I'm testing with gcc 4.8
+  on trusty now, which seems to have matching behavior.
+* Contributors: Max Schwarz
+
 1.0.5 (2018-05-25)
 ------------------
 * test/xml: avoid multiline Catch captures in exception tests
