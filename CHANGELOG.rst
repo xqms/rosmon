@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.7 (2018-05-27)
+------------------
 * Support Python 3 & select appropriate Python version.
   This fixes a mismatch on Debian Jessie, where rospack is linked against
   Python 2.7 and we would link against Python 3.4.
