@@ -2,6 +2,14 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Support Python 3 & select appropriate Python version.
+  This fixes a mismatch on Debian Jessie, where rospack is linked against
+  Python 2.7 and we would link against Python 3.4.
+* launch: substitution_python: support Python 3
+* Contributors: Max Schwarz
+
 1.0.6 (2018-05-26)
 ------------------
 * test/xml: replace more multiline string Catch captures
