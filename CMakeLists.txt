@@ -35,7 +35,10 @@ find_package(TinyXML REQUIRED)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIRS})
 
-find_package(PythonLibs QUIET)
+# We search for the same Python version that catkin has decided on.
+# Source: https://github.com/ros/rospack/blob/70eac5dec07311f9cacccddb301a8bc9b4efb671/CMakeLists.txt#L6
+set(Python_ADDITIONAL_VERSIONS "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
+find_package(PythonLibs "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" QUIET)
 if(PYTHONLIBS_FOUND)
 	add_definitions(-DHAVE_PYTHON=1)
 	include_directories(${PYTHON_INCLUDE_DIRS})
@@ -80,6 +83,7 @@ target_link_libraries(rosmon_launch_config
 	${catkin_LIBRARIES}
 	${TinyXML_LIBRARIES}
 	${Boost_LIBRARIES}
+	${Python_LIBRARIES}
 	rosmon_fmt
 	yaml-cpp
 )

@@ -160,8 +160,18 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 		throw SubstitutionException(ss.str());
 	}
 
+#if PY_MAJOR_VERSION >= 3
+	if(PyUnicode_Check(result.ptr()))
+	{
+		if(PyUnicode_READY(result.ptr()) != 0)
+			throw SubstitutionException("Could not read unicode object");
+
+		return std::string(PyUnicode_AsUTF8(result.ptr()));
+	}
+#else
 	if(PyString_Check(result.ptr()))
 		return py::extract<std::string>(result);
+#endif
 
 	if(PyBool_Check(result.ptr()))
 	{
@@ -171,10 +181,15 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 			return "false";
 	}
 
-	if(PyInt_Check(result.ptr()))
+#if PY_MAJOR_VERSION >= 3
+	if(PyLong_Check(result.ptr()))
+		return std::to_string(py::extract<int64_t>(result));
+#else
+	if(PyInt_Check(result.ptr()) || PyLong_Check(result.ptr()))
 	{
-		return std::to_string(py::extract<int>(result));
+		return std::to_string(py::extract<int64_t>(result));
 	}
+#endif
 
 	if(PyFloat_Check(result.ptr()))
 	{
