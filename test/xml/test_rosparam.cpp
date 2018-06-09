@@ -109,6 +109,28 @@ a: false
 	checkTypedParam<bool>(config.parameters(), "/namespace/a", XmlRpc::XmlRpcValue::TypeBoolean, false);
 }
 
+TEST_CASE("rosparam explicit types", "[rosparam]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+<rosparam>
+test_ns:
+  param1: !!str 1
+  param2: !!float 1
+</rosparam>
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	CAPTURE(config.parameters());
+
+	auto& params = config.parameters();
+	checkTypedParam<std::string>(params, "/test_ns/param1", XmlRpc::XmlRpcValue::TypeString, "1");
+	checkTypedParam<double>(params, "/test_ns/param2", XmlRpc::XmlRpcValue::TypeDouble, 1.0);
+}
+
 TEST_CASE("rosparam angle extensions", "[rosparam]")
 {
 	LaunchConfig config;
