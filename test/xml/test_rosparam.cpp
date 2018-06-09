@@ -118,6 +118,7 @@ TEST_CASE("rosparam explicit types", "[rosparam]")
 test_ns:
   param1: !!str 1
   param2: !!float 1
+  param3: !!binary "aGVsbG8K"
 </rosparam>
 		</launch>
 	)EOF");
@@ -129,6 +130,10 @@ test_ns:
 	auto& params = config.parameters();
 	checkTypedParam<std::string>(params, "/test_ns/param1", XmlRpc::XmlRpcValue::TypeString, "1");
 	checkTypedParam<double>(params, "/test_ns/param2", XmlRpc::XmlRpcValue::TypeDouble, 1.0);
+
+	auto binParam = getTypedParam<XmlRpc::XmlRpcValue::BinaryData>(params, "/test_ns/param3", XmlRpc::XmlRpcValue::TypeBase64);
+	XmlRpc::XmlRpcValue::BinaryData expected{'h', 'e', 'l', 'l', 'o', '\n'};
+	CHECK(binParam == expected);
 }
 
 TEST_CASE("rosparam angle extensions", "[rosparam]")

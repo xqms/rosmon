@@ -99,7 +99,10 @@ void checkTypedParam(const ParameterMap& parameters, const std::string& name, Xm
 	XmlRpc::XmlRpcValue value = it->second;
 
 	REQUIRE(value.getType() == expectedType);
-	REQUIRE(static_cast<T>(value) == expected);
+
+	T typedValue = value;
+
+	REQUIRE(typedValue == expected);
 }
 
 template<class T>
@@ -113,7 +116,9 @@ T getTypedParam(const ParameterMap& parameters, const std::string& name)
 
 	XmlRpc::XmlRpcValue value = it->second;
 
-	return static_cast<T>(value);
+	T typedValue = value;
+
+	return typedValue;
 }
 
 template<class T>
@@ -128,7 +133,10 @@ T getTypedParam(const ParameterMap& parameters, const std::string& name, XmlRpc:
 	XmlRpc::XmlRpcValue value = it->second;
 
 	REQUIRE(value.getType() == expectedType);
-	return static_cast<T>(value);
+
+	T typedValue = value;
+
+	return typedValue;
 }
 
 #endif
