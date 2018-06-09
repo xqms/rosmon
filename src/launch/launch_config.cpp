@@ -3,6 +3,7 @@
 
 #include "launch_config.h"
 #include "substitution.h"
+#include "substitution_python.h"
 
 #include <ros/package.h>
 #include <ros/names.h>
@@ -16,6 +17,7 @@
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -824,7 +826,6 @@ public:
 	}
 };
 
-
 XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const ParseContext& ctx, const YAML::Node& n)
 {
 	if(n.Type() != YAML::NodeType::Scalar)
@@ -865,6 +866,30 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const ParseContext& ctx, const YA
 	if(n.Tag() == "!!bool")
 		return XmlRpc::XmlRpcValue(n.as<bool>());
 
+	// rosparam supports !!degrees and !!radians...
+	if(n.Tag() == "!degrees")
+	{
+		try
+		{
+			return XmlRpc::XmlRpcValue(evaluateROSParamPython(n.as<std::string>()) * M_PI / 180.0);
+		}
+		catch(SubstitutionException& e)
+		{
+			throw ctx.error("{}", e.what());
+		}
+	}
+	if(n.Tag() == "!radians")
+	{
+		try
+		{
+			return XmlRpc::XmlRpcValue(evaluateROSParamPython(n.as<std::string>()));
+		}
+		catch(SubstitutionException& e)
+		{
+			throw ctx.error("{}", e.what());
+		}
+	}
+
 	// If we have a "non-specific" tag '!', this means that the YAML scalar
 	// is non-plain, i.e. of type seq, map, or str. Since seq and map are
 	// handled above, we assume str in this case.
@@ -881,7 +906,41 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const ParseContext& ctx, const YA
 	try { return XmlRpc::XmlRpcValue(n.as<double>()); }
 	catch(YAML::Exception&) {}
 
-	try { return XmlRpc::XmlRpcValue(n.as<std::string>()); }
+	try
+	{
+		std::string str = n.as<std::string>();
+
+		// rosparam supports deg(...) and rad(...) expressions, so we have to
+		// parse them here.
+
+		if(boost::starts_with(str, "deg(") && boost::ends_with(str, ")"))
+		{
+			try
+			{
+				return XmlRpc::XmlRpcValue(
+					evaluateROSParamPython(str.substr(4, str.size() - 5)) * M_PI / 180.0
+				);
+			}
+			catch(SubstitutionException& e)
+			{
+				throw ctx.error("{}", e.what());
+			}
+		}
+
+		if(boost::starts_with(str, "rad(") && boost::ends_with(str, ")"))
+		{
+			try
+			{
+				return XmlRpc::XmlRpcValue(evaluateROSParamPython(str.substr(4, str.size() - 5)));
+			}
+			catch(SubstitutionException& e)
+			{
+				throw ctx.error("{}", e.what());
+			}
+		}
+
+		return XmlRpc::XmlRpcValue(str);
+	}
 	catch(YAML::Exception&) {}
 
 	throw ctx.error("Could not convert YAML value");

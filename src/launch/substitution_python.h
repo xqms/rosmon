@@ -13,7 +13,11 @@ namespace launch
 
 class ParseContext;
 
+//! Evaluate a $(eval ...) python expression
 std::string evaluatePython(const std::string& input, ParseContext& context);
+
+//! Evaluate a deg(...) rosparam expression
+double evaluateROSParamPython(const std::string& input);
 
 }
 }
