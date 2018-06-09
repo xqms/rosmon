@@ -867,6 +867,16 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const ParseContext& ctx, const YA
 		return XmlRpc::XmlRpcValue(n.as<bool>());
 	if(n.Tag() == "tag:yaml.org,2002:str")
 		return XmlRpc::XmlRpcValue(n.as<std::string>());
+	if(n.Tag() == "tag:yaml.org,2002:binary")
+	{
+		auto binary = n.as<YAML::Binary>();
+
+		// XmlRpc API is stupid here and expects a mutable void*, so to keep
+		// things clean we do a copy.
+		std::vector<unsigned char> copy(binary.data(), binary.data()+binary.size());
+
+		return XmlRpc::XmlRpcValue(copy.data(), copy.size());
+	}
 
 	// rosparam supports !!degrees and !!radians...
 	if(n.Tag() == "!degrees")
