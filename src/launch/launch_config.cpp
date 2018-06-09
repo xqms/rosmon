@@ -859,12 +859,14 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const ParseContext& ctx, const YA
 	// figure out the data type...
 
 	// Check if a YAML tag is present
-	if(n.Tag() == "!!int")
+	if(n.Tag() == "tag:yaml.org,2002:int")
 		return XmlRpc::XmlRpcValue(n.as<int>());
-	if(n.Tag() == "!!float")
+	if(n.Tag() == "tag:yaml.org,2002:float")
 		return XmlRpc::XmlRpcValue(n.as<double>());
-	if(n.Tag() == "!!bool")
+	if(n.Tag() == "tag:yaml.org,2002:bool")
 		return XmlRpc::XmlRpcValue(n.as<bool>());
+	if(n.Tag() == "tag:yaml.org,2002:str")
+		return XmlRpc::XmlRpcValue(n.as<std::string>());
 
 	// rosparam supports !!degrees and !!radians...
 	if(n.Tag() == "!degrees")
