@@ -202,6 +202,74 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 	throw SubstitutionException::format("$(eval '{}'): Got unknown python return type", input);
 }
 
+double evaluateROSParamPython(const std::string& input)
+{
+	if(!g_initialized)
+	{
+		Py_Initialize();
+		g_initialized = true;
+	}
+
+	py::object main_module = py::import("__main__");
+	py::dict global = py::dict(main_module.attr("__dict__"));
+	py::dict local;
+
+	// Import math
+	{
+		py::object math = py::import("math");
+		py::object mathDict = math.attr("__dict__");
+		global.update(mathDict);
+	}
+
+	py::object result;
+	try
+	{
+		result = py::eval(input.c_str(), global, local);
+	}
+	catch(py::error_already_set&)
+	{
+		std::stringstream ss;
+		ss << "Caught Python exception while evaluating rosparam expression '" << input << "'):\n";
+
+		PyObject *e, *v, *t;
+		PyErr_Fetch(&e, &v, &t);
+
+		try
+		{
+			py::object t = py::extract<py::object>(e);
+			py::object t_name = t.attr("__name__");
+			std::string typestr = py::extract<std::string>(t_name);
+
+			ss << typestr << ": ";
+		}
+		catch(py::error_already_set const &)
+		{}
+
+		try
+		{
+			py::object vo = py::extract<py::object>(v);
+			std::string valuestr = py::extract<std::string>(vo.attr("__str__")());
+
+			ss << valuestr;
+		}
+		catch(py::error_already_set const &)
+		{
+			ss << "<no str() handler>";
+		}
+
+		throw SubstitutionException(ss.str());
+	}
+
+	try
+	{
+		return py::extract<double>(result);
+	}
+	catch(py::error_already_set)
+	{
+		throw SubstitutionException::format("got strange python type from rosparam python expression (should be numeric): '{}'", input);
+	}
+}
+
 #else // HAVE_PYTHON
 
 std::string evaluatePython(const std::string& input, ParseContext& context)
@@ -209,6 +277,21 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 	throw SubstitutionException(
 		"rosmon was built without python support, so I cannot parse $(eval ...) substitution args."
 	);
+}
+
+double evaluateROSParamPython(const std::string& input)
+{
+	try
+	{
+		return boost::lexical_cast<double>(input);
+	}
+	catch(boost::bad_lexical_cast)
+	{
+		throw SubstitutionException::format(
+			"rosmon was built without python support, so I cannot parse complex rosparam expressions (expression: {})",
+			input
+		);
+	}
 }
 
 #endif
