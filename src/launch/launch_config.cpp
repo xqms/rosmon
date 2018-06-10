@@ -865,6 +865,12 @@ XmlRpc::XmlRpcValue LaunchConfig::yamlToXmlRpc(const ParseContext& ctx, const YA
 	if(n.Tag() == "!!bool")
 		return XmlRpc::XmlRpcValue(n.as<bool>());
 
+	// If we have a "non-specific" tag '!', this means that the YAML scalar
+	// is non-plain, i.e. of type seq, map, or str. Since seq and map are
+	// handled above, we assume str in this case.
+	if(n.Tag() == "!")
+		return XmlRpc::XmlRpcValue(n.as<std::string>());
+
 	// Otherwise, we simply have to try things one by one...
 	try { return XmlRpc::XmlRpcValue(n.as<bool>()); }
 	catch(YAML::Exception&) {}

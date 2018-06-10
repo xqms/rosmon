@@ -21,6 +21,7 @@ test_ns:
   param2: hello
   param3: 3
   param4: 10.0
+  param5: "3"
 </rosparam>
 		</launch>
 	)EOF");
@@ -34,6 +35,7 @@ test_ns:
 	checkTypedParam<std::string>(params, "/test_ns/param2", XmlRpc::XmlRpcValue::TypeString, "hello");
 	checkTypedParam<int>(params, "/test_ns/param3", XmlRpc::XmlRpcValue::TypeInt, 3);
 	checkTypedParam<double>(params, "/test_ns/param4", XmlRpc::XmlRpcValue::TypeDouble, 10.0);
+	checkTypedParam<std::string>(params, "/test_ns/param5", XmlRpc::XmlRpcValue::TypeString, "3");
 }
 
 TEST_CASE("rosparam empty", "[rosparam]")
