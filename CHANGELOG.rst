@@ -2,6 +2,22 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* main: Add option for flushing the logfile
+  Add --flush option that will flush the logfile after each entry.
+* Merge pull request `#35 <https://github.com/xqms/rosmon/issues/35>`_
+  More complete support for rosparam features
+* Merge pull request `#34 <https://github.com/xqms/rosmon/issues/34>`_
+  YAML quoted strings
+* launch: rosparam: support binary data
+* launch: rosparam: correctly handle explicit YAML type tags
+* launch: support rosparam angle computations
+* launch: always map YAML quoted values to string params
+  These always get mapped to str by python's yaml.load, which is used by
+  roslaunch, so we do the same here.
+* Contributors: Max Schwarz, Nikos Skalkotos
+
 1.0.7 (2018-05-27)
 ------------------
 * Support Python 3 & select appropriate Python version.
