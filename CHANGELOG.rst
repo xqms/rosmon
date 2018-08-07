@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.8 (2018-08-07)
+------------------
 * main: Add option for flushing the logfile
   Add --flush option that will flush the logfile after each entry.
 * Merge pull request `#35 <https://github.com/xqms/rosmon/issues/35>`_
