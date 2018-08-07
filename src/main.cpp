@@ -61,6 +61,7 @@ void usage()
 		"\n"
 		"Options:\n"
 		"  --disable-ui   Disable fancy terminal UI\n"
+		"  --flush-log    Flush logfile after writing an entry\n"
 		"  --help         This help screen\n"
 		"  --log=FILE     Write log file to FILE\n"
 		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
@@ -95,6 +96,7 @@ void logToStdout(const std::string& channel, const std::string& str)
 static const struct option OPTIONS[] = {
 	{"disable-ui", no_argument, nullptr, 'd'},
 	{"benchmark", no_argument, nullptr, 'b'},
+	{"flush-log", no_argument, nullptr, 'f'},
 	{"help", no_argument, nullptr, 'h'},
 	{"list-args", no_argument, nullptr, 'L'},
 	{"log",  required_argument, nullptr, 'l'},
@@ -116,6 +118,7 @@ int main(int argc, char** argv)
 
 	Action action = ACTION_LAUNCH;
 	bool enableUI = true;
+	bool flushLog = false;
 
 	// Parse options
 	while(true)
@@ -145,6 +148,9 @@ int main(int argc, char** argv)
 				break;
 			case 'd':
 				enableUI = false;
+				break;
+			case 'f':
+				flushLog = true;
 				break;
 		}
 	}
@@ -225,7 +231,7 @@ int main(int argc, char** argv)
 			logFile = buf;
 		}
 
-		logger.reset(new rosmon::Logger(logFile));
+		logger.reset(new rosmon::Logger(logFile, flushLog));
 	}
 
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);

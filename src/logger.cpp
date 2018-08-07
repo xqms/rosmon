@@ -16,8 +16,8 @@
 namespace rosmon
 {
 
-Logger::Logger(const std::string& path)
- : m_file(nullptr)
+Logger::Logger(const std::string& path, bool flush)
+ : m_flush(flush)
 {
 	m_file = fopen(path.c_str(), "we");
 	if(!m_file)
@@ -57,6 +57,9 @@ void Logger::log(const std::string& source, const std::string& msg)
 	);
 	fwrite(msg.c_str(), 1, len, m_file);
 	fputc('\n', m_file);
+
+	if(m_flush)
+		fflush(m_file);
 }
 
 }

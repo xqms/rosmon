@@ -20,13 +20,14 @@ public:
 	 *
 	 * @param path Path to the output file
 	 **/
-	explicit Logger(const std::string& path);
+	explicit Logger(const std::string& path, bool flush = false);
 	~Logger();
 
 	//! Log message
 	void log(const std::string& source, const std::string& msg);
 private:
-	FILE* m_file;
+	FILE* m_file = nullptr;
+	bool m_flush = false;
 };
 
 }
