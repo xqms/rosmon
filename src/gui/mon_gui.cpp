@@ -147,7 +147,7 @@ void MonGUI::showContextMenu(const QPoint& point)
 	if(triggered)
 	{
 		rosmon::StartStop srv;
-		srv.request.node = m_model->nodeName(index.row()).toStdString();
+		srv.request.node = index.sibling(index.row(), NodeModel::COL_NAME).data().toString().toStdString();
 		srv.request.action = triggered->property("action").toInt();
 
 		if(!ros::service::call(m_model->namespaceString().toStdString() + "/start_stop", srv))
