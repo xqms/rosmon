@@ -66,6 +66,7 @@ void usage()
 		"  --log=FILE     Write log file to FILE\n"
 		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
 		"                 name is chosen.\n"
+		"  --no-start     Don't automatically start the nodes in the beginning\n"
 		"\n"
 		"rosmon also obeys some environment variables:\n"
 		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
@@ -101,6 +102,7 @@ static const struct option OPTIONS[] = {
 	{"list-args", no_argument, nullptr, 'L'},
 	{"log",  required_argument, nullptr, 'l'},
 	{"name", required_argument, nullptr, 'n'},
+	{"no-start", no_argument, nullptr, 'S'},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -119,6 +121,7 @@ int main(int argc, char** argv)
 	Action action = ACTION_LAUNCH;
 	bool enableUI = true;
 	bool flushLog = false;
+	bool startNodes = true;
 
 	// Parse options
 	while(true)
@@ -151,6 +154,9 @@ int main(int argc, char** argv)
 				break;
 			case 'f':
 				flushLog = true;
+				break;
+			case 'S':
+				startNodes = false;
 				break;
 		}
 	}
@@ -336,7 +342,9 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	monitor.start();
+	// Should we automatically start the nodes?
+	if(startNodes)
+		monitor.start();
 
 	// Start the ncurses UI
 	boost::scoped_ptr<rosmon::UI> ui;
