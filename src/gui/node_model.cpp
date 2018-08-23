@@ -202,13 +202,5 @@ QVariant NodeModel::headerData(int section, Qt::Orientation orientation, int rol
 	return QVariant();
 }
 
-QString NodeModel::nodeName(int row) const
-{
-	if(row < 0 || row > (int)m_entries.size())
-		return QString();
-
-	return m_entries[row].name;
-}
-
 }
 
