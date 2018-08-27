@@ -152,6 +152,8 @@ public:
 
 	void setArgument(const std::string& name, const std::string& value);
 
+	void setDefaultStopTimeout(double timeout);
+
 	void parse(const std::string& filename, bool onlyArguments = false);
 	void parseString(const std::string& input, bool onlyArguments = false);
 
@@ -212,6 +214,8 @@ private:
 	std::string m_rosmonNodeName;
 
 	std::string m_windowTitle;
+
+	double m_defaultStopTimeout;
 };
 
 }
