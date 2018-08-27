@@ -32,6 +32,8 @@ public:
 	void forceExit();
 	bool allShutdown();
 
+	double shutdownTimeout();
+
 	inline bool ok() const
 	{ return m_ok; }
 

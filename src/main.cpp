@@ -380,7 +380,7 @@ int main(int argc, char** argv)
 
 	// Wait for graceful shutdown
 	ros::WallTime start = ros::WallTime::now();
-	while(!monitor.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(5.0))
+	while(!monitor.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(monitor.shutdownTimeout()))
 	{
 		watcher->wait(waitDuration);
 
