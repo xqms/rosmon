@@ -38,6 +38,7 @@ Node::Node(std::string name, std::string package, std::string type)
  , m_required(false)
  , m_coredumpsEnabled(true)
  , m_clearParams(false)
+ , m_stopTimeout(5.0)
 {
 	m_executable = PackageRegistry::getExecutable(m_package, m_type);
 }
@@ -135,6 +136,11 @@ void Node::setWorkingDirectory(const std::string& cwd)
 void Node::setClearParams(bool on)
 {
 	m_clearParams = on;
+}
+
+void Node::setStopTimeout(double timeout)
+{
+	m_stopTimeout = timeout;
 }
 
 }

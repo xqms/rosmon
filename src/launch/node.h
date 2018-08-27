@@ -40,6 +40,8 @@ public:
 
 	void setClearParams(bool on);
 
+	void setStopTimeout(double timeout);
+
 	std::string name() const
 	{ return m_name; }
 
@@ -86,6 +88,9 @@ public:
 
 	bool clearParams() const
 	{ return m_clearParams; }
+
+	double stopTimeout() const
+	{ return m_stopTimeout; }
 private:
 	std::string m_name;
 	std::string m_package;
@@ -112,6 +117,8 @@ private:
 	std::string m_workingDirectory;
 
 	bool m_clearParams;
+
+	double m_stopTimeout;
 };
 
 }
