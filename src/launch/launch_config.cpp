@@ -381,7 +381,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		ctx.setCurrentElement(e);
 
 		if(e->ValueStr() == "param")
-			parseParam(e, ctx);
+			parseParam(e, ctx, PARAM_IN_NODE);
 		else if(e->ValueStr() == "rosparam")
 			parseROSParam(e, ctx);
 		else if(e->ValueStr() == "remap")
@@ -430,7 +430,7 @@ static XmlRpc::XmlRpcValue autoXmlRpcValue(const std::string& fullValue)
 	}
 }
 
-void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
+void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx, ParamContext paramContext)
 {
 	const char* name = element->Attribute("name");
 	const char* value = element->Attribute("value");
@@ -451,12 +451,24 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx)
 	}
 
 	std::string fullName = ctx.evaluate(name);
+	if(fullName.empty())
+	{
+		throw ctx.error("param name is empty");
+	}
 
-	// Expand relative paths
-	if(fullName[0] != '/')
+	// Expand relative paths. roslaunch ignores leading / when inside a
+	// <node> tag - god only knows why.
+	if(fullName[0] != '/' || paramContext == PARAM_IN_NODE)
 	{
 		// We silently ignore "~" at the beginning of the name
 		if(fullName[0] == '~')
+			fullName = fullName.substr(1);
+
+		if(fullName.empty())
+			throw ctx.error("param name is empty");
+
+		// Same with "/" (see above)
+		if(fullName[0] == '/')
 			fullName = fullName.substr(1);
 
 		fullName = ctx.prefix() + fullName;
