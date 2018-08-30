@@ -460,16 +460,17 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx, ParamCont
 	// <node> tag - god only knows why.
 	if(fullName[0] != '/' || paramContext == PARAM_IN_NODE)
 	{
-		// We silently ignore "~" at the beginning of the name
-		if(fullName[0] == '~')
-			fullName = fullName.substr(1);
-
-		if(fullName.empty())
-			throw ctx.error("param name is empty");
-
 		// Same with "/" (see above)
-		if(fullName[0] == '/')
+		if(paramContext == PARAM_IN_NODE && fullName[0] == '/')
+		{
+			ctx.warning("leading slashes in <param> names are ignored inside <node> contexts for roslaunch compatibility.");
 			fullName = fullName.substr(1);
+		}
+		else if(fullName[0] == '~')
+		{
+			// We silently ignore "~" at the beginning of the name
+			fullName = fullName.substr(1);
+		}
 
 		fullName = ctx.prefix() + fullName;
 	}

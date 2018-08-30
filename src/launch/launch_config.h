@@ -131,6 +131,21 @@ public:
 			return ParseException(fmt::format("{}: {}", m_filename, msg));
 		}
 	}
+
+	template<typename... Args>
+	void warning(const char* fmt, const Args& ... args) const
+	{
+		std::string msg = fmt::format(fmt, args...);
+
+		if(m_currentLine >= 0)
+		{
+			fmt::print(stderr, "{}:{}: Warning: {}\n", m_filename, m_currentLine, msg);
+		}
+		else
+		{
+			fmt::print(stderr, "{}: Warning: {}\n", m_filename, msg);
+		}
+	}
 private:
 	LaunchConfig* m_config;
 
