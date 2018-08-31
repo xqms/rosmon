@@ -42,7 +42,7 @@ class BasicTest(unittest.TestCase):
 		self.assertEqual(test1[0].state, NodeState.RUNNING)
 
 	def test_remapping(self):
-		pub = rospy.Publisher('/test_input', String, queue_size=5)
+		pub = rospy.Publisher('/test_input', String, queue_size=5, latch=True)
 
 		wfm = _WFM()
 		sub = rospy.Subscriber('/test_output', String, wfm.cb)
@@ -96,7 +96,7 @@ class BasicTest(unittest.TestCase):
 		self.assertEqual(rospy.get_param("test_argument"), 123)
 
 	def test_global_remapping(self):
-		pub = rospy.Publisher('/remapped_test_input', String, queue_size=5)
+		pub = rospy.Publisher('/remapped_test_input', String, queue_size=5, latch=True)
 
 		wfm = _WFM()
 		sub = rospy.Subscriber('/remapped_test_output', String, wfm.cb)
@@ -109,9 +109,9 @@ class BasicTest(unittest.TestCase):
 
 		timeout_t = time.time() + 5
 		while wfm.msg is None:
-				rospy.rostime.wallsleep(0.01)
-				if time.time() >= timeout_t:
-						self.fail('No reply to test message')
+			rospy.rostime.wallsleep(0.01)
+			if time.time() >= timeout_t:
+				self.fail('No reply to test message')
 
 		self.assertEqual(wfm.msg.data, 'Hello world!')
 
