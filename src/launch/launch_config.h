@@ -131,6 +131,21 @@ public:
 			return ParseException(fmt::format("{}: {}", m_filename, msg));
 		}
 	}
+
+	template<typename... Args>
+	void warning(const char* fmt, const Args& ... args) const
+	{
+		std::string msg = fmt::format(fmt, args...);
+
+		if(m_currentLine >= 0)
+		{
+			fmt::print(stderr, "{}:{}: Warning: {}\n", m_filename, m_currentLine, msg);
+		}
+		else
+		{
+			fmt::print(stderr, "{}: Warning: {}\n", m_filename, msg);
+		}
+	}
 private:
 	LaunchConfig* m_config;
 
@@ -174,11 +189,17 @@ public:
 	std::string windowTitle() const
 	{ return m_windowTitle; }
 private:
+	enum ParamContext
+	{
+		PARAM_GENERAL, //!< <param> tag inside <node>
+		PARAM_IN_NODE, //!< <param> tag everywhere else
+	};
+
 	void parseTopLevelAttributes(TiXmlElement* element);
 
 	void parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments = false);
 	void parseNode(TiXmlElement* element, ParseContext ctx);
-	void parseParam(TiXmlElement* element, ParseContext ctx);
+	void parseParam(TiXmlElement* element, ParseContext ctx, ParamContext paramContext = PARAM_GENERAL);
 	void parseROSParam(TiXmlElement* element, ParseContext ctx);
 	void parseInclude(TiXmlElement* element, ParseContext ctx);
 	void parseArgument(TiXmlElement* element, ParseContext& ctx);

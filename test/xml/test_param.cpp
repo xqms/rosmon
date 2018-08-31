@@ -166,6 +166,7 @@ TEST_CASE("scoped params", "[param]")
 			<node name="test_node" pkg="rosmon" type="abort">
 				<param name="private" value="val3" />
 				<param name="~private2" value="val4" />
+				<param name="/leading_slash" value="val5" />
 			</node>
 		</launch>
 	)EOF");
@@ -182,6 +183,8 @@ TEST_CASE("scoped params", "[param]")
 
 	checkTypedParam<std::string>(params, "/test_node/private", XmlRpc::XmlRpcValue::TypeString, "val3");
 	checkTypedParam<std::string>(params, "/test_node/private2", XmlRpc::XmlRpcValue::TypeString, "val4");
+
+	checkTypedParam<std::string>(params, "/test_node/leading_slash", XmlRpc::XmlRpcValue::TypeString, "val5");
 }
 
 TEST_CASE("wrong param types", "[param]")
