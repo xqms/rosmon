@@ -158,6 +158,10 @@ public:
 	inline int pid() const
 	{ return m_pid; }
 
+	//! Node stop timeout
+	inline double stopTimeout() const
+	{ return m_launchNode->stopTimeout(); }
+
 	/**
 	 * @brief Logging signal
 	 *

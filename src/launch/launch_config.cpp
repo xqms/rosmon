@@ -168,12 +168,18 @@ void ParseContext::setRemap(const std::string& from, const std::string& to)
 LaunchConfig::LaunchConfig()
  : m_rootContext(this)
  , m_anonGen(std::random_device()())
+ , m_defaultStopTimeout(5.0)
 {
 }
 
 void LaunchConfig::setArgument(const std::string& name, const std::string& value)
 {
 	m_rootContext.setArg(name, value, true);
+}
+
+void LaunchConfig::setDefaultStopTimeout(double timeout)
+{
+	m_defaultStopTimeout = timeout;
 }
 
 void LaunchConfig::parse(const std::string& filename, bool onlyArguments)
@@ -308,6 +314,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* coredumpsEnabled = element->Attribute("enable-coredumps");
 	const char* cwd = element->Attribute("cwd");
 	const char* clearParams = element->Attribute("clear_params");
+	const char* stopTimeout = element->Attribute("rosmon-stop-timeout");
 
 	if(!name || !pkg || !type)
 	{
@@ -337,6 +344,25 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 			throw ctx.error("node name '{}' is not unique", node->name());
 		}
 	}
+
+	if(stopTimeout)
+	{
+		double seconds;
+		try
+		{
+			seconds = boost::lexical_cast<double>(ctx.evaluate(stopTimeout));
+		}
+		catch(boost::bad_lexical_cast&)
+		{
+			throw ctx.error("bad rosmon-stop-timeout value '{}'", stopTimeout);
+		}
+		if(seconds < 0)
+			throw ctx.error("negative rosmon-stop-timeout value '{}'", stopTimeout);
+
+		node->setStopTimeout(seconds);
+	}
+	else
+		node->setStopTimeout(m_defaultStopTimeout);
 
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));

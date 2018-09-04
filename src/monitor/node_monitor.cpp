@@ -52,7 +52,7 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
  , m_restarting(false)
 {
 	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&NodeMonitor::start, this), false, false);
-	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(5.0), boost::bind(&NodeMonitor::checkStop, this));
+	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(m_launchNode->stopTimeout()), boost::bind(&NodeMonitor::checkStop, this));
 
 	m_processWorkingDirectory = m_launchNode->workingDirectory();
 

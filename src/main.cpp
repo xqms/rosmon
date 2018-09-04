@@ -10,6 +10,7 @@
 #include <ros/this_node.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <unistd.h>
 #include <getopt.h>
@@ -67,6 +68,9 @@ void usage()
 		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
 		"                 name is chosen.\n"
 		"  --no-start     Don't automatically start the nodes in the beginning\n"
+		"  --stop-timeout=SECONDS\n"
+		"                 Kill a process if it is still running this long\n"
+		"                 after the initial signal is send.\n"
 		"\n"
 		"rosmon also obeys some environment variables:\n"
 		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
@@ -103,6 +107,7 @@ static const struct option OPTIONS[] = {
 	{"log",  required_argument, nullptr, 'l'},
 	{"name", required_argument, nullptr, 'n'},
 	{"no-start", no_argument, nullptr, 'S'},
+	{"stop-timeout", required_argument, nullptr, 's'},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -122,6 +127,7 @@ int main(int argc, char** argv)
 	bool enableUI = true;
 	bool flushLog = false;
 	bool startNodes = true;
+	double stopTimeout = 5.0;
 
 	// Parse options
 	while(true)
@@ -157,6 +163,22 @@ int main(int argc, char** argv)
 				break;
 			case 'S':
 				startNodes = false;
+			case 's':
+				try
+				{
+					stopTimeout = boost::lexical_cast<double>(optarg);
+				}
+				catch(boost::bad_lexical_cast&)
+				{
+					fmt::print(stderr, "Bad value for --stop-timeout argument: '{}'\n");
+					return 1;
+				}
+
+				if(stopTimeout < 0)
+				{
+					fmt::print(stderr, "Stop timeout cannot be negative\n");
+					return 1;
+				}
 				break;
 		}
 	}
@@ -243,6 +265,7 @@ int main(int argc, char** argv)
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
 
 	rosmon::launch::LaunchConfig::Ptr config(new rosmon::launch::LaunchConfig);
+	config->setDefaultStopTimeout(stopTimeout);
 
 	// Parse launch file arguments from command line
 	for(int i = firstArg; i < argc; ++i)
@@ -380,7 +403,7 @@ int main(int argc, char** argv)
 
 	// Wait for graceful shutdown
 	ros::WallTime start = ros::WallTime::now();
-	while(!monitor.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(5.0))
+	while(!monitor.allShutdown() && ros::WallTime::now() - start < ros::WallDuration(monitor.shutdownTimeout()))
 	{
 		watcher->wait(waitDuration);
 

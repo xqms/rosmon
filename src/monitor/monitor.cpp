@@ -136,6 +136,17 @@ bool Monitor::allShutdown()
 	return allShutdown;
 }
 
+double Monitor::shutdownTimeout()
+{
+	double timeout = 0.0;
+	// Find the biggest timeout
+	for(auto& node : m_nodes)
+		if(node->stopTimeout() > timeout)
+			timeout = node->stopTimeout();
+	return timeout;
+}
+
+
 void Monitor::handleRequiredNodeExit(const std::string& name)
 {
 	log("Required node '{}' exited, shutting down...", name);
