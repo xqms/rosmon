@@ -80,7 +80,9 @@ static std::string getExecutableInPath(const fs::path& path, const std::string& 
 
 	for(fs::recursive_directory_iterator it(path); it != fs::recursive_directory_iterator(); ++it)
 	{
-		if(it->path().filename() == name && access(it->path().c_str(), X_OK) == 0)
+		if(it->path().filename() == name
+			&& fs::is_regular_file(it->path())
+			&& access(it->path().c_str(), X_OK) == 0)
 		{
 			return it->path().string();
 		}
