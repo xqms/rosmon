@@ -54,4 +54,9 @@ yaml:
 			<remap from="~input" to="/original_test_input" />
 			<remap from="~output" to="/original_test_output" />
 	</node>
+
+	<!-- Nested rosmon instance (see #46) -->
+	<group ns="nested">
+		<node name="nested_mon" pkg="rosmon" type="rosmon" args="--disable-ui $(find rosmon)/test/nested.launch" />
+	</group>
 </launch>

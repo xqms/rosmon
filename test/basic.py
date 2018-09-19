@@ -46,7 +46,7 @@ class BasicTest(unittest.TestCase):
 		except rospy.ROSException:
 			self.fail('Did not get state msg on /rosmon_uut/state' + repr(rospy.client.get_published_topics()))
 
-		self.assertEqual(len(state.nodes), 2)
+		self.assertEqual(len(state.nodes), 3)
 
 		test1 = [ n for n in state.nodes if n.name == 'test1' ]
 		self.assertEqual(len(test1), 1)
@@ -129,8 +129,13 @@ class BasicTest(unittest.TestCase):
 		sub.unregister()
 		pub.unregister()
 
+	def test_nested(self):
+		self.assertEqual(rospy.get_param("/nested/nested_param"), "hello")
+
 if __name__ == '__main__':
 	rospy.init_node('basic_test')
 
 	import rostest
 	rostest.rosrun('rosmon', 'basic', BasicTest)
+
+	time.sleep(1)
