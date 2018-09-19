@@ -86,6 +86,14 @@ static bool isOnlyWhitespace(const std::string& input)
 	return true;
 }
 
+ParseContext ParseContext::enterScope(const std::string& prefix)
+{
+	ParseContext ret = *this;
+	ret.m_prefix = ros::names::clean(ret.m_prefix + prefix) + "/";
+
+	return ret;
+}
+
 std::string ParseContext::evaluate(const std::string& tpl, bool simplifyWhitespace)
 {
 	std::string simplified;
