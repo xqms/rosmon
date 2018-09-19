@@ -170,6 +170,13 @@ LaunchConfig::LaunchConfig()
  , m_anonGen(std::random_device()())
  , m_defaultStopTimeout(5.0)
 {
+	const char* ROS_NAMESPACE = getenv("ROS_NAMESPACE");
+	if(ROS_NAMESPACE)
+	{
+		// Someone set ROS_NAMESPACE, we should respect it.
+		// This may happen in nested situations, e.g. rosmon launching rosmon.
+		m_rootContext = m_rootContext.enterScope(ROS_NAMESPACE);
+	}
 }
 
 void LaunchConfig::setArgument(const std::string& name, const std::string& value)
