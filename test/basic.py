@@ -2,6 +2,8 @@
 
 # Test driver for basic test
 
+from __future__ import print_function
+
 import sys
 import unittest
 import time
@@ -26,6 +28,15 @@ class _WFM(object):
 
 ## A sample python unit test
 class BasicTest(unittest.TestCase):
+
+	def get_param(self, name):
+		try:
+			return rospy.get_param(name)
+		except KeyError as e:
+			params = ', '.join([ '"' + name + '"' for name in sorted(rospy.get_param_names()) ])
+			raise KeyError(
+				'Caught KeyError("%s") while getting parameter. Known parameters: %s' % (e, params)
+			)
 
 	def test_rosmon_running(self):
 		from rosmon.msg import State, NodeState
@@ -65,35 +76,35 @@ class BasicTest(unittest.TestCase):
 		pub.unregister()
 
 	def test_params(self):
-		self.assertEqual(rospy.get_param("path_to_rosmon"), rospack.get_path('rosmon'))
+		self.assertEqual(self.get_param("path_to_rosmon"), rospack.get_path('rosmon'))
 		self.assertEqual(
-			rospy.get_param("path_to_launch_file"),
+			self.get_param("path_to_launch_file"),
 			os.path.join(rospack.get_path('rosmon'), 'test/basic.launch')
 		)
-		executable = rospy.get_param("path_to_rosmon_executable")
+		executable = self.get_param("path_to_rosmon_executable")
 		self.assert_(os.access(executable, os.X_OK), 'Invalid rosmon path: ' + executable)
 
 		self.assertEqual(
-			rospy.get_param("dirname"),
+			self.get_param("dirname"),
 			os.path.join(rospack.get_path('rosmon'), 'test')
 		)
 
-		self.assertEqual(rospy.get_param("eval_simple"), True)
-		self.assertEqual(rospy.get_param("eval_argexpr"), True)
-		self.assertAlmostEqual(rospy.get_param("eval_radius_pi"), 0.5 * math.pi)
+		self.assertEqual(self.get_param("eval_simple"), True)
+		self.assertEqual(self.get_param("eval_argexpr"), True)
+		self.assertAlmostEqual(self.get_param("eval_radius_pi"), 0.5 * math.pi)
 
-		self.assertEqual(rospy.get_param("/test1/private_param1"), "hello_world")
-		self.assertEqual(rospy.get_param("/test1/private_param2"), "hello_world")
+		self.assertEqual(self.get_param("/test1/private_param1"), "hello_world")
+		self.assertEqual(self.get_param("/test1/private_param2"), "hello_world")
 
 	def test_multiLine(self):
-		self.assertEqual(rospy.get_param("multiple_lines1"), "first_line second_line")
-		self.assertEqual(rospy.get_param("multiple_lines2"), "first_line second_line")
+		self.assertEqual(self.get_param("multiple_lines1"), "first_line second_line")
+		self.assertEqual(self.get_param("multiple_lines2"), "first_line second_line")
 
 	def test_yaml(self):
-		self.assertAlmostEqual(rospy.get_param("yaml/radius"), 0.5)
+		self.assertAlmostEqual(self.get_param("yaml/radius"), 0.5)
 
 	def test_arg_passing(self):
-		self.assertEqual(rospy.get_param("test_argument"), 123)
+		self.assertEqual(self.get_param("test_argument"), 123)
 
 	def test_global_remapping(self):
 		pub = rospy.Publisher('/remapped_test_input', String, queue_size=5, latch=True)
