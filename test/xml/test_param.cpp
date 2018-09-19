@@ -187,6 +187,29 @@ TEST_CASE("scoped params", "[param]")
 	checkTypedParam<std::string>(params, "/test_node/leading_slash", XmlRpc::XmlRpcValue::TypeString, "val5");
 }
 
+TEST_CASE("scoped params with double slash (#49)", "[param]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<group ns="/">
+				<param name="param1" value="hello" />
+			</group>
+
+			<node name="test_node" pkg="rosmon" type="abort" ns="/racecar">
+				<param name="private_param" value="hello again" />
+			</node>
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto& params = config.parameters();
+
+	checkTypedParam<std::string>(params, "/param1", XmlRpc::XmlRpcValue::TypeString, "hello");
+	checkTypedParam<std::string>(params, "/racecar/test_node/private_param", XmlRpc::XmlRpcValue::TypeString, "hello again");
+}
+
 TEST_CASE("wrong param types", "[param]")
 {
 	REQUIRE_THROWS_AS(
