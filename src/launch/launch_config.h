@@ -77,15 +77,7 @@ public:
 			m_currentLine = -1;
 	}
 
-	ParseContext enterScope(const std::string& prefix)
-	{
-		ParseContext ret = *this;
-		ret.m_prefix = ret.m_prefix + prefix;
-		if(prefix[prefix.size()-1] != '/')
-			ret.m_prefix.push_back('/');
-
-		return ret;
-	}
+	ParseContext enterScope(const std::string& prefix);
 
 	std::string evaluate(const std::string& tpl, bool simplifyWhitespace = true);
 
