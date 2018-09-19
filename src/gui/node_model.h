@@ -28,6 +28,11 @@ public:
 		COL_COUNT
 	};
 
+	enum Role
+	{
+		SortRole = Qt::UserRole
+	};
+
 	explicit NodeModel(ros::NodeHandle& nh, QObject* parent = nullptr);
 	~NodeModel() override = default;
 

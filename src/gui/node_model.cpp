@@ -61,7 +61,7 @@ void NodeModel::updateState(const rosmon::StateConstPtr& state)
 	std::vector<bool> covered(m_entries.size(), false);
 
 	// Look for changed & new rows
-	for(auto nodeState : state->nodes)
+	for(const auto& nodeState : state->nodes)
 	{
 		Entry key;
 		key.name = QString::fromStdString(nodeState.name);
@@ -181,6 +181,19 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 					return QColor(255, 255, 128);
 			}
 			break;
+		case SortRole:
+			switch(index.column())
+			{
+				case COL_NAME:
+					return entry.name;
+				case COL_LOAD:
+					return entry.load;
+				case COL_MEMORY:
+					return static_cast<unsigned int>(entry.memory);
+				case COL_RESTART_COUNT:
+					return entry.restartCount;
+			}
+		break;
 	}
 
 	return QVariant();

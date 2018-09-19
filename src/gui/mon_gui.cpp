@@ -49,6 +49,7 @@ void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
 	auto sortFilterProxy = new QSortFilterProxyModel(this);
 	sortFilterProxy->setSourceModel(m_model);
 	sortFilterProxy->setDynamicSortFilter(true);
+	sortFilterProxy->setSortRole(NodeModel::SortRole);
 	m_ui.tableView->setModel(sortFilterProxy);
 
 	m_ui.tableView->setSortingEnabled(true);
