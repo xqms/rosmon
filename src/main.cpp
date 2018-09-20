@@ -163,6 +163,7 @@ int main(int argc, char** argv)
 				break;
 			case 'S':
 				startNodes = false;
+				break;
 			case 's':
 				try
 				{
