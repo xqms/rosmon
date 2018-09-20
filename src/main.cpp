@@ -171,7 +171,7 @@ int main(int argc, char** argv)
 				}
 				catch(boost::bad_lexical_cast&)
 				{
-					fmt::print(stderr, "Bad value for --stop-timeout argument: '{}'\n");
+					fmt::print(stderr, "Bad value for --stop-timeout argument: '{}'\n", optarg);
 					return 1;
 				}
 
