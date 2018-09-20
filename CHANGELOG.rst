@@ -2,6 +2,18 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Clean namespace names properly to fix double slashes (issue #49, PR #53)
+* Respect ROS_NAMESPACE for nested launches (issue #46, PR #51)
+* gui: Sort Memory column correctly (issue #48, PR #50)
+* Try to find an executable *file* for nodes (issue #45, PR #47)
+* Add --stop-timeout option and launch file attribute (PR #37)
+* Handle params with leading slashes inside nodes (PR #40)
+* Add --no-start option (PR #39)
+* gui: Fix index bug in showContextMenu (PR #38)
+* Contributors: Max Schwarz, Nikos Skalkotos, Romain Reignier
+
 1.0.8 (2018-08-07)
 ------------------
 * main: Add option for flushing the logfile
