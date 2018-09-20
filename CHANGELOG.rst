@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.9 (2018-09-20)
+------------------
 * Fix race condition in integration test (issue #42, PR #54)
 * Clean namespace names properly to fix double slashes (issue #49, PR #53)
 * Respect ROS_NAMESPACE for nested launches (issue #46, PR #51)
