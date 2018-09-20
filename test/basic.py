@@ -17,6 +17,8 @@ import rospkg
 
 from std_msgs.msg import String
 
+from rosmon.msg import State, NodeState
+
 rospack = rospkg.RosPack()
 
 class _WFM(object):
@@ -39,8 +41,6 @@ class BasicTest(unittest.TestCase):
 			)
 
 	def test_rosmon_running(self):
-		from rosmon.msg import State, NodeState
-
 		try:
 			state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
 		except rospy.ROSException:
@@ -134,6 +134,9 @@ class BasicTest(unittest.TestCase):
 
 if __name__ == '__main__':
 	rospy.init_node('basic_test')
+
+	# Wait for rosmon to start up
+	state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
 
 	import rostest
 	rostest.rosrun('rosmon', 'basic', BasicTest)
