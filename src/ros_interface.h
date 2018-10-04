@@ -13,10 +13,16 @@
 namespace rosmon
 {
 
+struct LaunchInfo{
+	std::string robot_name;
+	std::string launch_group;
+	std::string launch_config;
+};
+
 class ROSInterface
 {
 public:
-	ROSInterface(monitor::Monitor* monitor);
+	ROSInterface(monitor::Monitor* monitor, LaunchInfo* launchInfo);
 
 	void shutdown();
 private:
@@ -24,6 +30,8 @@ private:
 	bool handleStartStop(StartStopRequest& req, StartStopResponse& resp);
 
 	monitor::Monitor* m_monitor;
+
+	LaunchInfo* m_launchInfo;
 
 	ros::NodeHandle m_nh;
 

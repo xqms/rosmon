@@ -10,10 +10,15 @@
 namespace rosmon
 {
 
-ROSInterface::ROSInterface(monitor::Monitor* monitor)
+ROSInterface::ROSInterface(monitor::Monitor* monitor, LaunchInfo* launchInfo)
  : m_monitor(monitor)
- , m_nh("~")
+ , m_launchInfo(launchInfo)
 {
+	if(launchInfo->robot_name.empty())
+		m_nh = ros::NodeHandle("~");
+	else
+		m_nh = ros::NodeHandle("/"+launchInfo->robot_name);
+
 	m_updateTimer = m_nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&ROSInterface::update, this));
 
 	m_pub_state = m_nh.advertise<rosmon::State>("state", 10, true);
@@ -25,6 +30,9 @@ void ROSInterface::update()
 {
 	rosmon::State state;
 	state.header.stamp = ros::Time::now();
+	state.robot_name = m_launchInfo->robot_name;
+	state.launch_group = m_launchInfo->launch_group;
+	state.launch_config = m_launchInfo->launch_config;
 
 	for(auto& node : m_monitor->nodes())
 	{
