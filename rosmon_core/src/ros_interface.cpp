@@ -10,15 +10,21 @@
 namespace rosmon
 {
 
-ROSInterface::ROSInterface(monitor::Monitor* monitor, bool enableDiagnostics,
+ROSInterface::ROSInterface(monitor::Monitor* monitor, LaunchInfo* launchInfo, bool enableDiagnostics,
                            const std::string& diagnosticsPrefix)
  : m_monitor(monitor)
- , m_nh("~")
+ , m_launchInfo(launchInfo)
  , m_diagnosticsEnabled(enableDiagnostics)
 {
+    if(launchInfo->robot_name.empty()) {
+        m_nh = ros::NodeHandle("~");
+    } else {
+        m_nh = ros::NodeHandle();
+    }
+
 	m_updateTimer = m_nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&ROSInterface::update, this));
 
-	m_pub_state = m_nh.advertise<rosmon_msgs::State>("state", 10, true);
+	m_pub_state = m_nh.advertise<rosmon_msgs::State>("ros_monitor", 10, true);
 
 	m_srv_startStop = m_nh.advertiseService("start_stop", &ROSInterface::handleStartStop, this);
 
@@ -30,6 +36,9 @@ void ROSInterface::update()
 {
 	rosmon_msgs::State state;
 	state.header.stamp = ros::Time::now();
+	state.robot_name = m_launchInfo->robot_name;
+	state.launch_group = m_launchInfo->launch_group;
+	state.launch_config = m_launchInfo->launch_config;
 
 	if(m_diagnosticsPublisher)
 		m_diagnosticsPublisher->publish(m_monitor->nodes());

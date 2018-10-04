@@ -42,9 +42,9 @@ class BasicTest(unittest.TestCase):
 
 	def test_rosmon_running(self):
 		try:
-			state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
+			state = rospy.client.wait_for_message('/rosmon_uut/ros_monitor', State, timeout=5.0)
 		except rospy.ROSException:
-			self.fail('Did not get state msg on /rosmon_uut/state' + repr(rospy.client.get_published_topics()))
+			self.fail('Did not get state msg on /rosmon_uut/ros_monitor' + repr(rospy.client.get_published_topics()))
 
 		self.assertEqual(len(state.nodes), 3)
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 	rospy.init_node('basic_test')
 
 	# Wait for rosmon to start up
-	state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
+	state = rospy.client.wait_for_message('/rosmon_uut/ros_monitor', State, timeout=5.0)
 
 	import rostest
 	rostest.rosrun('rosmon_core', 'basic', BasicTest)

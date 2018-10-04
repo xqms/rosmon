@@ -197,7 +197,17 @@ void Monitor::updateStats(const ros::WallTimerEvent& event)
 
 	for(; it != end; ++it)
 	{
-		fs::path statPath = (*it) / "stat";
+		fs::path statPath;
+		try {
+			statPath = (*it) / "stat";
+			if (!fs::exists(statPath)) {
+				continue;
+			}
+		} catch (const boost::filesystem::filesystem_error& ex) {
+			std::cout << ex.what() << std::endl;
+			std::cout << ex.code().value() << std::endl;
+			continue;
+		}
 
 		process_info::ProcessStat stat;
 		if(!process_info::readStatFile(statPath.c_str(), &stat))
@@ -246,6 +256,5 @@ void Monitor::updateStats(const ros::WallTimerEvent& event)
 			it++;
 	}
 }
-
 }
 }

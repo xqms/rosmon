@@ -35,7 +35,7 @@ void NodeModel::setNamespace(const QString& ns)
 		try
 		{
 			ros::NodeHandle nh(m_nh, ns.toStdString());
-			m_sub_state = nh.subscribe("state", 1, &NodeModel::stateReceived, this);
+			m_sub_state = nh.subscribe("ros_monitor", 1, &NodeModel::stateReceived, this);
 		}
 		catch(ros::InvalidNameException& name)
 		{
