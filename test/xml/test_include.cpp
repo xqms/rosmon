@@ -29,6 +29,29 @@ TEST_CASE("include basic", "[include]")
 	CHECK(getTypedParam<std::string>(params, "/test_argument") == "hello");
 }
 
+TEST_CASE("include default", "[include]")
+{
+	// roslaunch allows this - to me it seems quite confusing, since the value
+	// of the arg tag cannot be overriden, despite using "default".
+
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<arg name="test_argument" value="hello" />
+
+			<include file="$(find rosmon)/test/basic_sub.launch">
+				<arg name="test_argument" default="$(arg test_argument)" />
+			</include>
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto params = config.parameters();
+
+	CHECK(getTypedParam<std::string>(params, "/test_argument") == "hello");
+}
+
 TEST_CASE("include pass_all", "[include]")
 {
 	LaunchConfig config;
