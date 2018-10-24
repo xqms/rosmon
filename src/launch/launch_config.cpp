@@ -926,6 +926,23 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 		{
 			const char* name = e->Attribute("name");
 			const char* value = e->Attribute("value");
+			const char* defaultValue = e->Attribute("default");
+
+			if(!name)
+				throw ctx.error("<arg> inside include needs a name attribute");
+
+			if(!value && defaultValue)
+			{
+				// roslaunch allows this - god knows why.
+				ctx.warning(
+					"You are using <arg> inside an <include> tag with the "
+					"default=XY attribute - which is superfluous. "
+					"Use value=XY instead for less confusion. "
+					"Attribute name: {}",
+					name
+				);
+				value = defaultValue;
+			}
 
 			if(!name || !value)
 				throw ctx.error("<arg> inside include needs name and value");
