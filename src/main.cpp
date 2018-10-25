@@ -80,7 +80,7 @@ void usage()
 	);
 }
 
-void handleSIGINT(int)
+void handleSignal(int)
 {
 	g_shouldStop = true;
 }
@@ -386,7 +386,10 @@ int main(int argc, char** argv)
 
 	ros::WallDuration waitDuration(0.1);
 
-	signal(SIGINT, handleSIGINT);
+	// On SIGINT, SIGTERM, SIGHUP we stop gracefully.
+	signal(SIGINT, handleSignal);
+	signal(SIGHUP, handleSignal);
+	signal(SIGTERM, handleSignal);
 
 	// Main loop
 	while(ros::ok() && monitor.ok() && !g_shouldStop)
