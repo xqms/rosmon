@@ -2,6 +2,15 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* main: exit gracefully on SIGTERM and SIGHUP as well (issue #59, PR #60)
+* launch: allow <arg default="XY"> in <include> tags (issue #57, PR #58)
+  roslaunch allows this, so we should as well. Since it seems a bit
+  confusing, we issue a warning when this happens.
+  In these cases, <arg value="XY"> should be applicable and is much clearer.
+* Contributors: Max Schwarz
+
 1.0.9 (2018-09-20)
 ------------------
 * Fix race condition in integration test (issue #42, PR #54)
