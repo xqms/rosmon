@@ -344,9 +344,13 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			fmt::print("Starting own roscore...\n");
-			fmt::print(stderr, "Scratch that, I can't do that yet. Exiting...\n");
-			return 1;
+			fmt::print("roscore is not runnning.\n");
+			fmt::print("Waiting until it is up (abort with CTRL+C)...\n");
+
+			while(!ros::master::check())
+				ros::WallDuration(0.5).sleep();
+
+			fmt::print("roscore is running now.\n");
 		}
 	}
 
