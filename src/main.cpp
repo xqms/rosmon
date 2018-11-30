@@ -31,6 +31,7 @@
 namespace fs = boost::filesystem;
 
 bool g_shouldStop = false;
+bool g_force_stdout_line_buffered = false;
 
 static fs::path findFile(const fs::path& base, const std::string& name)
 {
@@ -95,6 +96,11 @@ void logToStdout(const std::string& channel, const std::string& str)
 	clean.resize(len);
 
 	fmt::print("{:>20}: {}\n", channel, clean);
+
+	if(g_force_stdout_line_buffered)
+	{
+		std::cout << std::flush;
+	}
 }
 
 // Options
@@ -383,6 +389,15 @@ int main(int argc, char** argv)
 	else
 	{
 		monitor.logMessageSignal.connect(logToStdout);
+	}
+
+	char* line_buffered_env_var = getenv("ROSCONSOLE_STDOUT_LINE_BUFFERED");
+	if(line_buffered_env_var)
+	{
+		if(std::string(line_buffered_env_var) == "1")
+		{
+			g_force_stdout_line_buffered = true;
+		}
 	}
 
 	// ROS interface
