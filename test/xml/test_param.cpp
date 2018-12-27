@@ -120,6 +120,23 @@ TEST_CASE("param textfile", "[param]")
 	checkTypedParam<std::string>(params, "/test", XmlRpc::XmlRpcValue::TypeString, "hello_world");
 }
 
+TEST_CASE("param textfile does not exist", "[param]")
+{
+	using Catch::Matchers::Contains;
+
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<param name="test" textfile="$(find rosmon)/test/textfile_does_not_exist.txt" />
+		</launch>
+	)EOF");
+
+	REQUIRE_THROWS_WITH(
+		config.evaluateParameters(),
+		Contains("file")
+	);
+}
+
 TEST_CASE("param binfile", "[param]")
 {
 	LaunchConfig config;
