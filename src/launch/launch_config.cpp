@@ -567,7 +567,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx, ParamCont
 		m_paramJobs[fullName] = std::async(std::launch::deferred,
 			[=]() -> XmlRpc::XmlRpcValue {
 				std::ifstream stream(fullFile, std::ios::binary | std::ios::ate);
-				if(stream.bad())
+				if(!stream || stream.bad())
 					throw ctx.error("Could not open file '{}'", fullFile);
 
 				std::vector<char> data(stream.tellg(), 0);
@@ -689,7 +689,7 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx, ParamCont
 		*computeString = std::async(std::launch::deferred,
 			[=]() -> std::string {
 				std::ifstream stream(fullFile);
-				if(stream.bad())
+				if(!stream || stream.bad())
 					throw ctx.error("Could not open file '{}'", fullFile);
 
 				std::stringstream buffer;
@@ -791,7 +791,7 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 		{
 			fullFile = ctx.evaluate(file);
 			std::ifstream stream(fullFile);
-			if(stream.bad())
+			if(!stream || stream.bad())
 				throw ctx.error("Could not open file '{}'", fullFile);
 
 			std::stringstream buffer;
