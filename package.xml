@@ -15,6 +15,7 @@
 	<depend>cmake_modules</depend>
 	<depend>libncurses-dev</depend>
 	<depend>message_generation</depend>
+	<depend>rosfmt</depend>
 	<depend>rospack</depend>
 	<depend>roslib</depend>
 	<depend>roscpp</depend>
