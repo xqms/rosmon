@@ -31,6 +31,7 @@
 namespace fs = boost::filesystem;
 
 bool g_shouldStop = false;
+bool g_flushStdout = false;
 
 static fs::path findFile(const fs::path& base, const std::string& name)
 {
@@ -57,20 +58,21 @@ void usage()
 		"  rosmon [actions] [options] path/to/test.launch [arg1:=value1 ...]\n"
 		"\n"
 		"Actions (default is to launch the launch file):\n"
-		"  --benchmark    Exit after loading the launch file\n"
-		"  --list-args    List launch file arguments\n"
+		"  --benchmark     Exit after loading the launch file\n"
+		"  --list-args     List launch file arguments\n"
 		"\n"
 		"Options:\n"
-		"  --disable-ui   Disable fancy terminal UI\n"
-		"  --flush-log    Flush logfile after writing an entry\n"
-		"  --help         This help screen\n"
-		"  --log=FILE     Write log file to FILE\n"
-		"  --name=NAME    Use NAME as ROS node name. By default, an anonymous\n"
-		"                 name is chosen.\n"
-		"  --no-start     Don't automatically start the nodes in the beginning\n"
+		"  --disable-ui    Disable fancy terminal UI\n"
+		"  --flush-log     Flush logfile after writing an entry\n"
+		"  --flush-stdout  Flush stdout after writing an entry\n"
+		"  --help          This help screen\n"
+		"  --log=FILE      Write log file to FILE\n"
+		"  --name=NAME     Use NAME as ROS node name. By default, an anonymous\n"
+		"                  name is chosen.\n"
+		"  --no-start      Don't automatically start the nodes in the beginning\n"
 		"  --stop-timeout=SECONDS\n"
-		"                 Kill a process if it is still running this long\n"
-		"                 after the initial signal is send.\n"
+		"                  Kill a process if it is still running this long\n"
+		"                  after the initial signal is send.\n"
 		"\n"
 		"rosmon also obeys some environment variables:\n"
 		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
@@ -95,6 +97,9 @@ void logToStdout(const std::string& channel, const std::string& str)
 	clean.resize(len);
 
 	fmt::print("{:>20}: {}\n", channel, clean);
+
+	if(g_flushStdout)
+		fflush(stdout);
 }
 
 // Options
@@ -102,6 +107,7 @@ static const struct option OPTIONS[] = {
 	{"disable-ui", no_argument, nullptr, 'd'},
 	{"benchmark", no_argument, nullptr, 'b'},
 	{"flush-log", no_argument, nullptr, 'f'},
+	{"flush-stdout", no_argument, nullptr, 'F'},
 	{"help", no_argument, nullptr, 'h'},
 	{"list-args", no_argument, nullptr, 'L'},
 	{"log",  required_argument, nullptr, 'l'},
@@ -160,6 +166,9 @@ int main(int argc, char** argv)
 				break;
 			case 'f':
 				flushLog = true;
+				break;
+			case 'F':
+				g_flushStdout = true;
 				break;
 			case 'S':
 				startNodes = false;
