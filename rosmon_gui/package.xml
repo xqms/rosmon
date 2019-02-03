@@ -1,0 +1,24 @@
+<package format="2">
+	<name>rosmon_gui</name>
+	<description>
+		rqt GUI for rosmon, the node launcher and monitor for ROS.
+		rosmon is a replacement for the roslaunch tool, focused on performance,
+		remote monitoring, and usability.
+	</description>
+	<version>1.0.10</version>
+	<license>BSD</license>
+	<author email="max.schwarz@uni-bonn.de">Max Schwarz</author>
+	<maintainer email="max.schwarz@uni-bonn.de">Max Schwarz</maintainer>
+
+	<buildtool_depend>catkin</buildtool_depend>
+	<depend>rosmon_msgs</depend>
+	<depend>roscpp</depend>
+	<depend>rqt_gui</depend>
+	<depend>rqt_gui_cpp</depend>
+
+	<build_depend>qtbase5-dev</build_depend>
+
+	<export>
+		<rqt_gui plugin="${prefix}/rqt_plugin.xml" />
+	</export>
+</package>

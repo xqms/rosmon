@@ -20,8 +20,8 @@ NodeModel::NodeModel(ros::NodeHandle& nh, QObject* parent)
  , m_namespace("/rosmon")
 {
 	qRegisterMetaType<rosmon_msgs::StateConstPtr>();
-	connect(this, SIGNAL(stateReceived(rosmon::StateConstPtr)),
-		SLOT(updateState(rosmon::StateConstPtr)),
+	connect(this, SIGNAL(stateReceived(rosmon_msgs::StateConstPtr)),
+		SLOT(updateState(rosmon_msgs::StateConstPtr)),
 		Qt::QueuedConnection
 	);
 }

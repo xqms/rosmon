@@ -10,8 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
 	rosfmt
 	rosmon_msgs
 	rospack
-	rqt_gui
-	rqt_gui_cpp
 )
 
 catkin_package()
@@ -100,69 +98,6 @@ target_link_libraries(rosmon
 if(PYTHONLIBS_FOUND)
 	target_link_libraries(rosmon
 		${PYTHON_LIBRARIES}
-	)
-endif()
-
-# GUI
-
-# Decide on a Qt version
-if("${qt_gui_cpp_USE_QT_MAJOR_VERSION} " STREQUAL "5 ")
-	set(USE_QT5 true)
-else()
-	set(USE_QT5 false)
-endif()
-
-# Find Qt
-if(USE_QT5)
-	find_package(Qt5Widgets REQUIRED)
-	set(QT_FOUND ${Qt5Widgets_FOUND})
-	set(QT_LIBRARIES ${Qt5Widgets_LIBRARIES})
-else()
-	find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
-	include(${QT_USE_FILE})
-endif()
-
-find_package(rqt_gui_cpp)
-
-if(QT_FOUND AND rqt_gui_cpp_FOUND)
-
-	include_directories(${rqt_gui_cpp_INCLUDE_DIRS})
-	include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-	set(UI_FILES
-		src/gui/mon_gui.ui
-	)
-	set(H_FILES
-		src/gui/mon_gui.h
-		src/gui/node_model.h
-		src/gui/rosmon_model.h
-	)
-
-	if(USE_QT5)
-		qt5_wrap_ui(UIC_FILES ${UI_FILES})
-		qt5_wrap_cpp(MOC_FILES ${H_FILES})
-	else()
-		qt4_wrap_ui(UIC_FILES ${UI_FILES})
-		qt4_wrap_cpp(MOC_FILES ${H_FILES})
-	endif()
-
-	add_library(rosmon_gui
-		${UIC_FILES}
-		${MOC_FILES}
-		src/gui/bar_delegate.cpp
-		src/gui/format_data_size.cpp
-		src/gui/mon_gui.cpp
-		src/gui/node_model.cpp
-		src/gui/rosmon_model.cpp
-	)
-	target_link_libraries(rosmon_gui
-		${catkin_LIBRARIES}
-		${rqt_gui_cpp_LIBRARIES}
-		${QT_LIBRARIES}
-	)
-
-	install(TARGETS rosmon_gui
-		LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	)
 endif()
 
