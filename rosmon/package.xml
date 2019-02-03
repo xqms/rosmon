@@ -1,5 +1,5 @@
 <package format="2">
-	<name>rosmon_core</name>
+	<name>rosmon</name>
 	<description>
 		Node launcher and monitor for ROS. rosmon is a replacement
 		for the roslaunch tool, focused on performance, remote

@@ -17,7 +17,7 @@ import rospkg
 
 from std_msgs.msg import String
 
-from rosmon.msg import State, NodeState
+from rosmon_msgs.msg import State, NodeState
 
 rospack = rospkg.RosPack()
 
