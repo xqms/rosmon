@@ -6,7 +6,7 @@
 
 #include <QAbstractTableModel>
 
-#include <rosmon/State.h>
+#include <rosmon_msgs/State.h>
 
 #include <ros/subscriber.h>
 #include <ros/node_handle.h>
@@ -49,9 +49,9 @@ public Q_SLOTS:
 	void setNamespace(const QString& ns);
 	void unsubscribe();
 Q_SIGNALS:
-	void stateReceived(const rosmon::StateConstPtr& state);
+	void stateReceived(const rosmon_msgs::StateConstPtr& state);
 private Q_SLOTS:
-	void updateState(const rosmon::StateConstPtr& state);
+	void updateState(const rosmon_msgs::StateConstPtr& state);
 private:
 	struct Entry
 	{

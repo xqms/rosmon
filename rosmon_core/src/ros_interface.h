@@ -8,7 +8,7 @@
 
 #include <ros/node_handle.h>
 
-#include <rosmon/StartStop.h>
+#include <rosmon_msgs/StartStop.h>
 
 namespace rosmon
 {
@@ -21,7 +21,7 @@ public:
 	void shutdown();
 private:
 	void update();
-	bool handleStartStop(StartStopRequest& req, StartStopResponse& resp);
+	bool handleStartStop(rosmon_msgs::StartStopRequest& req, rosmon_msgs::StartStopResponse& resp);
 
 	monitor::Monitor* m_monitor;
 

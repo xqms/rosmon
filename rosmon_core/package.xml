@@ -1,5 +1,5 @@
 <package format="2">
-	<name>rosmon</name>
+	<name>rosmon_core</name>
 	<description>
 		Node launcher and monitor for ROS. rosmon is a replacement
 		for the roslaunch tool, focused on performance, remote
@@ -14,10 +14,10 @@
 	<depend>boost</depend>
 	<depend>cmake_modules</depend>
 	<depend>libncurses-dev</depend>
-	<depend>message_generation</depend>
 	<depend>rosfmt</depend>
 	<depend>rospack</depend>
 	<depend>roslib</depend>
+	<depend>rosmon_msgs</depend>
 	<depend>roscpp</depend>
 	<depend>rosbash</depend>
 	<depend>rqt_gui</depend>

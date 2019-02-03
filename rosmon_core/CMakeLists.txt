@@ -1,30 +1,17 @@
 
 cmake_minimum_required(VERSION 2.8)
-project(rosmon)
+project(rosmon_core)
 
 find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	cmake_modules
 	roslib
-	message_generation
 	pluginlib
 	rosfmt
+	rosmon_msgs
 	rospack
 	rqt_gui
 	rqt_gui_cpp
-)
-
-add_message_files(FILES
-	NodeState.msg
-	State.msg
-)
-
-add_service_files(FILES
-	StartStop.srv
-)
-
-generate_messages(DEPENDENCIES
-	std_msgs
 )
 
 catkin_package()
@@ -109,9 +96,6 @@ target_link_libraries(rosmon
 	util
 	rosmon_launch_config
 )
-add_dependencies(rosmon
-	${PROJECT_NAME}_generate_messages_cpp
-)
 
 if(PYTHONLIBS_FOUND)
 	target_link_libraries(rosmon
@@ -175,9 +159,6 @@ if(QT_FOUND AND rqt_gui_cpp_FOUND)
 		${catkin_LIBRARIES}
 		${rqt_gui_cpp_LIBRARIES}
 		${QT_LIBRARIES}
-	)
-	add_dependencies(rosmon_gui
-		${PROJECT_NAME}_generate_messages_cpp
 	)
 
 	install(TARGETS rosmon_gui

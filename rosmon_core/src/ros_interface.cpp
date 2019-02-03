@@ -3,7 +3,7 @@
 
 #include "ros_interface.h"
 
-#include <rosmon/State.h>
+#include <rosmon_msgs/State.h>
 
 #include <algorithm>
 
@@ -16,19 +16,19 @@ ROSInterface::ROSInterface(monitor::Monitor* monitor)
 {
 	m_updateTimer = m_nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&ROSInterface::update, this));
 
-	m_pub_state = m_nh.advertise<rosmon::State>("state", 10, true);
+	m_pub_state = m_nh.advertise<rosmon_msgs::State>("state", 10, true);
 
 	m_srv_startStop = m_nh.advertiseService("start_stop", &ROSInterface::handleStartStop, this);
 }
 
 void ROSInterface::update()
 {
-	rosmon::State state;
+	rosmon_msgs::State state;
 	state.header.stamp = ros::Time::now();
 
 	for(auto& node : m_monitor->nodes())
 	{
-		rosmon::NodeState nstate;
+		rosmon_msgs::NodeState nstate;
 		nstate.name = node->name();
 
 		switch(node->state())
@@ -63,7 +63,7 @@ void ROSInterface::update()
 	m_pub_state.publish(state);
 }
 
-bool ROSInterface::handleStartStop(StartStopRequest& req, StartStopResponse&)
+bool ROSInterface::handleStartStop(rosmon_msgs::StartStopRequest& req, rosmon_msgs::StartStopResponse&)
 {
 	auto it = std::find_if(
 		m_monitor->nodes().begin(), m_monitor->nodes().end(),
@@ -75,13 +75,13 @@ bool ROSInterface::handleStartStop(StartStopRequest& req, StartStopResponse&)
 
 	switch(req.action)
 	{
-		case StartStopRequest::START:
+		case rosmon_msgs::StartStopRequest::START:
 			(*it)->start();
 			break;
-		case StartStopRequest::STOP:
+		case rosmon_msgs::StartStopRequest::STOP:
 			(*it)->stop();
 			break;
-		case StartStopRequest::RESTART:
+		case rosmon_msgs::StartStopRequest::RESTART:
 			(*it)->restart();
 			break;
 	}
@@ -94,7 +94,7 @@ void ROSInterface::shutdown()
 	m_updateTimer.stop();
 
 	// Send empty state packet to clear the GUI
-	rosmon::State state;
+	rosmon_msgs::State state;
 	state.header.stamp = ros::Time::now();
 	m_pub_state.publish(state);
 

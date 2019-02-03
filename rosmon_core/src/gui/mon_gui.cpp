@@ -15,7 +15,7 @@
 #include <QDebug>
 #include <QSortFilterProxyModel>
 
-#include <rosmon/StartStop.h>
+#include <rosmon_msgs/StartStop.h>
 
 #include <ros/service.h>
 
@@ -135,19 +135,19 @@ void MonGUI::showContextMenu(const QPoint& point)
 	QMenu menu(m_ui.tableView);
 
 	QAction* startAction = menu.addAction("Start");
-	startAction->setProperty("action", rosmon::StartStopRequest::START);
+	startAction->setProperty("action", rosmon_msgs::StartStopRequest::START);
 
 	QAction* stopAction = menu.addAction("Stop");
-	stopAction->setProperty("action", rosmon::StartStopRequest::STOP);
+	stopAction->setProperty("action", rosmon_msgs::StartStopRequest::STOP);
 
 	QAction* restartAction = menu.addAction("Restart");
-	restartAction->setProperty("action", rosmon::StartStopRequest::RESTART);
+	restartAction->setProperty("action", rosmon_msgs::StartStopRequest::RESTART);
 
 	QAction* triggered = menu.exec(m_ui.tableView->viewport()->mapToGlobal(point));
 
 	if(triggered)
 	{
-		rosmon::StartStop srv;
+		rosmon_msgs::StartStop srv;
 		srv.request.node = index.sibling(index.row(), NodeModel::COL_NAME).data().toString().toStdString();
 		srv.request.action = triggered->property("action").toInt();
 

@@ -9,7 +9,7 @@
 
 #include "format_data_size.h"
 
-Q_DECLARE_METATYPE(rosmon::StateConstPtr)
+Q_DECLARE_METATYPE(rosmon_msgs::StateConstPtr)
 
 namespace rosmon
 {
@@ -19,7 +19,7 @@ NodeModel::NodeModel(ros::NodeHandle& nh, QObject* parent)
  , m_nh(nh)
  , m_namespace("/rosmon")
 {
-	qRegisterMetaType<rosmon::StateConstPtr>();
+	qRegisterMetaType<rosmon_msgs::StateConstPtr>();
 	connect(this, SIGNAL(stateReceived(rosmon::StateConstPtr)),
 		SLOT(updateState(rosmon::StateConstPtr)),
 		Qt::QueuedConnection
@@ -56,7 +56,7 @@ void NodeModel::unsubscribe()
 	m_sub_state.shutdown();
 }
 
-void NodeModel::updateState(const rosmon::StateConstPtr& state)
+void NodeModel::updateState(const rosmon_msgs::StateConstPtr& state)
 {
 	std::vector<bool> covered(m_entries.size(), false);
 
@@ -171,13 +171,13 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 		case Qt::BackgroundColorRole:
 			switch(entry.state)
 			{
-				case rosmon::NodeState::RUNNING:
+				case rosmon_msgs::NodeState::RUNNING:
 					return QVariant();
-				case rosmon::NodeState::IDLE:
+				case rosmon_msgs::NodeState::IDLE:
 					return QColor(200, 200, 200);
-				case rosmon::NodeState::CRASHED:
+				case rosmon_msgs::NodeState::CRASHED:
 					return QColor(255, 100, 100);
-				case rosmon::NodeState::WAITING:
+				case rosmon_msgs::NodeState::WAITING:
 					return QColor(255, 255, 128);
 			}
 			break;
