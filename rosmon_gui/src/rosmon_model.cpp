@@ -53,7 +53,7 @@ void ROSMonModel::updateData()
 
 	for(auto& topic : topics)
 	{
-		if(topic.datatype != "rosmon/State")
+		if(topic.datatype != "rosmon_msgs/State")
 			continue;
 
 		nodeList << QString::fromStdString(ros::names::parentNamespace(topic.name));
