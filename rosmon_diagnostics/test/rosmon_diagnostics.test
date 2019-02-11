@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+	<test pkg="rosmon_diagnostics" type="rosmon_diagnostics-test" name="rosmon_diagnostics_tester" 
+		test-name="rosmon diagnostics tester">
+		<rosparam>
+defaultMemoryLimit_byte: 150000
+defaultUserCPULimit: 0.2
+memory_limits: {foo_node: '250 ko', bar_node: '4.5 Mo'}
+user_cpu_limits: {foo_node: 0.6}
+        </rosparam>
+	</test>
+</launch>

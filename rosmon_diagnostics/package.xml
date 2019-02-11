@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rosmon_diagnostics</name>
+  <version>0.1.0</version>
+  <description>
+	  Package that publish diagnostics according to the current rosmon sub processes state.
+  </description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
+  <!-- Example:  -->
+  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
+  <maintainer email="aba@robopec.com">Adrien BARRAL</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>BSD</license>
+
+
+  <!-- Author tags are optional, multiple are allowed, one per tag -->
+  <!-- Authors do not have to be maintainers, but could be -->
+  <!-- Example: -->
+  <author email="aba@robopec.com">Adrien BARRAL</author> 
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rosmon_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>diagnostic_msgs</depend>
+
+  <export>
+  </export>
+</package>
