@@ -2,10 +2,11 @@
 <launch>
 	<test pkg="rosmon_diagnostics" type="rosmon_diagnostics-test" name="rosmon_diagnostics_tester" 
 		test-name="rosmon diagnostics tester">
+		<param name="diagnostics_prefix" value="procs/"/>
 		<rosparam>
 defaultMemoryLimit_byte: 150000
 defaultUserCPULimit: 0.2
-memory_limits: {foo_node: '250 ko', bar_node: '4.5 Mo'}
+memory_limits: {foo_node: '250 kB', bar_node: '4.5 MB'}
 user_cpu_limits: {foo_node: 0.6}
         </rosparam>
 	</test>

@@ -7,7 +7,7 @@ add_compile_options(-std=c++11 -Werror)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-set(CATKIN_DEPS roscpp rosmon_msgs diagnostic_msgs)
+set(CATKIN_DEPS roscpp rosmon_msgs diagnostic_msgs rosfmt)
 find_package(catkin REQUIRED ${CATKIN_DEPS})
 
 catkin_package()
