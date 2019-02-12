@@ -4,7 +4,7 @@
 		<param name="diagnostics_prefix" value="procs_"/>
 		<rosparam>
 defaultMemoryLimit_byte: '30 MB'
-defaultUserCPULimit: 0.1
+defaultCPULimit: 0.1
         </rosparam>
         <remap from="rosmon_state" to="/rosmon/state"/>
 	</node>

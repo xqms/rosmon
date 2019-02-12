@@ -12,15 +12,13 @@ class ResourceChecker
 public:
     ResourceChecker();
     uint64_t getMaxAllowedMemory(const std::string& nodeName) const;
-    float getMaxUserAllowedCPU(const std::string& nodeName) const;
-
-
+    float getMaxAllowedCPU(const std::string& nodeName) const;
 
 protected:
     std::map<std::string, uint64_t> memoryWrtNodeName;
-    std::map<std::string, float> userCPUWrtNodeName;
+    std::map<std::string, float> CPUWrtNodeName;
     uint64_t defaultMemoryLimit_byte;
-    float defaultUserCPULimit; // normalized between 0 and 1.
+    float defaultCPULimit;      // normalized between 0 and <core count>.
     void fillMemoryMapFromLitteral(const std::map<std::string, std::string> literal);
     OctetsParser parser;
 };

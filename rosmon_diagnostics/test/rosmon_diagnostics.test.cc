@@ -114,13 +114,13 @@ TEST(Rosmon_Diagnostics, WeExtractResourcesLimitsFromParameters)
     rosmon_diagnostics::ResourceChecker resourceChecker;
 
     ASSERT_EQ(resourceChecker.getMaxAllowedMemory("unknown_node"), DEFAULT_MEM_LIMIT);
-    ASSERT_FLOAT_EQ(resourceChecker.getMaxUserAllowedCPU("unknown_node"),
+    ASSERT_FLOAT_EQ(resourceChecker.getMaxAllowedCPU("unknown_node"),
                     DEFAULT_CPU_LIMIT);
 
     ASSERT_EQ(resourceChecker.getMaxAllowedMemory("foo_node"), 250000);
     ASSERT_EQ(resourceChecker.getMaxAllowedMemory("bar_node"), 4500000);
-    ASSERT_FLOAT_EQ(resourceChecker.getMaxUserAllowedCPU("foo_node"), 0.6);
-    ASSERT_FLOAT_EQ(resourceChecker.getMaxUserAllowedCPU("bar_node"), DEFAULT_CPU_LIMIT);
+    ASSERT_FLOAT_EQ(resourceChecker.getMaxAllowedCPU("foo_node"), 0.6);
+    ASSERT_FLOAT_EQ(resourceChecker.getMaxAllowedCPU("bar_node"), DEFAULT_CPU_LIMIT);
 }
 
 int main(int argc, char* argv[])

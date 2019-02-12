@@ -1,16 +1,20 @@
 #include "rosmon_to_diagnostic.h"
 #include <fmt/format.h>
 #include <ros/node_handle.h>
+#include <ros/this_node.h>
 
 using namespace rosmon_diagnostics;
 
 RosmonToDiagnostic::RosmonToDiagnostic()
 {
     ros::NodeHandle nh("~");
-    diagnosticNamePrefix = nh.param("diagnostics_prefix", std::string("processes_"));
+    if(nh.getParam("diagnostics_prefix", diagnosticNamePrefix) == false)
+    {
+        diagnosticNamePrefix = ros::this_node::getName() + ":";
+    }
 }
 
-void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State &state)
+void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State& state)
 {
     // cleanup the diagnostic array result :
     currentDiagnosticArray.header.stamp = state.header.stamp;
@@ -23,7 +27,7 @@ void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State &state)
         nodeStatus.name = diagnosticNamePrefix + nodeState.name;
         diagnostic_msgs::KeyValue kv;
         kv.key = "user CPU Load";
-        kv.value = fmt::format("{:.1f}%", nodeState.user_load*100.);
+        kv.value = fmt::format("{:.1f}%", nodeState.user_load * 100.);
         nodeStatus.values.push_back(kv);
 
         kv.key = "used memory";
@@ -40,7 +44,9 @@ void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State &state)
         {
             nodeStatus.level = diagnostic_msgs::DiagnosticStatus::ERROR;
             nodeStatus.message = "Process has crashed";
-        }else{
+        }
+        else
+        {
             if(nodeState.restart_count > 0)
             {
                 nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
@@ -51,10 +57,11 @@ void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State &state)
                 nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
                 msg += "memory usage is high ! ";
             }
-            if(nodeState.user_load > resourceChecker.getMaxUserAllowedCPU(nodeState.name))
+            if(nodeState.user_load + nodeState.system_load >
+               resourceChecker.getMaxAllowedCPU(nodeState.name))
             {
                 nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
-                msg += "CPU User load is high ! ";
+                msg += "CPU load is high ! ";
             }
             nodeStatus.message = msg;
         }
