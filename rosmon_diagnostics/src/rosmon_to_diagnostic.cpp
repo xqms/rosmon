@@ -7,13 +7,7 @@ using namespace rosmon_diagnostics;
 RosmonToDiagnostic::RosmonToDiagnostic()
 {
     ros::NodeHandle nh("~");
-    diagnosticNamePrefix = nh.param("diagnostics_prefix", std::string("processes"));
-
-    // Remove leading "/" if any !
-    if(*diagnosticNamePrefix.rbegin() == '/')
-    {
-        diagnosticNamePrefix.pop_back();
-    }
+    diagnosticNamePrefix = nh.param("diagnostics_prefix", std::string("processes_"));
 }
 
 void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State &state)
@@ -26,14 +20,15 @@ void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State &state)
     for(auto& nodeState : state.nodes)
     {
         diagnostic_msgs::DiagnosticStatus nodeStatus;
-        nodeStatus.name = diagnosticNamePrefix + "/" + nodeState.name;
+        nodeStatus.name = diagnosticNamePrefix + nodeState.name;
         diagnostic_msgs::KeyValue kv;
         kv.key = "user CPU Load";
-        kv.value = nodeState.user_load;
+        kv.value = fmt::format("{:.1f}%", nodeState.user_load*100.);
         nodeStatus.values.push_back(kv);
 
         kv.key = "used memory";
         kv.value = RosmonToDiagnostic::memoryToString(nodeState.memory);
+        nodeStatus.values.push_back(kv);
 
         // Apply the operation level rule :
         // If process is CRASHED => ERROR

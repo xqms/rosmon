@@ -49,3 +49,8 @@ list(REMOVE_ITEM TEST_SRC src/main.cpp)
 
 add_rostest_gtest(rosmon_diagnostics-test test/rosmon_diagnostics.test test/rosmon_diagnostics.test.cc ${TEST_SRC})
 target_link_libraries(rosmon_diagnostics-test ${catkin_LIBRARIES})
+
+# A small node usefull for testing diagnostics :
+add_executable(node_for_test test/node_for_test.cpp)
+add_dependencies(node_for_test ${catkin_EXPORTED_TARGETS})
+target_link_libraries(node_for_test ${catkin_LIBRARIES})

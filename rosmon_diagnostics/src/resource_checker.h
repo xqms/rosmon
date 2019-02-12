@@ -2,6 +2,7 @@
 #include <map>
 #include <stdint.h>
 #include <string>
+#include "octets_parse.h"
 
 namespace rosmon_diagnostics
 {
@@ -21,6 +22,7 @@ protected:
     uint64_t defaultMemoryLimit_byte;
     float defaultUserCPULimit; // normalized between 0 and 1.
     void fillMemoryMapFromLitteral(const std::map<std::string, std::string> literal);
+    OctetsParser parser;
 };
 
 } // namespace rosmon_diagnostics

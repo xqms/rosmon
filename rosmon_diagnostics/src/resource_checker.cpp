@@ -1,14 +1,16 @@
 #include "resource_checker.h"
-#include <ros/ros.h>
 #include "octets_parse.h"
+#include <ros/ros.h>
 
 using namespace rosmon_diagnostics;
 
 ResourceChecker::ResourceChecker()
 {
     ros::NodeHandle nh("~");
-    defaultMemoryLimit_byte =
-        nh.param("defaultMemoryLimit_byte", 10000000);           // 10 Mbyte by default.
+    std::string strMemoryLimit =
+        nh.param("defaultMemoryLimit_byte", std::string("15 MB"));
+    parser.parseMemory(strMemoryLimit, defaultMemoryLimit_byte);
+
     defaultUserCPULimit = nh.param("defaultUserCPULimit", 0.05); // 5%
 
     std::map<std::string, std::string> memoryWrtNodeNameLiteral;
@@ -40,8 +42,7 @@ float ResourceChecker::getMaxUserAllowedCPU(const std::string& nodeName) const
 
 void ResourceChecker::fillMemoryMapFromLitteral(
     const std::map<std::string, std::string> literal)
-{
-    OctetsParser parser;
+{    
     uint64_t memory;
     for(const auto& memWrtNodeName : literal)
     {

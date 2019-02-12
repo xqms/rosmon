@@ -40,18 +40,6 @@ TEST(Rosmon_Diagnostics, WeCanParseMemorySize)
     EXPECT_EQ(memory, 1.0e9);
 }
 
-TEST(Rosmon_Diagnostics, WeRemoveLeadingSlashIfAny)
-{
-    RosmonToDiagnostic rosmonToDiagnostic;
-    State state;
-    NodeState node;
-    node.name = "foo_node";
-    state.nodes.push_back(node);
-    rosmonToDiagnostic.onNewStateMessage(state);
-    auto diag = rosmonToDiagnostic.getCurrentDiagnosticArray();
-    ASSERT_STREQ(diag.status.at(0).name.c_str(), "procs/foo_node");
-}
-
 TEST(Rosmon_Diagnostics, WeFormatCorrectlyMemorySizes)
 {
     ASSERT_STREQ(RosmonToDiagnostic::memoryToString(123).c_str(), "123 Bytes");
