@@ -1,5 +1,5 @@
 # rosmon_diagnostic
-This node convert the [State message](../rosmon_msgs/State.msg) into a ROS [diagnostic_msgs/DiagnosticArray](http://docs.ros.org/melodic/api/diagnostic_msgs/html/msg/DiagnosticArray.html).
+This node convert the [State message](../rosmon_msgs/msg/State.msg) into a ROS [diagnostic_msgs/DiagnosticArray](http://docs.ros.org/melodic/api/diagnostic_msgs/html/msg/DiagnosticArray.html).
 This allow to have processes's state information into the robot diagnostics system.
 
 # configuration
@@ -28,7 +28,7 @@ cpu_limits: {foo_node: 0.6}
 A built in memory byte parser allow user to enter memory limits in a human readable form. Parser understand the following memory suffix : B, kB, KB, mB, MB, gB, GB, tB, TB for respectively Byte, Kilobytes, Megabytes, etc ...
 
 ## Subscribed values
-This node subscribe to a [State message](../rosmon_msgs/State.msg) from rosmon. You will have to remap the topic ```rosmon_state``` to the topic published by rosmon.
+This node subscribe to a [State message](../rosmon_msgs/msg/State.msg) from rosmon. You will have to remap the topic ```rosmon_state``` to the topic published by rosmon.
 If you launch rosmon with the standard command ```mon launch <my launch file>```, the rosmon node will have an anonymized name.
 So you will not be able to know the topic name.
 
