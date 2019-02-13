@@ -28,7 +28,7 @@
   <depend>rosmon_msgs</depend>
   <depend>roscpp</depend>
   <depend>diagnostic_msgs</depend>
-
+  <depend>rosfmt</depend>
   <export>
   </export>
 </package>

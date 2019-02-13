@@ -6,7 +6,7 @@
 #include <boost/spirit/include/qi.hpp>
 #include <ros/console.h>
 
-class OctetsParser
+class ByteParser
 {
 public:
     bool parseMemory(const std::string& memory, uint64_t& outMemory)
@@ -21,7 +21,7 @@ public:
         double res = 0.0;
         bool ok = phrase_parse(
             it, memory.end(),
-            (double_[ref(res) = _1] >> -(octets_decades[ref(res) *= _1])),
+            (double_[ref(res) = _1] >> -(byte_decades[ref(res) *= _1])),
             boost::spirit::ascii::space);
         if(!ok)
         {
@@ -33,12 +33,12 @@ public:
     }
 
 private:
-    struct octets_decades_ : boost::spirit::qi::symbols<char, uint64_t>
+    struct bytes_decades_ : boost::spirit::qi::symbols<char, uint64_t>
     {
-        octets_decades_()
+        bytes_decades_()
         {
             add("kB", 1e3)("mB", 1e6)("gB", 1e9)("tB", 1e12)("KB", 1e3)("MB", 1e6)(
                 "GB", 1e9)("TB", 1e12)("B", 1);
         }
-    } octets_decades;
+    } byte_decades;
 };

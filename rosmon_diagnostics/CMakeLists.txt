@@ -42,13 +42,15 @@ target_link_libraries(rosmon_diagnostics_node ${catkin_LIBRARIES})
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-find_package(rostest REQUIRED)
-set(TEST_SRC ${NODE_SRC})
-list(REMOVE_ITEM TEST_SRC src/main.cpp)
+if(CATKIN_ENABLE_TESTING)
+    ## Add gtest based cpp test target and link libraries
+    find_package(rostest REQUIRED)
+    set(TEST_SRC ${NODE_SRC})
+    list(REMOVE_ITEM TEST_SRC src/main.cpp)
 
-add_rostest_gtest(rosmon_diagnostics-test test/rosmon_diagnostics.test test/rosmon_diagnostics.test.cc ${TEST_SRC})
-target_link_libraries(rosmon_diagnostics-test ${catkin_LIBRARIES})
+    add_rostest_gtest(rosmon_diagnostics-test test/rosmon_diagnostics.test test/rosmon_diagnostics.test.cc ${TEST_SRC})
+    target_link_libraries(rosmon_diagnostics-test ${catkin_LIBRARIES})
+endif()
 
 # A small node usefull for testing diagnostics :
 add_executable(node_for_test test/node_for_test.cpp)

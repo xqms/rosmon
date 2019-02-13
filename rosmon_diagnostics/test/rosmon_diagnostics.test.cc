@@ -1,4 +1,4 @@
-#include "../src/octets_parse.h"
+#include "../src/bytes_parser.h"
 #include "../src/resource_checker.h"
 #include "../src/rosmon_to_diagnostic.h"
 #include <gtest/gtest.h>
@@ -13,7 +13,7 @@ using namespace rosmon_msgs;
 
 TEST(Rosmon_Diagnostics, WeCanParseMemorySize)
 {
-    OctetsParser parser;
+    ByteParser parser;
     uint64_t memory;
     bool ok = parser.parseMemory("1  B", memory);
     EXPECT_TRUE(ok);
@@ -84,7 +84,7 @@ TEST(Rosmon_Diagnostics, WeConvertToDiagnosticsInAComplexScenario)
 
     EXPECT_DOUBLE_EQ(diag.header.stamp.toSec(), 10.);
 
-    for(auto diagStatus : diag.status)
+    for(const auto& diagStatus : diag.status)
     {
         std::cerr << "Node : " << diagStatus.name << " message : " << diagStatus.message << std::endl;
         if(diagStatus.name == "procs/good_node")

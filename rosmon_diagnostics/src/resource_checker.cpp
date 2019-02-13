@@ -1,5 +1,4 @@
 #include "resource_checker.h"
-#include "octets_parse.h"
 #include <ros/ros.h>
 
 using namespace rosmon_diagnostics;
@@ -41,14 +40,14 @@ float ResourceChecker::getMaxAllowedCPU(const std::string& nodeName) const
 }
 
 void ResourceChecker::fillMemoryMapFromLitteral(
-    const std::map<std::string, std::string> literal)
+    const std::map<std::string, std::string>& literal)
 {
     uint64_t memory;
     for(const auto& memWrtNodeName : literal)
     {
         if(parser.parseMemory(memWrtNodeName.second, memory))
         {
-            memoryWrtNodeName.insert(std::make_pair(memWrtNodeName.first, memory));
+            memoryWrtNodeName.emplace(memWrtNodeName.first, memory);
         }
     }
 }

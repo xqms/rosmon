@@ -19,14 +19,14 @@ void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State& state)
     // cleanup the diagnostic array result :
     currentDiagnosticArray.header.stamp = state.header.stamp;
     currentDiagnosticArray.status.clear();
-
+    currentDiagnosticArray.status.reserve(state.nodes.size());
     // convert state to diag :
-    for(auto& nodeState : state.nodes)
+    for(const auto& nodeState : state.nodes)
     {
         diagnostic_msgs::DiagnosticStatus nodeStatus;
         nodeStatus.name = diagnosticNamePrefix + nodeState.name;
         diagnostic_msgs::KeyValue kv;
-        kv.key = "user CPU Load";
+        kv.key = "CPU Load";
         kv.value = fmt::format("{:.1f}%", nodeState.user_load * 100.);
         nodeStatus.values.push_back(kv);
 
@@ -50,18 +50,18 @@ void RosmonToDiagnostic::onNewStateMessage(const rosmon_msgs::State& state)
             if(nodeState.restart_count > 0)
             {
                 nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
-                msg = "restart count > 0 ! ";
+                msg = "restart count > 0! ";
             }
             if(nodeState.memory > resourceChecker.getMaxAllowedMemory(nodeState.name))
             {
                 nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
-                msg += "memory usage is high ! ";
+                msg += "memory usage is high! ";
             }
             if(nodeState.user_load + nodeState.system_load >
                resourceChecker.getMaxAllowedCPU(nodeState.name))
             {
                 nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
-                msg += "CPU load is high ! ";
+                msg += "CPU load is high! ";
             }
             nodeStatus.message = msg;
         }
