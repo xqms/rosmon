@@ -1,5 +1,4 @@
 #include "rosmon_to_diagnostic.h"
-#include <boost/bind/placeholders.hpp>
 #include <ros/ros.h>
 #include <rosmon_msgs/State.h>
 
@@ -22,8 +21,8 @@ int main(int argc, char* argv[])
 
     auto sub = nh.subscribe<rosmon_msgs::State>(
         "rosmon_state", 1,
-        boost::bind(onNewStateMessage, boost::placeholders::_1,
-                    boost::ref(rosmonToDiagnostic), boost::ref(pub)));
+        boost::bind(onNewStateMessage, _1, boost::ref(rosmonToDiagnostic),
+                    boost::ref(pub)));
 
     ros::spin();
     return 0;
