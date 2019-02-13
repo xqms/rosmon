@@ -1,4 +1,5 @@
 #include "rosmon_to_diagnostic.h"
+#include <boost/bind/placeholders.hpp>
 #include <ros/ros.h>
 #include <rosmon_msgs/State.h>
 
