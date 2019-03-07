@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 2.8)
-project(rosmon_gui)
+project(rqt_rosmon)
 
 find_package(catkin REQUIRED COMPONENTS
 	roscpp

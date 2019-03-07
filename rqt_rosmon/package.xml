@@ -1,5 +1,5 @@
 <package format="2">
-	<name>rosmon_gui</name>
+	<name>rqt_rosmon</name>
 	<description>
 		rqt GUI for rosmon, the node launcher and monitor for ROS.
 		rosmon is a replacement for the roslaunch tool, focused on performance,

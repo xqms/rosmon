@@ -12,5 +12,5 @@
 
 	<buildtool_depend>catkin</buildtool_depend>
 	<depend>rosmon_core</depend>
-	<depend>rosmon_gui</depend>
+	<depend>rqt_rosmon</depend>
 </package>
