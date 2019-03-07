@@ -5,6 +5,8 @@
 
 #include <QTimer>
 
+#include <rosmon_msgs/State.h>
+
 #include <ros/master.h>
 #include <ros/names.h>
 
@@ -53,7 +55,7 @@ void ROSMonModel::updateData()
 
 	for(auto& topic : topics)
 	{
-		if(topic.datatype != "rosmon_msgs/State")
+		if(topic.datatype != ros::message_traits::DataType<rosmon_msgs::State>::value())
 			continue;
 
 		nodeList << QString::fromStdString(ros::names::parentNamespace(topic.name));
