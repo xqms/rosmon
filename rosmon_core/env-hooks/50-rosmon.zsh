@@ -4,13 +4,13 @@
 
 # cache rosmon executable so that we don't need a rosrun invocation each
 # time we do completion
-_ROSMON_EXECUTABLE=$(rosrun --prefix echo rosmon rosmon)
+_ROSMON_EXECUTABLE=$(rosrun --prefix echo rosmon_core rosmon)
 
 function mon() {
 	case $1 in
 		launch)
 			shift
-			rosrun rosmon rosmon $*
+			rosrun rosmon_core rosmon $*
 			;;
 	esac
 }

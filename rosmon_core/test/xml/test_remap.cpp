@@ -16,7 +16,7 @@ TEST_CASE("remap", "[remap]")
 		<launch rosmon-name="rosmon_uut">
 				<remap from="topic_a" to="topic_b" />
 
-				<node name="test" pkg="rosmon" type="abort">
+				<node name="test" pkg="rosmon_core" type="abort">
 						<remap from="~local_a" to="/global_a" />
 						<remap from="local_b" to="/global_b" />
 				</node>
@@ -47,7 +47,7 @@ TEST_CASE("remap scoped", "[remap]")
 					<remap from="topic_a" to="topic_b" />
 				</group>
 
-				<node name="test" pkg="rosmon" type="abort">
+				<node name="test" pkg="rosmon_core" type="abort">
 				</node>
 		</launch>
 	)EOF");

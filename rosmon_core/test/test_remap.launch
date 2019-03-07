@@ -1,17 +1,17 @@
 <launch rosmon-name="rosmon_uut">
         <!-- Test global remapping -->
-        <include file="$(find rosmon)/test/sub_remap.launch" />
+        <include file="$(find rosmon_core)/test/sub_remap.launch" />
         <remap from="original_test_output" to="remapped_test_output" />
 	<remap from="input" to="test_input" />
 	<remap from="~input" to="test2_input" />
 
 	<group ns="namespace">
 		<remap from="test" to="other" />
-		<node name="test3" pkg="rosmon" type="echo_args.sh" output="screen">
+		<node name="test3" pkg="rosmon_core" type="echo_args.sh" output="screen">
 		</node>
 	</group>
 
-        <node name="test2" pkg="rosmon" type="echo_args.sh" output="screen">
+        <node name="test2" pkg="rosmon_core" type="echo_args.sh" output="screen">
                 <remap from="~input" to="/original_test_input" />
                 <remap from="~output" to="/original_test_output" />
         </node>

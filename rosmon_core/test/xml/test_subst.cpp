@@ -102,9 +102,9 @@ TEST_CASE("find", "[subst]")
 		LaunchConfig config;
 		config.parseString(R"EOF(
 			<launch>
-				<param name="path_to_rosmon" value="$(find rosmon)" />
-				<param name="path_to_launch_file" value="$(find rosmon)/test/basic.launch" />
-				<param name="path_to_rosmon_executable" value="$(find rosmon)/rosmon" />
+				<param name="path_to_rosmon" value="$(find rosmon_core)" />
+				<param name="path_to_launch_file" value="$(find rosmon_core)/test/basic.launch" />
+				<param name="path_to_rosmon_executable" value="$(find rosmon_core)/rosmon" />
 			</launch>
 		)EOF");
 
@@ -112,8 +112,8 @@ TEST_CASE("find", "[subst]")
 
 		CAPTURE(config.parameters());
 
-		checkTypedParam<std::string>(config.parameters(), "/path_to_rosmon", XmlRpc::XmlRpcValue::TypeString, ros::package::getPath("rosmon"));
-		checkTypedParam<std::string>(config.parameters(), "/path_to_launch_file", XmlRpc::XmlRpcValue::TypeString, ros::package::getPath("rosmon") + "/test/basic.launch");
+		checkTypedParam<std::string>(config.parameters(), "/path_to_rosmon", XmlRpc::XmlRpcValue::TypeString, ros::package::getPath("rosmon_core"));
+		checkTypedParam<std::string>(config.parameters(), "/path_to_launch_file", XmlRpc::XmlRpcValue::TypeString, ros::package::getPath("rosmon_core") + "/test/basic.launch");
 
 		{
 			INFO("Looking for /path_to_rosmon_executable");
@@ -231,14 +231,14 @@ TEST_CASE("eval", "[subst]")
 		config.parseString(R"EOF(
 			<launch>
 				<arg name="foo" default="test" />
-				<param name="test" value="$(eval arg('foo') + env('PATH') + 'bar' + find('rosmon'))"/>
+				<param name="test" value="$(eval arg('foo') + env('PATH') + 'bar' + find('rosmon_core'))"/>
 			</launch>
 		)EOF");
 
 		config.evaluateParameters();
 
 		auto value = getTypedParam<std::string>(config.parameters(), "/test");
-		CHECK(value == std::string("test") + getenv("PATH") + "bar" + ros::package::getPath("rosmon"));
+		CHECK(value == std::string("test") + getenv("PATH") + "bar" + ros::package::getPath("rosmon_core"));
 	}
 
 	SECTION("example 3")
@@ -247,14 +247,14 @@ TEST_CASE("eval", "[subst]")
 		config.parseString(R"EOF(
 			<launch>
 				<arg name="foo" default="test" />
-				<param name="test" value="$(eval foo + env('PATH') + 'bar' + find('rosmon'))"/>
+				<param name="test" value="$(eval foo + env('PATH') + 'bar' + find('rosmon_core'))"/>
 			</launch>
 		)EOF");
 
 		config.evaluateParameters();
 
 		auto value = getTypedParam<std::string>(config.parameters(), "/test");
-		CHECK(value == std::string("test") + getenv("PATH") + "bar" + ros::package::getPath("rosmon"));
+		CHECK(value == std::string("test") + getenv("PATH") + "bar" + ros::package::getPath("rosmon_core"));
 	}
 
 	SECTION("example 4")

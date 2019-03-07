@@ -1,0 +1,31 @@
+<package format="2">
+	<name>rosmon_core</name>
+	<description>
+		Node launcher and monitor for ROS. rosmon is a replacement
+		for the roslaunch tool, focused on performance, remote
+		monitoring, and usability.
+	</description>
+	<version>1.0.10</version>
+	<license>BSD</license>
+	<author email="max.schwarz@uni-bonn.de">Max Schwarz</author>
+	<maintainer email="max.schwarz@uni-bonn.de">Max Schwarz</maintainer>
+
+	<buildtool_depend>catkin</buildtool_depend>
+	<depend>boost</depend>
+	<depend>cmake_modules</depend>
+	<depend>libncurses-dev</depend>
+	<depend>rosfmt</depend>
+	<depend>rospack</depend>
+	<depend>roslib</depend>
+	<depend>rosmon_msgs</depend>
+	<depend>roscpp</depend>
+	<depend>rosbash</depend>
+	<depend>std_msgs</depend>
+	<depend>yaml-cpp</depend>
+
+	<build_depend>python</build_depend>
+
+	<test_depend>python-rospkg</test_depend>
+	<test_depend>rostest</test_depend>
+	<test_depend>catch_ros</test_depend>
+</package>

@@ -76,17 +76,17 @@ class BasicTest(unittest.TestCase):
 		pub.unregister()
 
 	def test_params(self):
-		self.assertEqual(self.get_param("path_to_rosmon"), rospack.get_path('rosmon'))
+		self.assertEqual(self.get_param("path_to_rosmon"), rospack.get_path('rosmon_core'))
 		self.assertEqual(
 			self.get_param("path_to_launch_file"),
-			os.path.join(rospack.get_path('rosmon'), 'test/basic.launch')
+			os.path.join(rospack.get_path('rosmon_core'), 'test/basic.launch')
 		)
 		executable = self.get_param("path_to_rosmon_executable")
 		self.assert_(os.access(executable, os.X_OK), 'Invalid rosmon path: ' + executable)
 
 		self.assertEqual(
 			self.get_param("dirname"),
-			os.path.join(rospack.get_path('rosmon'), 'test')
+			os.path.join(rospack.get_path('rosmon_core'), 'test')
 		)
 
 		self.assertEqual(self.get_param("eval_simple"), True)
@@ -139,6 +139,6 @@ if __name__ == '__main__':
 	state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
 
 	import rostest
-	rostest.rosrun('rosmon', 'basic', BasicTest)
+	rostest.rosrun('rosmon_core', 'basic', BasicTest)
 
 	time.sleep(1)

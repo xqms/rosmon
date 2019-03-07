@@ -16,7 +16,7 @@ TEST_CASE("include basic", "[include]")
 		<launch>
 			<arg name="test_argument" value="hello" />
 
-			<include file="$(find rosmon)/test/basic_sub.launch">
+			<include file="$(find rosmon_core)/test/basic_sub.launch">
 				<arg name="test_argument" value="$(arg test_argument)" />
 			</include>
 		</launch>
@@ -39,7 +39,7 @@ TEST_CASE("include default", "[include]")
 		<launch>
 			<arg name="test_argument" value="hello" />
 
-			<include file="$(find rosmon)/test/basic_sub.launch">
+			<include file="$(find rosmon_core)/test/basic_sub.launch">
 				<arg name="test_argument" default="$(arg test_argument)" />
 			</include>
 		</launch>
@@ -59,7 +59,7 @@ TEST_CASE("include pass_all", "[include]")
 		<launch>
 			<arg name="test_argument" value="hello" />
 
-			<include file="$(find rosmon)/test/basic_sub.launch" pass_all_args="true" />
+			<include file="$(find rosmon_core)/test/basic_sub.launch" pass_all_args="true" />
 		</launch>
 	)EOF");
 

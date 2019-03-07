@@ -16,7 +16,7 @@ TEST_CASE("env basic", "[env]")
 		<launch>
 			<env name="test" value="hello world" />
 
-			<node name="test_node" pkg="rosmon" type="abort" />
+			<node name="test_node" pkg="rosmon_core" type="abort" />
 		</launch>
 	)EOF");
 

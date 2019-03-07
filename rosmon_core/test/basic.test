@@ -1,0 +1,7 @@
+<launch>
+	<node name="monXYZ" pkg="rosmon_core" type="rosmon" args="--disable-ui rosmon_core basic.launch" output="screen">
+	</node>
+
+	<test test-name="rosmon_test" pkg="rosmon_core" type="basic.py">
+	</test>
+</launch>

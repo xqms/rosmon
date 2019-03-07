@@ -18,7 +18,7 @@ TEST_CASE("node basic", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort" />
+			<node name="test_node" pkg="rosmon_core" type="abort" />
 		</launch>
 	)EOF");
 
@@ -32,7 +32,7 @@ TEST_CASE("node basic", "[node]")
 	auto node = getNode(nodes, "test_node");
 
 	CHECK(node->name() == "test_node");
-	CHECK(node->package() == "rosmon");
+	CHECK(node->package() == "rosmon_core");
 	CHECK(node->type() == "abort");
 
 	{
@@ -58,7 +58,7 @@ TEST_CASE("node args", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort" args="arg1 arg2 'long arg'" />
+			<node name="test_node" pkg="rosmon_core" type="abort" args="arg1 arg2 'long arg'" />
 		</launch>
 	)EOF");
 
@@ -84,7 +84,7 @@ TEST_CASE("node respawn", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort" respawn="true" respawn_delay="10" />
+			<node name="test_node" pkg="rosmon_core" type="abort" respawn="true" respawn_delay="10" />
 		</launch>
 	)EOF");
 
@@ -106,7 +106,7 @@ TEST_CASE("node required", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort" required="true" />
+			<node name="test_node" pkg="rosmon_core" type="abort" required="true" />
 		</launch>
 	)EOF");
 
@@ -127,12 +127,12 @@ TEST_CASE("node ns", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort" ns="namespace" />
+			<node name="test_node" pkg="rosmon_core" type="abort" ns="namespace" />
 
 			<group ns="ns1">
-				<node name="test_node" pkg="rosmon" type="abort" />
+				<node name="test_node" pkg="rosmon_core" type="abort" />
 
-				<node name="test_node" pkg="rosmon" type="abort" ns="namespace" />
+				<node name="test_node" pkg="rosmon_core" type="abort" ns="namespace" />
 			</group>
 		</launch>
 	)EOF");
@@ -163,9 +163,9 @@ TEST_CASE("node clear_params", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node_on" pkg="rosmon" type="abort" clear_params="true" />
-			<node name="test_node_off" pkg="rosmon" type="abort" clear_params="false" />
-			<node name="test_node_def" pkg="rosmon" type="abort" />
+			<node name="test_node_on" pkg="rosmon_core" type="abort" clear_params="true" />
+			<node name="test_node_off" pkg="rosmon_core" type="abort" clear_params="false" />
+			<node name="test_node_def" pkg="rosmon_core" type="abort" />
 		</launch>
 	)EOF");
 
@@ -184,7 +184,7 @@ TEST_CASE("node cwd", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort" cwd="/my_cwd/" />
+			<node name="test_node" pkg="rosmon_core" type="abort" cwd="/my_cwd/" />
 		</launch>
 	)EOF");
 
@@ -203,7 +203,7 @@ TEST_CASE("node launch-prefix", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort" launch-prefix="echo my command is:" />
+			<node name="test_node" pkg="rosmon_core" type="abort" launch-prefix="echo my command is:" />
 		</launch>
 	)EOF");
 
@@ -229,7 +229,7 @@ TEST_CASE("node remap", "[remap]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node" pkg="rosmon" type="abort">
+			<node name="test_node" pkg="rosmon_core" type="abort">
 				<remap from="private1" to="/global_target" />
 				<remap from="private2" to="local_target" />
 			</node>
@@ -258,8 +258,8 @@ TEST_CASE("node enable-coredumps", "[node]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<node name="test_node_on" pkg="rosmon" type="abort" enable-coredumps="true" />
-			<node name="test_node_off" pkg="rosmon" type="abort" enable-coredumps="false" />
+			<node name="test_node_on" pkg="rosmon_core" type="abort" enable-coredumps="true" />
+			<node name="test_node_off" pkg="rosmon_core" type="abort" enable-coredumps="false" />
 		</launch>
 	)EOF");
 

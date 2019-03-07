@@ -46,7 +46,7 @@ TEST_CASE("rosparam empty", "[rosparam]")
 <rosparam>
 </rosparam>
 
-			<rosparam command="load" file="$(find rosmon)/test/empty.yaml" />
+			<rosparam command="load" file="$(find rosmon_core)/test/empty.yaml" />
 		</launch>
 	)EOF");
 }

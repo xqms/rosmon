@@ -109,7 +109,7 @@ TEST_CASE("param textfile", "[param]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<param name="test" textfile="$(find rosmon)/test/textfile.txt" />
+			<param name="test" textfile="$(find rosmon_core)/test/textfile.txt" />
 		</launch>
 	)EOF");
 
@@ -127,7 +127,7 @@ TEST_CASE("param textfile does not exist", "[param]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<param name="test" textfile="$(find rosmon)/test/textfile_does_not_exist.txt" />
+			<param name="test" textfile="$(find rosmon_core)/test/textfile_does_not_exist.txt" />
 		</launch>
 	)EOF");
 
@@ -142,7 +142,7 @@ TEST_CASE("param binfile", "[param]")
 	LaunchConfig config;
 	config.parseString(R"EOF(
 		<launch>
-			<param name="test" binfile="$(find rosmon)/test/textfile.txt" />
+			<param name="test" binfile="$(find rosmon_core)/test/textfile.txt" />
 		</launch>
 	)EOF");
 
@@ -180,7 +180,7 @@ TEST_CASE("scoped params", "[param]")
 				<param name="/test2" value="val2" />
 			</group>
 
-			<node name="test_node" pkg="rosmon" type="abort">
+			<node name="test_node" pkg="rosmon_core" type="abort">
 				<param name="private" value="val3" />
 				<param name="~private2" value="val4" />
 				<param name="/leading_slash" value="val5" />
@@ -213,7 +213,7 @@ TEST_CASE("scoped params with double slash (#49)", "[param]")
 				<param name="param1" value="hello" />
 			</group>
 
-			<node name="test_node" pkg="rosmon" type="abort" ns="/racecar">
+			<node name="test_node" pkg="rosmon_core" type="abort" ns="/racecar">
 				<param name="private_param" value="hello again" />
 			</node>
 		</launch>
@@ -274,7 +274,7 @@ TEST_CASE("invalid param input combinations", "[param]")
 	);
 
 	REQUIRE_THROWS_AS(
-		LaunchConfig().parseString(R"EOF(<launch><param name="test" textfile="$(find rosmon)/test/textfile.txt" command="echo -ne test" /></launch>)EOF"),
+		LaunchConfig().parseString(R"EOF(<launch><param name="test" textfile="$(find rosmon_core)/test/textfile.txt" command="echo -ne test" /></launch>)EOF"),
 		ParseException
 	);
 
