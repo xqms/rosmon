@@ -23,7 +23,7 @@
 
 #include "bar_delegate.h"
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 void MonGUI::initPlugin(qt_gui_cpp::PluginContext& ctx)
@@ -186,4 +186,4 @@ void MonGUI::setNamespace(const QString& ns)
 
 }
 
-PLUGINLIB_EXPORT_CLASS(rosmon::MonGUI, rqt_gui_cpp::Plugin)
+PLUGINLIB_EXPORT_CLASS(rqt_rosmon::MonGUI, rqt_gui_cpp::Plugin)

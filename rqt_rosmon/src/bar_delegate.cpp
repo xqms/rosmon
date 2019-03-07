@@ -5,7 +5,7 @@
 
 #include <QPainter>
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 BarDelegate::BarDelegate(QObject* parent)

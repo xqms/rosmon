@@ -6,7 +6,7 @@
 
 #include <QString>
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 QString formattedDataSize(qint64 bytes, int precision);

@@ -7,7 +7,7 @@
 #include <QAbstractListModel>
 #include <QStringList>
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 class ROSMonModel : public QAbstractListModel

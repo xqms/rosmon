@@ -11,7 +11,7 @@
 #include <ros/subscriber.h>
 #include <ros/node_handle.h>
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 class NodeModel : public QAbstractTableModel

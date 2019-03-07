@@ -6,7 +6,7 @@
 
 #include <QStyledItemDelegate>
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 class BarDelegate : public QStyledItemDelegate

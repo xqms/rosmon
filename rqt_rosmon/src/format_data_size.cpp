@@ -8,7 +8,7 @@
 #include <QtAlgorithms>
 #include <QLocale>
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 static inline uint countLeadingZeroBits(quint64 v)

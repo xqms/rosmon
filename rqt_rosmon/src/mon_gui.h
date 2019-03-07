@@ -11,7 +11,7 @@
 #include "node_model.h"
 #include "rosmon_model.h"
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 class MonGUI : public rqt_gui_cpp::Plugin

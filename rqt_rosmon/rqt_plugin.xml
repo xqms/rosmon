@@ -1,5 +1,5 @@
 <library path="lib/librosmon_gui">
-	<class name="rosmon" type="rosmon::MonGUI" base_class_type="rqt_gui_cpp::Plugin">
+	<class name="rosmon" type="rqt_rosmon::MonGUI" base_class_type="rqt_gui_cpp::Plugin">
 		<description>
 			rosmon
 		</description>

@@ -10,7 +10,7 @@
 #include <ros/master.h>
 #include <ros/names.h>
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 ROSMonModel::ROSMonModel(QObject* parent)

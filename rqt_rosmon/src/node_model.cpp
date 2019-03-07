@@ -11,7 +11,7 @@
 
 Q_DECLARE_METATYPE(rosmon_msgs::StateConstPtr)
 
-namespace rosmon
+namespace rqt_rosmon
 {
 
 NodeModel::NodeModel(ros::NodeHandle& nh, QObject* parent)
