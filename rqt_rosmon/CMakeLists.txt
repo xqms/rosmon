@@ -60,7 +60,7 @@ else()
 	qt4_wrap_cpp(MOC_FILES ${H_FILES})
 endif()
 
-add_library(rosmon_gui
+add_library(rqt_rosmon
 	${UIC_FILES}
 	${MOC_FILES}
 	src/bar_delegate.cpp
@@ -69,13 +69,13 @@ add_library(rosmon_gui
 	src/node_model.cpp
 	src/rosmon_model.cpp
 )
-target_link_libraries(rosmon_gui
+target_link_libraries(rqt_rosmon
 	${catkin_LIBRARIES}
 	${rqt_gui_cpp_LIBRARIES}
 	${QT_LIBRARIES}
 )
 
-install(TARGETS rosmon_gui
+install(TARGETS rqt_rosmon
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 

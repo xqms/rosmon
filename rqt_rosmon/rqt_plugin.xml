@@ -1,4 +1,4 @@
-<library path="lib/librosmon_gui">
+<library path="lib/librqt_rosmon">
 	<class name="rosmon" type="rqt_rosmon::MonGUI" base_class_type="rqt_gui_cpp::Plugin">
 		<description>
 			rosmon
