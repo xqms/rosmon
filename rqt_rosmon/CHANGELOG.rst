@@ -2,8 +2,8 @@
 Changelog for package rqt_rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2019-03-11)
+------------------
 * split into separate packages for core, GUI, messages, PR #72
 * Contributors: Max Schwarz
 

@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2019-03-11)
+------------------
 * split into separate packages for core, GUI, messages, PR #72
 * depend on external rosfmt package, PR #63
 * wait for roscore if not already running, issue #61, PR #62
