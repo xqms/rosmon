@@ -2,6 +2,11 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* split into separate packages for core, GUI, messages, PR #72
+* Contributors: Max Schwarz
+
 1.0.10 (2018-10-29)
 -------------------
 * main: exit gracefully on SIGTERM and SIGHUP as well (issue #59, PR #60)

@@ -1,6 +1,15 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rosmon
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package rosmon_core
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+* split into separate packages for core, GUI, messages, PR #72
+* depend on external rosfmt package, PR #63
+* wait for roscore if not already running, issue #61, PR #62
+* check for param file errors correctly, issue #66, PR #68
+* add --flush-stdout option, PR #69
+* Contributors: Max Schwarz, Romain Reignier
 
 1.0.10 (2018-10-29)
 -------------------
