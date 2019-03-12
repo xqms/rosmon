@@ -5,7 +5,7 @@
 		rosmon is a replacement for the roslaunch tool, focused on performance,
 		remote monitoring, and usability.
 	</description>
-	<version>2.0.0</version>
+	<version>2.0.1</version>
 	<license>BSD</license>
 	<author email="max.schwarz@uni-bonn.de">Max Schwarz</author>
 	<maintainer email="max.schwarz@uni-bonn.de">Max Schwarz</maintainer>
