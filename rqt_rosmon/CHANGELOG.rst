@@ -2,6 +2,11 @@
 Changelog for package rqt_rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rqt_rosmon: declare pluginlib dependency in package.xml
+* Contributors: Max Schwarz
+
 2.0.0 (2019-03-11)
 ------------------
 * split into separate packages for core, GUI, messages, PR #72

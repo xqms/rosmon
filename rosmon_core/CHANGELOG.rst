@@ -2,6 +2,12 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rosmon_core: remove superfluous pluginlib dependency
+  (leftover from the rqt plugin)
+* Contributors: Max Schwarz
+
 2.0.0 (2019-03-11)
 ------------------
 * split into separate packages for core, GUI, messages, PR #72
