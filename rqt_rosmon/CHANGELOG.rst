@@ -2,6 +2,9 @@
 Changelog for package rqt_rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.0.1 (2019-03-12)
 ------------------
 * rqt_rosmon: declare pluginlib dependency in package.xml

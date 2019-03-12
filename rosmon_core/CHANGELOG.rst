@@ -2,6 +2,12 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rosmon_core: add tinyxml dependency to package.xml
+  Fix for binary deb generation on ros_buildfarm.
+* Contributors: Max Schwarz
+
 2.0.1 (2019-03-12)
 ------------------
 * rosmon_core: remove superfluous pluginlib dependency
