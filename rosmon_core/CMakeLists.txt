@@ -6,7 +6,6 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	cmake_modules
 	roslib
-	pluginlib
 	rosfmt
 	rosmon_msgs
 	rospack
@@ -40,11 +39,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 if(${roscpp_VERSION} VERSION_GREATER 1.12.8)
 	message(STATUS "roscpp is new enough, using SteadyTimer for timekeeping")
 	add_definitions(-DHAVE_STEADYTIMER=1)
-endif()
-
-if(${pluginlib_VERSION} VERSION_GREATER 1.11.1)
-	message(STATUS "using new pluginlib headers with .hpp extensions")
-	add_definitions(-DHAVE_PLUGINLIB_NEW_HEADERS=1)
 endif()
 
 # Are we building with test coverage instrumentation?
