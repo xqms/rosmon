@@ -37,6 +37,7 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
  : m_monitor(monitor)
  , m_fdWatcher(fdWatcher)
  , m_columns(80)
+ , m_filterSet(false)
  , m_selectedNode(-1)
 {
 	std::atexit(cleanup);
@@ -68,6 +69,23 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
 UI::~UI()
 {
 	m_fdWatcher->removeFD(STDIN_FILENO);
+}
+
+void UI::toggleFilter(const std::string &nodeName)
+{
+	if (isFiltered(nodeName))
+	{
+		m_nodeFilterSet.erase(nodeName);
+		if (m_nodeFilterSet.size() == 0)
+		{
+			m_filterSet = false;
+		}	
+	}
+	else
+	{
+		m_nodeFilterSet.insert(nodeName);
+		m_filterSet = true;
+	}
 }
 
 void UI::setupColors()
@@ -105,7 +123,17 @@ void UI::drawStatusLine()
 
 	// Print menu if a node is selected
 	if(m_selectedNode != -1)
-		fmt::print("Actions: s: start, k: stop, d: debug");
+	{
+		auto& selectedNode = m_monitor->nodes()[m_selectedNode];
+		if(isFiltered(selectedNode->name()))
+		{
+			fmt::print("Actions: s: start, k: stop, d: debug, f: unfilter");
+		}
+		else
+		{
+			fmt::print("Actions: s: start, k: stop, d: debug, f: filter");
+		}
+	}
 
 	fmt::print("\n");
 
@@ -125,19 +153,25 @@ void UI::drawStatusLine()
 			m_term.setSimpleBackground(Terminal::White);
 		fmt::print("{:c}", key);
 
+		auto foregroundColor = Terminal::Black;
+		if (m_filterSet && isFiltered(node->name()))
+		{
+			foregroundColor = Terminal::White;
+		}
+
 		switch(node->state())
 		{
 			case monitor::NodeMonitor::STATE_RUNNING:
-				m_term.setSimplePair(Terminal::Black, Terminal::Green);
+				m_term.setSimplePair(foregroundColor, Terminal::Green);
 				break;
 			case monitor::NodeMonitor::STATE_IDLE:
 				m_term.setStandardColors();
 				break;
 			case monitor::NodeMonitor::STATE_CRASHED:
-				m_term.setSimplePair(Terminal::Black, Terminal::Red);
+				m_term.setSimplePair(foregroundColor, Terminal::Red);
 				break;
 			case monitor::NodeMonitor::STATE_WAITING:
-				m_term.setSimplePair(Terminal::Black, Terminal::Yellow);
+				m_term.setSimplePair(foregroundColor, Terminal::Yellow);
 				break;
 		}
 
@@ -189,6 +223,13 @@ void UI::drawStatusLine()
 
 void UI::log(const std::string& channel, const std::string& str)
 {
+
+	if (m_filterSet && !isFiltered(channel))
+	{
+		return;
+	}
+
+
 	std::string clean = str;
 
 	auto it = m_nodeColorMap.find(channel);
@@ -289,6 +330,9 @@ void UI::handleInput()
 				break;
 			case 'd':
 				node->launchDebugger();
+				break;
+			case 'f':
+				toggleFilter(node->name());
 				break;
 		}
 

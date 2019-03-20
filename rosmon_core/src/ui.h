@@ -41,6 +41,10 @@ private:
 	void checkWindowSize();
 	void setupColors();
 	void handleInput();
+	void toggleFilter(const std::string &nodeName);
+
+	inline bool isFiltered(const std::string &s) 
+	{ return m_nodeFilterSet.find(s) != m_nodeFilterSet.end(); }
 
 	monitor::Monitor* m_monitor;
 	FDWatcher::Ptr m_fdWatcher;
@@ -49,6 +53,10 @@ private:
 
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
+
+	std::set<std::string> m_nodeFilterSet;
+
+	bool m_filterSet;
 
 	std::map<std::string, ChannelInfo> m_nodeColorMap;
 
