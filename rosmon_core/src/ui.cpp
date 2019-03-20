@@ -37,7 +37,7 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
  : m_monitor(monitor)
  , m_fdWatcher(fdWatcher)
  , m_columns(80)
- , m_filterSet(false)
+ , m_currentFilterMode(UI::Unfiltered)
  , m_selectedNode(-1)
 {
 	std::atexit(cleanup);
@@ -71,20 +71,24 @@ UI::~UI()
 	m_fdWatcher->removeFD(STDIN_FILENO);
 }
 
-void UI::toggleFilter(const std::string &nodeName)
+void UI::toggleFilter(const std::string &nodeName, FilterMode selectedMode)
 {
+	if ((m_currentFilterMode & (UI::Unfiltered | selectedMode)) == 0)
+	{
+		return;
+	}
 	if (isFiltered(nodeName))
 	{
 		m_nodeFilterSet.erase(nodeName);
 		if (m_nodeFilterSet.size() == 0)
 		{
-			m_filterSet = false;
+			m_currentFilterMode = UI::Unfiltered;
 		}	
 	}
 	else
 	{
 		m_nodeFilterSet.insert(nodeName);
-		m_filterSet = true;
+		m_currentFilterMode = selectedMode;
 	}
 }
 
@@ -125,14 +129,26 @@ void UI::drawStatusLine()
 	if(m_selectedNode != -1)
 	{
 		auto& selectedNode = m_monitor->nodes()[m_selectedNode];
-		if(isFiltered(selectedNode->name()))
+		std::string filterOption;
+		switch(m_currentFilterMode)
 		{
-			fmt::print("Actions: s: start, k: stop, d: debug, f: unfilter");
+			case UI::Unfiltered:
+				filterOption = "f: filter, x: exclude";
+				break;
+			case UI::InclusiveFiltered:
+				if(isFiltered(selectedNode->name()))
+					filterOption = "f: unfilter";
+				else
+					filterOption = "f: filter";
+				break;
+			case UI::ExclusiveFiltered:
+				if(isFiltered(selectedNode->name()))
+					filterOption = "x: unexclude";
+				else
+					filterOption = "x: exclude";
+				break;			
 		}
-		else
-		{
-			fmt::print("Actions: s: start, k: stop, d: debug, f: filter");
-		}
+		fmt::print("Actions: s: start, k: stop, d: debug, {}", filterOption);
 	}
 
 	fmt::print("\n");
@@ -144,34 +160,55 @@ void UI::drawStatusLine()
 
 	for(auto& node : m_monitor->nodes())
 	{
-		// Print key with grey background
-		m_term.setSimpleForeground(Terminal::Black);
+		// Print key with grey background	
+		Terminal::SimpleColor keyForegroundColor = Terminal::Black;
+		Terminal::SimpleColor keyBackgroundColor = Terminal::White;
+		uint32_t keyBackgroundColor256 = 0xC8C8C8;
 
-		if(m_term.has256Colors())
-			m_term.setBackgroundColor(0xC8C8C8);
-		else
-			m_term.setSimpleBackground(Terminal::White);
-		fmt::print("{:c}", key);
-
-		auto foregroundColor = Terminal::Black;
-		if (m_filterSet && isFiltered(node->name()))
+		switch(m_currentFilterMode)
 		{
-			foregroundColor = Terminal::White;
+			case UI::Unfiltered:
+				break;
+			case UI::InclusiveFiltered:
+				if(isFiltered(node->name()))
+				{
+					keyBackgroundColor = Terminal::Blue;
+					keyForegroundColor = Terminal::White;
+					keyBackgroundColor256 = 0xA50000;
+				}
+				break;
+			case UI::ExclusiveFiltered:
+				if(isFiltered(node->name()))
+				{
+					keyBackgroundColor = Terminal::Red;
+					keyForegroundColor = Terminal::White;
+					keyBackgroundColor256 = 0x0000A5;
+				}
+				break;			
 		}
+		
+		m_term.setSimpleForeground(keyForegroundColor);
+		
+		if(m_term.has256Colors())
+			m_term.setBackgroundColor(keyBackgroundColor256);
+		else
+			m_term.setSimpleBackground(keyBackgroundColor);
+
+		fmt::print("{:c}", key);
 
 		switch(node->state())
 		{
 			case monitor::NodeMonitor::STATE_RUNNING:
-				m_term.setSimplePair(foregroundColor, Terminal::Green);
+				m_term.setSimplePair(Terminal::Black, Terminal::Green);
 				break;
 			case monitor::NodeMonitor::STATE_IDLE:
 				m_term.setStandardColors();
 				break;
 			case monitor::NodeMonitor::STATE_CRASHED:
-				m_term.setSimplePair(foregroundColor, Terminal::Red);
+				m_term.setSimplePair(Terminal::Black, Terminal::Red);
 				break;
 			case monitor::NodeMonitor::STATE_WAITING:
-				m_term.setSimplePair(foregroundColor, Terminal::Yellow);
+				m_term.setSimplePair(Terminal::Black, Terminal::Yellow);
 				break;
 		}
 
@@ -223,10 +260,18 @@ void UI::drawStatusLine()
 
 void UI::log(const std::string& channel, const std::string& str)
 {
-
-	if (m_filterSet && !isFiltered(channel))
+	switch(m_currentFilterMode)
 	{
-		return;
+		case UI::Unfiltered:
+			break;
+		case UI::InclusiveFiltered:
+			if (!isFiltered(channel))
+				return;
+			break;
+		case UI::ExclusiveFiltered:
+			if (isFiltered(channel))
+				return;
+			break;
 	}
 
 
@@ -332,7 +377,10 @@ void UI::handleInput()
 				node->launchDebugger();
 				break;
 			case 'f':
-				toggleFilter(node->name());
+				toggleFilter(node->name(), UI::InclusiveFiltered);
+				break;
+			case 'x':
+				toggleFilter(node->name(), UI::ExclusiveFiltered);
 				break;
 		}
 

@@ -37,11 +37,17 @@ private:
 		Terminal::Parser parser;
 	};
 
+	enum FilterMode
+	{
+		Unfiltered = 0x1,
+		InclusiveFiltered = 0x2,
+		ExclusiveFiltered = 0x4
+	};
 	void drawStatusLine();
 	void checkWindowSize();
 	void setupColors();
 	void handleInput();
-	void toggleFilter(const std::string &nodeName);
+	void toggleFilter(const std::string &nodeName, FilterMode mode);
 
 	inline bool isFiltered(const std::string &s) 
 	{ return m_nodeFilterSet.find(s) != m_nodeFilterSet.end(); }
@@ -56,7 +62,7 @@ private:
 
 	std::set<std::string> m_nodeFilterSet;
 
-	bool m_filterSet;
+	FilterMode m_currentFilterMode;
 
 	std::map<std::string, ChannelInfo> m_nodeColorMap;
 
