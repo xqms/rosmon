@@ -27,6 +27,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>rosmon_msgs</depend>
   <depend>roscpp</depend>
+  <depend>std_srvs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>rosfmt</depend>
   <export>
