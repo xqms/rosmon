@@ -75,6 +75,8 @@ target_link_libraries(rqt_rosmon
 	${QT_LIBRARIES}
 )
 
+add_dependencies(rqt_rosmon ${catkin_EXPORTED_TARGETS})
+
 install(TARGETS rqt_rosmon
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
