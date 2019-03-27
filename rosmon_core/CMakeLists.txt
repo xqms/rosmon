@@ -89,6 +89,8 @@ target_link_libraries(rosmon
 	rosmon_launch_config
 )
 
+add_dependencies(rosmon ${catkin_EXPORTED_TARGETS})
+
 if(PYTHONLIBS_FOUND)
 	target_link_libraries(rosmon
 		${PYTHON_LIBRARIES}
