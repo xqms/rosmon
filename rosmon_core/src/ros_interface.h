@@ -9,6 +9,7 @@
 #include <ros/node_handle.h>
 
 #include <rosmon_msgs/StartStop.h>
+#include "diagnostics/rosmon_to_diagnostic.h"
 
 namespace rosmon
 {
@@ -16,7 +17,8 @@ namespace rosmon
 class ROSInterface
 {
 public:
-	ROSInterface(monitor::Monitor* monitor);
+    ROSInterface(monitor::Monitor* monitor, bool enableDiagnostics=false,
+                 const std::string &diagnosticsPrefix=std::string());
 
 	void shutdown();
 private:
@@ -32,6 +34,9 @@ private:
 	ros::Publisher m_pub_state;
 
 	ros::ServiceServer m_srv_startStop;
+
+    bool m_diagnosticsEnabled;
+    std::shared_ptr<diagnostics::RosmonToDiagnostic> m_diagnosticsPublisher;
 };
 
 }

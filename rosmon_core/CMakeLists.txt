@@ -72,6 +72,7 @@ add_executable(rosmon
 	src/monitor/node_monitor.cpp
 	src/monitor/monitor.cpp
 	src/monitor/linux_process_info.cpp
+        src/diagnostics/rosmon_to_diagnostic.cpp
 	src/ui.cpp
 	src/husl/husl.c
 	src/ros_interface.cpp
@@ -88,6 +89,9 @@ target_link_libraries(rosmon
 	util
 	rosmon_launch_config
 )
+
+add_executable(node_for_test test/node_for_test.cpp)
+target_link_libraries(node_for_test ${catkin_LIBRARIES})
 
 if(PYTHONLIBS_FOUND)
 	target_link_libraries(rosmon
@@ -109,6 +113,9 @@ if(CATKIN_ENABLE_TESTING)
 	# Integration tests
 	find_package(rostest REQUIRED)
 	add_rostest(test/basic.test DEPENDENCIES rosmon)
+
+        catkin_add_gtest(memory_parser_test test/memory_parser.test.cc)
+        target_link_libraries(memory_parser_test ${catkin_LIBRARIES})
 
 	# XML parsing test suite
 	find_package(catch_ros)

@@ -39,6 +39,8 @@ Node::Node(std::string name, std::string package, std::string type)
  , m_coredumpsEnabled(true)
  , m_clearParams(false)
  , m_stopTimeout(5.0)
+ , m_memoryLimitByte(15e6)
+ , m_cpuLimit(0.05)
 {
 	m_executable = PackageRegistry::getExecutable(m_package, m_type);
 }
@@ -141,6 +143,16 @@ void Node::setClearParams(bool on)
 void Node::setStopTimeout(double timeout)
 {
 	m_stopTimeout = timeout;
+}
+
+void Node::setMemoryLimit(uint64_t memoryLimitByte)
+{
+    m_memoryLimitByte = memoryLimitByte;
+}
+
+void Node::setCPULimit(float cpuLimit)
+{
+    m_cpuLimit = cpuLimit;
 }
 
 }
