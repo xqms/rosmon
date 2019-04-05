@@ -37,20 +37,15 @@ private:
 		Terminal::Parser parser;
 	};
 
-	enum FilterMode
-	{
-		Unfiltered = 0x1,
-		InclusiveFiltered = 0x2,
-		ExclusiveFiltered = 0x4
-	};
+
 	void drawStatusLine();
 	void checkWindowSize();
 	void setupColors();
 	void handleInput();
-	void toggleFilter(const std::string &nodeName, FilterMode mode);
+	void toggleMute(const std::string &nodeName);
 
-	inline bool isFiltered(const std::string &s) 
-	{ return m_nodeFilterSet.find(s) != m_nodeFilterSet.end(); }
+	inline bool isMuted(const std::string &s) 
+	{ return m_mutedSet.find(s) != m_mutedSet.end(); }
 
 	monitor::Monitor* m_monitor;
 	FDWatcher::Ptr m_fdWatcher;
@@ -60,9 +55,7 @@ private:
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
 
-	std::set<std::string> m_nodeFilterSet;
-
-	FilterMode m_currentFilterMode;
+	std::set<std::string> m_mutedSet;
 
 	std::map<std::string, ChannelInfo> m_nodeColorMap;
 
