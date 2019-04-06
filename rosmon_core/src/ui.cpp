@@ -70,17 +70,6 @@ UI::~UI()
 	m_fdWatcher->removeFD(STDIN_FILENO);
 }
 
-void UI::toggleMute(const std::string &nodeName)
-{
-	if (isMuted(nodeName))
-	{
-		m_mutedSet.erase(nodeName);
-	}
-	else
-	{
-		m_mutedSet.insert(nodeName);
-	}
-}
 
 void UI::setupColors()
 {
@@ -123,7 +112,7 @@ void UI::drawStatusLine()
 
 		if(isMuted(selectedNode->name()))
 		{
-			muteOption = "m: unmute";
+			muteOption = "u: unmute";
 		}
 		else
 		{
@@ -131,6 +120,10 @@ void UI::drawStatusLine()
 		}
 
 		fmt::print("Actions: s: start, k: stop, d: debug, {}", muteOption);
+	}
+	else
+	{
+		fmt::print("Mute all: -, Unmute all: +");
 	}
 
 	fmt::print("\n");
@@ -304,6 +297,19 @@ void UI::handleInput()
 	{
 		int nodeIndex = -1;
 
+		// Check for Mute all keys first
+
+		if(c == '_' || c == '-')
+		{
+			muteAll();
+			return;
+		}
+		if(c == '=' || c == '+')
+		{
+			unmuteAll();
+			return;
+		}
+
 		if(c >= 'a' && c <= 'z')
 			nodeIndex = c - 'a';
 		else if(c >= 'A' && c <= 'Z')
@@ -332,7 +338,10 @@ void UI::handleInput()
 				node->launchDebugger();
 				break;
 			case 'm':
-				toggleMute(node->name());
+				mute(node->name());
+				break;
+			case 'u':
+				unmute(node->name());
 				break;
 		}
 
