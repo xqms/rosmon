@@ -108,22 +108,20 @@ void UI::drawStatusLine()
 	if(m_selectedNode != -1)
 	{
 		auto& selectedNode = m_monitor->nodes()[m_selectedNode];
-		std::string muteOption;
-
-		if(isMuted(selectedNode->name()))
-		{
-			muteOption = "u: unmute";
-		}
-		else
-		{
-			muteOption = "m: mute";
-		}
+		std::string muteOption = isMuted(selectedNode->name()) ? "u: unmute" : "m: mute"; 
 
 		fmt::print("Actions: s: start, k: stop, d: debug, {}", muteOption);
 	}
 	else
 	{
-		fmt::print("Mute all: -, Unmute all: +");
+		fmt::print("Mute all: -, Unmute all: + ");
+		if (anyMuted())
+		{
+			m_term.setSimpleForeground(Terminal::Yellow);
+			m_term.setSimpleBackground(Terminal::Black);
+			fmt::print("! Caution: nodes are being muted");
+			m_term.setStandardColors();
+		}
 	}
 
 	fmt::print("\n");

@@ -43,6 +43,9 @@ private:
 	void setupColors();
 	void handleInput();
 
+	inline bool anyMuted()
+	{ return !m_mutedSet.empty(); }
+
 	inline bool isMuted(const std::string &s) 
 	{ return m_mutedSet.find(s) != m_mutedSet.end(); }
 
