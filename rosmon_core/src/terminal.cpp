@@ -208,6 +208,16 @@ Terminal::Terminal()
 	m_upStr = tigetstr("cuu");
 
 	m_boldStr = tigetstr("bold");
+
+	// Map function keys
+	for(int i = 0; i < 12; ++i)
+	{
+		char* code = tigetstr(fmt::format("kf{}", i+1).c_str());
+
+		// Who comes up with these return codes?
+		if(code && code != reinterpret_cast<char*>(-1))
+			m_specialKeys[code] = static_cast<SpecialKey>(SK_F1 + i);
+	}
 }
 
 bool Terminal::has256Colors() const
@@ -399,6 +409,57 @@ void Terminal::clearWindowTitle(const std::string& backup)
 
 	// screen/tmux style
 	fmt::print("\033k{}\033\\", backup);
+}
+
+int Terminal::readKey()
+{
+	char c;
+	if(read(STDIN_FILENO, &c, 1) != 1)
+		return -1;
+
+	if(m_currentEscapeStr.empty() && c == '\E')
+	{
+		m_currentEscapeStr.push_back(c);
+	}
+	else if(!m_currentEscapeStr.empty())
+	{
+		m_currentEscapeStr.push_back(c);
+
+		std::size_t matches = 0;
+		int lastMatch = -1;
+		bool completeMatch = false;
+
+		for(auto& pair : m_specialKeys)
+		{
+			if(m_currentEscapeStr.length() > pair.first.length())
+				continue;
+
+			if(pair.first.substr(0, m_currentEscapeStr.length()) == m_currentEscapeStr)
+			{
+				matches++;
+				lastMatch = pair.second;
+
+				if(m_currentEscapeStr.length() == pair.first.length())
+				{
+					completeMatch = true;
+					break;
+				}
+			}
+		}
+
+		if(matches == 0)
+		{
+			// We don't understand this code, just switch back to normal mode
+			m_currentEscapeStr.clear();
+		}
+		else if(completeMatch)
+		{
+			m_currentEscapeStr.clear();
+			return lastMatch;
+		}
+	}
+
+	return c;
 }
 
 }

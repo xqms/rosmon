@@ -37,7 +37,6 @@ private:
 		Terminal::Parser parser;
 	};
 
-
 	void drawStatusLine();
 	void checkWindowSize();
 	void setupColors();
