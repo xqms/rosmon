@@ -11,28 +11,39 @@ using namespace rosmon::launch;
 TEST(Rosmon_Diagnostics, WeCanParseMemorySize)
 {
     ByteParser parser;
-    uint64_t memory;
-    bool ok = parser.parseMemory("1  B", memory);
+    auto res = parser.parseMemory("1  B");
+    uint64_t memory = std::get<1>(res);
+    bool ok = std::get<0>(res);
     EXPECT_TRUE(ok);
     EXPECT_EQ(memory, 1);
 
-    ok = parser.parseMemory("100", memory);
+    res = parser.parseMemory("100");
+    memory = std::get<1>(res);
+    ok = std::get<0>(res);
     EXPECT_TRUE(ok);
     EXPECT_EQ(memory, 100);
 
-    ok = parser.parseMemory("1 MB", memory);
+    res = parser.parseMemory("1 MB");
+    memory = std::get<1>(res);
+    ok = std::get<0>(res);
     EXPECT_TRUE(ok);
     EXPECT_EQ(memory, 1e6);
 
-    ok = parser.parseMemory("1MB", memory);
+    res = parser.parseMemory("1MB", memory);
+    memory = std::get<1>(res);
+    ok = std::get<0>(res);
     EXPECT_TRUE(ok);
     EXPECT_EQ(memory, 1e6);
 
-    ok = parser.parseMemory("1.6  GB", memory);
+    res = parser.parseMemory("1.6  GB", memory);
+    memory = std::get<1>(res);
+    ok = std::get<0>(res);
     EXPECT_TRUE(ok);
     EXPECT_EQ(memory, 1.6e9);
 
-    ok = parser.parseMemory("1 gB", memory);
+    res = parser.parseMemory("1 gB", memory);
+    memory = std::get<1>(res);
+    ok = std::get<0>(res);
     EXPECT_TRUE(ok);
     EXPECT_EQ(memory, 1.0e9);
 }

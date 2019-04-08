@@ -57,6 +57,7 @@ add_library(rosmon_launch_config
 	src/launch/substitution.cpp
 	src/launch/substitution_python.cpp
 	src/launch/yaml_params.cpp
+        src/launch/bytes_parser.cpp
 	src/package_registry.cpp
 )
 target_link_libraries(rosmon_launch_config
