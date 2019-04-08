@@ -18,6 +18,7 @@ public:
     void updateDiagnostics(const std::vector<rosmon::monitor::NodeMonitor::Ptr>& state);
 
 protected:
+    static std::string memoryToString(uint64_t memory);
     std::string m_diagnosticNamePrefix = "processes";
     ros::Publisher m_diagnosticsPublisher;
 };

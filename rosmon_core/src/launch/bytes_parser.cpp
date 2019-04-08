@@ -20,10 +20,10 @@ std::tuple<uint64_t, bool> rosmon::launch::ByteParser::parseMemory(const std::st
     if(!ok)
     {
         ROS_WARN_STREAM("can't parse memory value : " << memory);
-        return std::make_tuple(true, result);
+        return std::make_tuple(result, false);
     }
     result = static_cast<uint64_t>(res);
-    return std::make_tuple(true, result);
+    return std::make_tuple(result, true);
 }
 
 rosmon::launch::ByteParser::bytes_decades_::bytes_decades_()

@@ -233,8 +233,8 @@ int main(int argc, char** argv)
                 break;
             case 'm':
                 memoryParseResult = parser.parseMemory(optarg);
-                memoryLimit = std::get<1>(memoryParseResult);
-                if(std::get<0>(memoryParseResult)==false)
+                memoryLimit = std::get<0>(memoryParseResult);
+                if(std::get<1>(memoryParseResult)==false)
                 {
                     fmt::print(stderr, "Bad value for --memory-limit argument: '{}'\n", optarg);
                     return 1;

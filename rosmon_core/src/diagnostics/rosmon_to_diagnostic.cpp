@@ -7,15 +7,16 @@
 using namespace rosmon::monitor;
 using namespace rosmon::diagnostics;
 
-RosmonToDiagnostic::RosmonToDiagnostic(const std::string &diagnosticsPrefix):
-    m_diagnosticNamePrefix(diagnosticsPrefix)
+RosmonToDiagnostic::RosmonToDiagnostic(const std::string& diagnosticsPrefix)
+    : m_diagnosticNamePrefix(diagnosticsPrefix)
 {
     ros::NodeHandle nh;
     if(diagnosticsPrefix.empty())
     {
         m_diagnosticNamePrefix = ros::this_node::getName() + ":";
     }
-    m_diagnosticsPublisher = nh.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1, true);
+    m_diagnosticsPublisher =
+        nh.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics", 1, true);
 }
 
 void RosmonToDiagnostic::updateDiagnostics(const std::vector<NodeMonitor::Ptr>& state)
@@ -32,11 +33,12 @@ void RosmonToDiagnostic::updateDiagnostics(const std::vector<NodeMonitor::Ptr>& 
         nodeStatus.name = m_diagnosticNamePrefix + nodeState->name();
         diagnostic_msgs::KeyValue kv;
         kv.key = "CPU Load";
-        kv.value = fmt::format("{:.1f}%", (nodeState->userLoad() + nodeState->systemLoad()) * 100.);
+        kv.value = fmt::format("{:.1f}%",
+                               (nodeState->userLoad() + nodeState->systemLoad()) * 100.);
         nodeStatus.values.push_back(kv);
 
         kv.key = "used memory";
-        kv.value = launch::ByteStringGenerator::memoryToString(nodeState->memory());
+        kv.value = memoryToString(nodeState->memory());
         nodeStatus.values.push_back(kv);
 
         // Apply the operation level rule :
@@ -72,4 +74,25 @@ void RosmonToDiagnostic::updateDiagnostics(const std::vector<NodeMonitor::Ptr>& 
         currentDiagnosticArray.status.push_back(nodeStatus);
     }
     m_diagnosticsPublisher.publish(currentDiagnosticArray);
+}
+
+std::string RosmonToDiagnostic::memoryToString(uint64_t memory)
+{
+    if(memory < 1000)
+    {
+        return fmt::format("{} B", memory);
+    }
+    else if(memory < 1e6)
+    {
+        return fmt::format("{:.2f} KiB", memory / 1e3);
+    }
+    else if(memory < 1e9)
+    {
+        return fmt::format("{:.2f} MiB", memory / 1e6);
+    }
+    else if(memory < 1e12)
+    {
+        return fmt::format("{:.2f} GiB", memory / 1e9);
+    }
+    return fmt::format("{:.2f} TiB", memory / 1e12);
 }

@@ -117,7 +117,7 @@ if(CATKIN_ENABLE_TESTING)
 	find_package(rostest REQUIRED)
 	add_rostest(test/basic.test DEPENDENCIES rosmon)
 
-        catkin_add_gtest(memory_parser_test test/memory_parser.test.cc)
+        catkin_add_gtest(memory_parser_test test/memory_parser.test.cc src/launch/bytes_parser.cpp)
         target_link_libraries(memory_parser_test ${catkin_LIBRARIES})
 
 	# XML parsing test suite

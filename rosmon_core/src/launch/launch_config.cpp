@@ -399,8 +399,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
     {
         ByteParser byteParser;
         auto parseResult = byteParser.parseMemory(std::string(memoryLimit));
-        uint64_t memoryLimitByte = std::get<1>(parseResult);
-        bool parseOk = std::get<0>(parseResult);
+        uint64_t memoryLimitByte = std::get<0>(parseResult);
+        bool parseOk = std::get<1>(parseResult);
         if(!parseOk)
         {
             throw ctx.error("{} can't be parsed as a memory limit", memoryLimit);
