@@ -11,6 +11,7 @@
 #include <ros/wall_timer.h>
 
 #include <map>
+#include <unordered_set>
 
 namespace rosmon
 {
@@ -68,7 +69,7 @@ private:
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
 
-	std::set<std::string> m_mutedSet;
+	std::unordered_set<std::string> m_mutedSet;
 
 	std::map<std::string, ChannelInfo> m_nodeColorMap;
 
