@@ -78,21 +78,21 @@ void RosmonToDiagnostic::updateDiagnostics(const std::vector<NodeMonitor::Ptr>& 
 
 std::string RosmonToDiagnostic::memoryToString(uint64_t memory)
 {
-    if(memory < static_cast<uint64_t>(1000))
+    if(memory < static_cast<uint64_t>(1<<10))
     {
         return fmt::format("{} B", memory);
     }
-    else if(memory < static_cast<uint64_t>(1e6))
+    else if(memory < static_cast<uint64_t>(1<<20))
     {
-        return fmt::format("{:.2f} KiB", memory / static_cast<uint64_t>(1e3));
+        return fmt::format("{:.2f} KiB", memory / static_cast<uint64_t>(1<<10));
     }
-    else if(memory < static_cast<uint64_t>(1e9))
+    else if(memory < static_cast<uint64_t>(1<<30))
     {
-        return fmt::format("{:.2f} MiB", memory / static_cast<uint64_t>(1e6));
+        return fmt::format("{:.2f} MiB", memory / static_cast<uint64_t>(1<<20));
     }
-    else if(memory < static_cast<uint64_t>(1e12))
+    else if(memory < static_cast<uint64_t>(1ull<<40))
     {
-        return fmt::format("{:.2f} GiB", memory / static_cast<uint64_t>(1e9));
+        return fmt::format("{:.2f} GiB", memory / static_cast<uint64_t>(1ull<<30));
     }
-    return fmt::format("{:.2f} TiB", memory / static_cast<uint64_t>(1e12));
+    return fmt::format("{:.2f} TiB", memory / static_cast<uint64_t>(1ull<<40));
 }
