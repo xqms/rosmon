@@ -200,7 +200,7 @@ void LaunchConfig::setDefaultStopTimeout(double timeout)
     m_defaultStopTimeout = timeout;
 }
 
-void LaunchConfig::setDefaultCPULimit(float CPULimit)
+void LaunchConfig::setDefaultCPULimit(double CPULimit)
 {
     m_defaultCPULimit = CPULimit;
 }
@@ -413,10 +413,10 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
     if(cpuLimit)
     {
-        float cpuLimitPct;
+        double cpuLimitPct;
         try
         {
-            cpuLimitPct = boost::lexical_cast<float>(ctx.evaluate(cpuLimit));
+            cpuLimitPct = boost::lexical_cast<double>(ctx.evaluate(cpuLimit));
         }
         catch(boost::bad_lexical_cast&)
         {

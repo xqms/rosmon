@@ -160,7 +160,7 @@ public:
 	void setArgument(const std::string& name, const std::string& value);
 
 	void setDefaultStopTimeout(double timeout);
-    void setDefaultCPULimit(float CPULimit);
+    void setDefaultCPULimit(double CPULimit);
     void setDefaultMemoryLimit(uint64_t memoryLimit);
 
 	void parse(const std::string& filename, bool onlyArguments = false);
@@ -232,7 +232,7 @@ private:
 
 	double m_defaultStopTimeout;
     uint64_t m_defaultMemoryLimit;
-    float m_defaultCPULimit;
+    double m_defaultCPULimit;
 };
 
 }
