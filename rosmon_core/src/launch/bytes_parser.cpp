@@ -1,10 +1,20 @@
 #include "bytes_parser.h"
+#include <boost/spirit/include/classic.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/qi.hpp>
 #include <ros/console.h>
 
 std::tuple<uint64_t, bool> rosmon::launch::ByteParser::parseMemory(const std::string& memory)
 {
+    struct bytes_decades_ : boost::spirit::qi::symbols<char, uint64_t>
+    {
+        bytes_decades_(){
+            add("kB", 1e3)("mB", 1e6)("gB", 1e9)("tB", 1e12)("KB", 1e3)("MB", 1e6)("GB", 1e9)(
+                "TB", 1e12)("B", 1);
+        }
+    } byte_decades;
+
     uint64_t result = 0;
     using boost::phoenix::ref;
     using boost::spirit::qi::_1;
@@ -24,10 +34,4 @@ std::tuple<uint64_t, bool> rosmon::launch::ByteParser::parseMemory(const std::st
     }
     result = static_cast<uint64_t>(res);
     return std::make_tuple(result, true);
-}
-
-rosmon::launch::ByteParser::bytes_decades_::bytes_decades_()
-{
-    add("kB", 1e3)("mB", 1e6)("gB", 1e9)("tB", 1e12)("KB", 1e3)("MB", 1e6)("GB", 1e9)(
-        "TB", 1e12)("B", 1);
 }
