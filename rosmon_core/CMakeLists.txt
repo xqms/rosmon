@@ -93,9 +93,6 @@ target_link_libraries(rosmon
 
 add_dependencies(rosmon ${catkin_EXPORTED_TARGETS})
 
-add_executable(node_for_test test/node_for_test.cpp)
-target_link_libraries(node_for_test ${catkin_LIBRARIES})
-
 if(PYTHONLIBS_FOUND)
 	target_link_libraries(rosmon
 		${PYTHON_LIBRARIES}
