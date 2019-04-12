@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <map>
 
 namespace rosmon
 {
@@ -158,6 +159,16 @@ public:
 	void setWindowTitle(const std::string& title);
 	void clearWindowTitle(const std::string& backup);
 
+
+	enum SpecialKey
+	{
+		SK_F1 = 0x100, SK_F2, SK_F3, SK_F4,
+		SK_F5, SK_F6, SK_F7, SK_F8,
+		SK_F9, SK_F10, SK_F11, SK_F12
+	};
+
+	int readKey();
+
 private:
 	bool m_valid;
 	bool m_256colors;
@@ -170,6 +181,10 @@ private:
 	std::string m_elStr;
 	std::string m_upStr;
 	std::string m_boldStr;
+
+	std::map<std::string, SpecialKey> m_specialKeys;
+
+	std::string m_currentEscapeStr;
 };
 
 }

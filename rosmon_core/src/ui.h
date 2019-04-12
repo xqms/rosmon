@@ -11,6 +11,7 @@
 #include <ros/wall_timer.h>
 
 #include <map>
+#include <unordered_set>
 
 namespace rosmon
 {
@@ -42,6 +43,24 @@ private:
 	void setupColors();
 	void handleInput();
 
+	inline bool anyMuted()
+	{ return !m_mutedSet.empty(); }
+
+	inline bool isMuted(const std::string &s) 
+	{ return m_mutedSet.find(s) != m_mutedSet.end(); }
+
+	inline void mute(const std::string &s)
+	{ m_mutedSet.insert(s); }
+
+	inline void unmute(const std::string &s)
+	{ m_mutedSet.erase(s); }
+
+	inline void muteAll()
+	{ for(auto& node : m_monitor->nodes()) m_mutedSet.insert(node->name()); }
+
+	inline void unmuteAll()
+	{ m_mutedSet.clear(); }
+
 	monitor::Monitor* m_monitor;
 	FDWatcher::Ptr m_fdWatcher;
 
@@ -49,6 +68,8 @@ private:
 
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
+
+	std::unordered_set<std::string> m_mutedSet;
 
 	std::map<std::string, ChannelInfo> m_nodeColorMap;
 

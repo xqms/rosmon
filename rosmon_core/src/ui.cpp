@@ -105,7 +105,23 @@ void UI::drawStatusLine()
 
 	// Print menu if a node is selected
 	if(m_selectedNode != -1)
-		fmt::print("Actions: s: start, k: stop, d: debug");
+	{
+		auto& selectedNode = m_monitor->nodes()[m_selectedNode];
+		std::string muteOption = isMuted(selectedNode->name()) ? "u: unmute" : "m: mute"; 
+
+		fmt::print("Actions: s: start, k: stop, d: debug, {}", muteOption);
+	}
+	else
+	{
+		fmt::print("Global shortcuts: <node key>: show node menu, F9: mute all, F10: unmute all ");
+		if (anyMuted())
+		{
+			m_term.setSimpleForeground(Terminal::Black);
+			m_term.setSimpleBackground(Terminal::Yellow);
+			fmt::print("! Caution: Nodes muted !");
+			m_term.setStandardColors();
+		}
+	}
 
 	fmt::print("\n");
 
@@ -117,12 +133,24 @@ void UI::drawStatusLine()
 	for(auto& node : m_monitor->nodes())
 	{
 		// Print key with grey background
-		m_term.setSimpleForeground(Terminal::Black);
+		Terminal::SimpleColor keyForegroundColor = Terminal::Black;
+		Terminal::SimpleColor keyBackgroundColor = Terminal::White;
+		uint32_t keyBackgroundColor256 = 0xC8C8C8;
 
+		if(isMuted(node->name()))
+		{
+			keyBackgroundColor = Terminal::Red;
+			keyForegroundColor = Terminal::White;
+			keyBackgroundColor256 = 0x0000A5;
+		}
+		
+		m_term.setSimpleForeground(keyForegroundColor);
+		
 		if(m_term.has256Colors())
-			m_term.setBackgroundColor(0xC8C8C8);
+			m_term.setBackgroundColor(keyBackgroundColor256);
 		else
-			m_term.setSimpleBackground(Terminal::White);
+			m_term.setSimpleBackground(keyBackgroundColor);
+
 		fmt::print("{:c}", key);
 
 		switch(node->state())
@@ -189,6 +217,9 @@ void UI::drawStatusLine()
 
 void UI::log(const std::string& channel, const std::string& str)
 {
+	if (isMuted(channel))
+		return;
+	
 	std::string clean = str;
 
 	auto it = m_nodeColorMap.find(channel);
@@ -255,13 +286,26 @@ void UI::checkWindowSize()
 
 void UI::handleInput()
 {
-	char c;
-	if(read(STDIN_FILENO, &c, 1) != 1)
+	int c = m_term.readKey();
+	if(c < 0)
 		return;
 
 	if(m_selectedNode == -1)
 	{
 		int nodeIndex = -1;
+
+		// Check for Mute all keys first
+
+		if(c == Terminal::SK_F9)
+		{
+			muteAll();
+			return;
+		}
+		if(c == Terminal::SK_F10)
+		{
+			unmuteAll();
+			return;
+		}
 
 		if(c >= 'a' && c <= 'z')
 			nodeIndex = c - 'a';
@@ -289,6 +333,12 @@ void UI::handleInput()
 				break;
 			case 'd':
 				node->launchDebugger();
+				break;
+			case 'm':
+				mute(node->name());
+				break;
+			case 'u':
+				unmute(node->name());
 				break;
 		}
 
