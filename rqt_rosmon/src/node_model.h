@@ -21,6 +21,7 @@ public:
 	enum Column
 	{
 		COL_NAME,
+		COL_NAMESPACE,
 		COL_RESTART_COUNT,
 		COL_LOAD,
 		COL_MEMORY,
@@ -59,6 +60,7 @@ private:
 		{ return name < other.name; }
 
 		QString name;
+		QString ns;
 		int state;
 		int restartCount;
 		double load;
