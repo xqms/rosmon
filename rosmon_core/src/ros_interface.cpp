@@ -30,6 +30,7 @@ void ROSInterface::update()
 	{
 		rosmon_msgs::NodeState nstate;
 		nstate.name = node->name();
+		nstate.ns = node->namespaceString();
 
 		switch(node->state())
 		{
