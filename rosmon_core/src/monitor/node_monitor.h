@@ -154,6 +154,10 @@ public:
 	inline std::string name() const
 	{ return m_launchNode->name(); }
 
+	//! Node namespace
+	inline std::string namespaceString() const
+	{ return m_launchNode->namespaceString(); }
+
 	//! Node PID
 	inline int pid() const
 	{ return m_pid; }

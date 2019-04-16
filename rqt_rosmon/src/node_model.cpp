@@ -65,6 +65,7 @@ void NodeModel::updateState(const rosmon_msgs::StateConstPtr& state)
 	{
 		Entry key;
 		key.name = QString::fromStdString(nodeState.name);
+		key.ns = QString::fromStdString(nodeState.ns);
 		key.state = nodeState.state;
 		key.restartCount = nodeState.restart_count;
 		key.load = nodeState.system_load + nodeState.user_load;
@@ -142,6 +143,8 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 			{
 				case COL_NAME:
 					return entry.name;
+				case COL_NAMESPACE:
+					return entry.ns;
 				case COL_LOAD:
 					return QString::number(entry.load, 'f', 2);
 				case COL_MEMORY:
@@ -161,6 +164,8 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 			switch(index.column())
 			{
 				case COL_NAME:
+					return QVariant();
+				case COL_NAMESPACE:
 					return QVariant();
 				case COL_RESTART_COUNT:
 				case COL_LOAD:
@@ -186,6 +191,8 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 			{
 				case COL_NAME:
 					return entry.name;
+				case COL_NAMESPACE:
+					return entry.ns;
 				case COL_LOAD:
 					return entry.load;
 				case COL_MEMORY:
@@ -207,6 +214,7 @@ QVariant NodeModel::headerData(int section, Qt::Orientation orientation, int rol
 	switch(section)
 	{
 		case COL_NAME:          return "Node";
+		case COL_NAMESPACE:     return "Namespace";
 		case COL_LOAD:          return "CPU Load";
 		case COL_MEMORY:        return "Memory";
 		case COL_RESTART_COUNT: return "#Restarts";

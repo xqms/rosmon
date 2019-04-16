@@ -6,6 +6,9 @@ uint8 WAITING = 3  # Node is waiting for automatic restart
 # ROS node name
 string name
 
+# ROS node namespace
+string ns
+
 # Node state (see above)
 uint8 state
 
