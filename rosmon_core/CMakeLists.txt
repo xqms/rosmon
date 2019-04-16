@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 	rosfmt
 	rosmon_msgs
 	rospack
+	diagnostic_msgs
 )
 
 catkin_package()
