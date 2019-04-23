@@ -84,15 +84,15 @@ std::string RosmonToDiagnostic::memoryToString(uint64_t memory)
     }
     else if(memory < static_cast<uint64_t>(1<<20))
     {
-        return fmt::format("{:.2f} KiB", memory / static_cast<uint64_t>(1<<10));
+        return fmt::format("{:.2f} KiB", static_cast<double>(memory / static_cast<uint64_t>(1<<10)));
     }
     else if(memory < static_cast<uint64_t>(1<<30))
     {
-        return fmt::format("{:.2f} MiB", memory / static_cast<uint64_t>(1<<20));
+        return fmt::format("{:.2f} MiB", static_cast<double>(memory / static_cast<uint64_t>(1<<20)));
     }
     else if(memory < static_cast<uint64_t>(1ull<<40))
     {
-        return fmt::format("{:.2f} GiB", memory / static_cast<uint64_t>(1ull<<30));
+        return fmt::format("{:.2f} GiB", static_cast<double>(memory / static_cast<uint64_t>(1ull<<30)));
     }
-    return fmt::format("{:.2f} TiB", memory / static_cast<uint64_t>(1ull<<40));
+    return fmt::format("{:.2f} TiB", static_cast<double>(memory / static_cast<uint64_t>(1ull<<40)));
 }
