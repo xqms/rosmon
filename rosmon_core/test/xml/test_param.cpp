@@ -44,8 +44,8 @@ TEST_CASE("param_types", "[param]")
 			<param name="str_param_auto" value="hello" />
 			<param name="str_param_forced" value="0" type="str" />
 
-			<param name="bool_param_auto" value="true" />
-			<param name="bool_param_forced" value="true" type="boolean" />
+			<param name="bool_param_auto" value="True" />
+			<param name="bool_param_forced" value="True" type="boolean" />
 
 			<param name="yaml_param" type="yaml" value="test_param: true" />
 			<param name="yaml_param_scalar" type="yaml" value="true" />

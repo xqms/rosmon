@@ -17,9 +17,11 @@ TEST_CASE("arg basic", "[arg]")
 		<launch>
 			<arg name="arg1" value="hello world" />
 			<arg name="arg2" default="hello world" />
+			<arg name="arg3" default="True" />
 
 			<param name="arg1" value="$(arg arg1)" />
 			<param name="arg2" value="$(arg arg2)" />
+			<param name="arg3" type="bool" value="$(arg arg3)" />
 		</launch>
 	)EOF");
 
