@@ -31,6 +31,7 @@ TEST_CASE("arg basic", "[arg]")
 
 	CHECK(getTypedParam<std::string>(params, "/arg1") == "hello world");
 	CHECK(getTypedParam<std::string>(params, "/arg2") == "hello world");
+	CHECK(getTypedParam<bool>(params, "/arg3") == true);
 }
 
 TEST_CASE("arg from external", "[arg]")
