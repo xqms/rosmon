@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -455,9 +456,11 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 static XmlRpc::XmlRpcValue autoXmlRpcValue(const std::string& fullValue)
 {
-	if(fullValue == "true")
+	std::string fullValueLowercase(fullValue);
+	boost::algorithm::to_lower(fullValueLowercase);
+	if(fullValueLowercase == "true")
 		return XmlRpc::XmlRpcValue(true);
-	else if(fullValue == "false")
+	else if(fullValueLowercase == "false")
 		return XmlRpc::XmlRpcValue(false);
 	else
 	{
@@ -753,9 +756,11 @@ XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const ParseContext& ctx, const s
 			return boost::lexical_cast<double>(value);
 		else if(type == "bool" || type == "boolean")
 		{
-			if(value == "true")
+			std::string value_lowercase(value);
+			boost::algorithm::to_lower(value_lowercase);
+			if(value_lowercase == "true")
 				return true;
-			else if(value == "false")
+			else if(value_lowercase == "false")
 				return false;
 			else
 			{
