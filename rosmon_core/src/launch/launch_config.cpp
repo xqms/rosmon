@@ -456,8 +456,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 static XmlRpc::XmlRpcValue autoXmlRpcValue(const std::string& fullValue)
 {
-	std::string fullValueLowercase(fullValue);
-	boost::algorithm::to_lower(fullValueLowercase);
+	std::string fullValueLowercase = boost::algorithm::to_lower_copy(fullValue);
 	if(fullValueLowercase == "true")
 		return XmlRpc::XmlRpcValue(true);
 	else if(fullValueLowercase == "false")
@@ -756,8 +755,7 @@ XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const ParseContext& ctx, const s
 			return boost::lexical_cast<double>(value);
 		else if(type == "bool" || type == "boolean")
 		{
-			std::string value_lowercase(value);
-			boost::algorithm::to_lower(value_lowercase);
+			std::string value_lowercase = boost::algorithm::to_lower_copy(value);
 			if(value_lowercase == "true")
 				return true;
 			else if(value_lowercase == "false")
