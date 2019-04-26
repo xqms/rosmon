@@ -47,6 +47,9 @@ TEST_CASE("param_types", "[param]")
 			<param name="bool_param_auto" value="true" />
 			<param name="bool_param_forced" value="true" type="boolean" />
 
+			<param name="bool_param_auto_nonlowercase" value="True" />
+			<param name="bool_param_forced_nonlowercase" value="True" type="boolean" />
+
 			<param name="yaml_param" type="yaml" value="test_param: true" />
 			<param name="yaml_param_scalar" type="yaml" value="true" />
 		</launch>
@@ -66,6 +69,9 @@ TEST_CASE("param_types", "[param]")
 
 	checkTypedParam<bool>(params, "/bool_param_auto", XmlRpc::XmlRpcValue::TypeBoolean, true);
 	checkTypedParam<bool>(params, "/bool_param_forced", XmlRpc::XmlRpcValue::TypeBoolean, true);
+
+	checkTypedParam<bool>(params, "/bool_param_auto_nonlowercase", XmlRpc::XmlRpcValue::TypeBoolean, true);
+	checkTypedParam<bool>(params, "/bool_param_forced_nonlowercase", XmlRpc::XmlRpcValue::TypeBoolean, true);
 
 	checkTypedParam<bool>(params, "/yaml_param/test_param", XmlRpc::XmlRpcValue::TypeBoolean, true);
 	checkTypedParam<bool>(params, "/yaml_param_scalar", XmlRpc::XmlRpcValue::TypeBoolean, true);

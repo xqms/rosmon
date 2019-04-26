@@ -17,9 +17,11 @@ TEST_CASE("arg basic", "[arg]")
 		<launch>
 			<arg name="arg1" value="hello world" />
 			<arg name="arg2" default="hello world" />
+			<arg name="arg3" default="True" />
 
 			<param name="arg1" value="$(arg arg1)" />
 			<param name="arg2" value="$(arg arg2)" />
+			<param name="arg3" type="bool" value="$(arg arg3)" />
 		</launch>
 	)EOF");
 
@@ -29,6 +31,7 @@ TEST_CASE("arg basic", "[arg]")
 
 	CHECK(getTypedParam<std::string>(params, "/arg1") == "hello world");
 	CHECK(getTypedParam<std::string>(params, "/arg2") == "hello world");
+	CHECK(getTypedParam<bool>(params, "/arg3") == true);
 }
 
 TEST_CASE("arg from external", "[arg]")
