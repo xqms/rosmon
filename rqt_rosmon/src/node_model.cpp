@@ -74,7 +74,7 @@ void NodeModel::updateState(const rosmon_msgs::StateConstPtr& state)
 		auto it = std::lower_bound(m_entries.begin(), m_entries.end(), key);
 		int row = it - m_entries.begin();
 
-		if(it == m_entries.end() || it->name != key.name)
+		if(it == m_entries.end() || !((it->name == key.name) && (it->ns == key.ns)))
 		{
 			beginInsertRows(QModelIndex(), row, row);
 			m_entries.insert(it, key);
