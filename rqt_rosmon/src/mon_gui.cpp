@@ -149,6 +149,7 @@ void MonGUI::showContextMenu(const QPoint& point)
 	{
 		rosmon_msgs::StartStop srv;
 		srv.request.node = index.sibling(index.row(), NodeModel::COL_NAME).data().toString().toStdString();
+		srv.request.ns = index.sibling(index.row(), NodeModel::COL_NAMESPACE).data().toString().toStdString();
 		srv.request.action = triggered->property("action").toInt();
 
 		if(!ros::service::call(m_model->namespaceString().toStdString() + "/start_stop", srv))

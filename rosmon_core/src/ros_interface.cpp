@@ -76,7 +76,7 @@ bool ROSInterface::handleStartStop(rosmon_msgs::StartStopRequest& req, rosmon_ms
 {
 	auto it = std::find_if(
 		m_monitor->nodes().begin(), m_monitor->nodes().end(),
-		[&](const monitor::NodeMonitor::ConstPtr& n){ return n->name() == req.node; }
+		[&](const monitor::NodeMonitor::ConstPtr& n){ return (n->name() == req.node) && (n->namespaceString() == req.ns); }
 	);
 
 	if(it == m_monitor->nodes().end())
