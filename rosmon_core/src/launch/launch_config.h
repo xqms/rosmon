@@ -155,6 +155,10 @@ public:
 	typedef std::shared_ptr<LaunchConfig> Ptr;
 	typedef std::shared_ptr<const LaunchConfig> ConstPtr;
 
+	constexpr static float DEFAULT_CPU_LIMIT = 0.9f;
+	constexpr static uint64_t DEFAULT_MEMORY_LIMIT = 500*1024*1024;
+	constexpr static float DEFAULT_STOP_TIMEOUT = 5.0f;
+
 	LaunchConfig();
 
 	void setArgument(const std::string& name, const std::string& value);
@@ -230,9 +234,9 @@ private:
 
 	std::string m_windowTitle;
 
-	double m_defaultStopTimeout;
-    uint64_t m_defaultMemoryLimit;
-    double m_defaultCPULimit;
+	double m_defaultStopTimeout{DEFAULT_STOP_TIMEOUT};
+    uint64_t m_defaultMemoryLimit{DEFAULT_MEMORY_LIMIT};
+    double m_defaultCPULimit{DEFAULT_CPU_LIMIT};
 };
 
 }
