@@ -1,4 +1,4 @@
-// Parse memory specifications like "100 MB"
+// Parse memory specifications like "100 MB" orr "100MiB"
 // Authors: Adrien Barral, Max Schwarz
 
 #include "bytes_parser.h"
@@ -27,7 +27,9 @@ std::tuple<uint64_t, bool> parseMemory(const std::string& memory)
 	{
 		bytes_decades_(){
 			add("kB", 1e3)("mB", 1e6)("gB", 1e9)("tB", 1e12)("KB", 1e3)("MB", 1e6)("GB", 1e9)(
-				"TB", 1e12)("B", 1);
+				"TB", 1e12)("B", 1)("KiB", static_cast<uint64_t>(1ull<<10))("MiB",
+				static_cast<uint64_t>(1ull<<20))("GiB", static_cast<uint64_t>(1ull<<30))("TiB",
+				static_cast<uint64_t>(1ull<<40));
 		}
 	} byte_decades;
 

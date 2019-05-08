@@ -17,7 +17,11 @@ TEST_CASE("parse memory size", "[memory]")
 		{"1 MB", 1000000ULL},
 		{"1MB", 1000000ULL},
 		{"1.6 GB", 1600000000ULL},
-		{"1 gB", 1000000000ULL}
+        {"1 gB", 1000000000ULL},
+        {"3250 KiB", 3250*1ull<<10},
+        {"40 MiB", 40*1ull<<20},
+        {"1 GiB", 1ull<<30},
+        {"0.5 TiB", (1ull<<40)/2}
 	};
 
 	for(const auto& example : EXAMPLES)
