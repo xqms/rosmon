@@ -22,10 +22,8 @@ ROSInterface::ROSInterface(monitor::Monitor* monitor, bool enableDiagnostics,
 
 	m_srv_startStop = m_nh.advertiseService("start_stop", &ROSInterface::handleStartStop, this);
 
-    if(m_diagnosticsEnabled)
-    {
-        m_diagnosticsPublisher = std::make_shared<diagnostics::RosmonToDiagnostic>(diagnosticsPrefix);
-    }
+	if(m_diagnosticsEnabled)
+		m_diagnosticsPublisher.reset(new DiagnosticsPublisher(diagnosticsPrefix));
 }
 
 void ROSInterface::update()
@@ -33,10 +31,8 @@ void ROSInterface::update()
 	rosmon_msgs::State state;
 	state.header.stamp = ros::Time::now();
 
-    if(m_diagnosticsPublisher)
-    {
-        m_diagnosticsPublisher->updateDiagnostics(m_monitor->nodes());
-    }
+	if(m_diagnosticsPublisher)
+		m_diagnosticsPublisher->publish(m_monitor->nodes());
 
 	for(auto& node : m_monitor->nodes())
 	{

@@ -74,7 +74,7 @@ add_executable(rosmon
 	src/monitor/node_monitor.cpp
 	src/monitor/monitor.cpp
 	src/monitor/linux_process_info.cpp
-        src/diagnostics/rosmon_to_diagnostic.cpp
+	src/diagnostics_publisher.cpp
 	src/ui.cpp
 	src/husl/husl.c
 	src/ros_interface.cpp
