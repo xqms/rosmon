@@ -2,7 +2,7 @@ uint8 START = 1
 uint8 STOP = 2
 uint8 RESTART = 3
 
-string node   # ROS node name
-string ns     # ROS node namespace
+string node		# ROS node name
+string ns		# ROS node namespace
 uint8 action
 ---
