@@ -115,9 +115,6 @@ if(CATKIN_ENABLE_TESTING)
 	find_package(rostest REQUIRED)
 	add_rostest(test/basic.test DEPENDENCIES rosmon)
 
-        catkin_add_gtest(memory_parser_test test/memory_parser.test.cc src/launch/bytes_parser.cpp)
-        target_link_libraries(memory_parser_test ${catkin_LIBRARIES})
-
 	# XML parsing test suite
 	find_package(catch_ros)
 	if(catch_ros_FOUND)
@@ -135,6 +132,7 @@ if(CATKIN_ENABLE_TESTING)
 			test/xml/test_remap.cpp
 			test/xml/test_rosparam.cpp
 			test/xml/test_subst.cpp
+			test/xml/test_memory.cpp
 		)
 		target_link_libraries(test_xml_loading
 			rosmon_launch_config
