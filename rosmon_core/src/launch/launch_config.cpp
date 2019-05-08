@@ -178,8 +178,8 @@ LaunchConfig::LaunchConfig()
  : m_rootContext(this)
  , m_anonGen(std::random_device()())
  , m_defaultStopTimeout(5.0)
- , m_defaultMemoryLimit(15e6)
- , m_defaultCPULimit(0.1)
+ , m_defaultMemoryLimit(500e6)
+ , m_defaultCPULimit(0.9)
 {
 	const char* ROS_NAMESPACE = getenv("ROS_NAMESPACE");
 	if(ROS_NAMESPACE)
