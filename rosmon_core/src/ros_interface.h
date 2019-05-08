@@ -5,6 +5,7 @@
 #define ROS_INTERFACE_H
 
 #include "monitor/monitor.h"
+#include "diagnostics_publisher.h"
 
 #include <ros/node_handle.h>
 
@@ -16,7 +17,9 @@ namespace rosmon
 class ROSInterface
 {
 public:
-	ROSInterface(monitor::Monitor* monitor);
+	ROSInterface(monitor::Monitor* monitor, bool enableDiagnostics=false,
+		const std::string& diagnosticsPrefix={}
+	);
 
 	void shutdown();
 private:
@@ -32,6 +35,9 @@ private:
 	ros::Publisher m_pub_state;
 
 	ros::ServiceServer m_srv_startStop;
+
+	bool m_diagnosticsEnabled;
+	std::unique_ptr<DiagnosticsPublisher> m_diagnosticsPublisher;
 };
 
 }

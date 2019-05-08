@@ -4,6 +4,7 @@
 #include "launch_config.h"
 #include "substitution.h"
 #include "yaml_params.h"
+#include "bytes_parser.h"
 
 #include <ros/package.h>
 #include <ros/names.h>
@@ -177,7 +178,6 @@ void ParseContext::setRemap(const std::string& from, const std::string& to)
 LaunchConfig::LaunchConfig()
  : m_rootContext(this)
  , m_anonGen(std::random_device()())
- , m_defaultStopTimeout(5.0)
 {
 	const char* ROS_NAMESPACE = getenv("ROS_NAMESPACE");
 	if(ROS_NAMESPACE)
@@ -195,7 +195,17 @@ void LaunchConfig::setArgument(const std::string& name, const std::string& value
 
 void LaunchConfig::setDefaultStopTimeout(double timeout)
 {
-	m_defaultStopTimeout = timeout;
+    m_defaultStopTimeout = timeout;
+}
+
+void LaunchConfig::setDefaultCPULimit(double CPULimit)
+{
+    m_defaultCPULimit = CPULimit;
+}
+
+void LaunchConfig::setDefaultMemoryLimit(uint64_t memoryLimit)
+{
+    m_defaultMemoryLimit = memoryLimit;
 }
 
 void LaunchConfig::parse(const std::string& filename, bool onlyArguments)
@@ -331,6 +341,9 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* cwd = element->Attribute("cwd");
 	const char* clearParams = element->Attribute("clear_params");
 	const char* stopTimeout = element->Attribute("rosmon-stop-timeout");
+    const char* memoryLimit = element->Attribute("rosmon-memory-limit");
+    const char* cpuLimit = element->Attribute("rosmon-cpu-limit");
+
 
 	if(!name || !pkg || !type)
 	{
@@ -379,6 +392,45 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	}
 	else
 		node->setStopTimeout(m_defaultStopTimeout);
+
+	if(memoryLimit)
+	{
+		uint64_t memoryLimitByte;
+		bool ok;
+		std::tie(memoryLimitByte, ok) = parseMemory(static_cast<std::string>(memoryLimit));
+		if(!ok)
+		{
+			throw ctx.error("{} cannot be parsed as a memory limit", memoryLimit);
+		}
+
+		node->setMemoryLimit(memoryLimitByte);
+	}
+	else
+	{
+		node->setMemoryLimit(m_defaultMemoryLimit);
+	}
+
+	if(cpuLimit)
+	{
+		double cpuLimitPct;
+		try
+		{
+			cpuLimitPct = boost::lexical_cast<double>(ctx.evaluate(cpuLimit));
+		}
+		catch(boost::bad_lexical_cast&)
+		{
+			throw ctx.error("bad rosmon-cpu-limit value '{}'", cpuLimit);
+		}
+
+		if(cpuLimitPct < 0)
+			throw ctx.error("negative rosmon-cpu-limit value'{}'", cpuLimit);
+
+		node->setCPULimit(cpuLimitPct);
+	}
+	else
+	{
+		node->setCPULimit(m_defaultCPULimit);
+	}
 
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));

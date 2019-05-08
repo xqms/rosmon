@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+	<node pkg="rosmon_core" type="node_for_test" name="node_crash"/>
+	<node pkg="rosmon_core" type="node_for_test" name="node_high_memory" rosmon-memory-limit="30 MB"/>
+	<node pkg="rosmon_core" type="node_for_test" name="node_high_cpu"/>
+    <node pkg="rosmon_core" type="node_for_test" name="node_high_cpu_no_limit" rosmon-cpu-limit="1.1"/>
+	<node pkg="rosmon_core" type="node_for_test" name="node_restart_count" respawn="true"/>
+	<node pkg="diagnostic_aggregator" type="aggregator_node" name="diag_agg" >
+  		<rosparam command="load" file="$(find rosmon_core)/test/analyzers.yaml" />
+	</node>
+</launch>
