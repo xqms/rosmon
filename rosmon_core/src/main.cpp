@@ -151,12 +151,10 @@ int main(int argc, char** argv)
 	bool flushLog = false;
 	bool startNodes = true;
 	double stopTimeout = 5.0;
-    uint64_t memoryLimit = 15e6;
-    float cpuLimit = .1;
-    bool disableDiagnostics = false;
-    std::string diagnosticsPrefix;
-    rosmon::launch::ByteParser parser;
-    std::tuple<bool, uint64_t> memoryParseResult;
+	uint64_t memoryLimit = 15e6;
+	float cpuLimit = .1;
+	bool disableDiagnostics = false;
+	std::string diagnosticsPrefix;
 
 	// Parse options
 	while(true)
@@ -213,39 +211,41 @@ int main(int argc, char** argv)
 					return 1;
 				}
 				break;
-            case 'D' :
-                disableDiagnostics = true;
-                break;
-            case 'c':
-                try
-                {
-                    cpuLimit = boost::lexical_cast<float>(optarg);
-                }
-                catch(boost::bad_lexical_cast&)
-                {
-                    fmt::print(stderr, "Bad value for --cpu-limit argument: '{}'\n", optarg);
-                    return 1;
-                }
+			case 'D' :
+				disableDiagnostics = true;
+				break;
+			case 'c':
+				try
+				{
+					cpuLimit = boost::lexical_cast<float>(optarg);
+				}
+				catch(boost::bad_lexical_cast&)
+				{
+					fmt::print(stderr, "Bad value for --cpu-limit argument: '{}'\n", optarg);
+					return 1;
+				}
 
-                if(cpuLimit < 0)
-                {
-                    fmt::print(stderr, "CPU Limit cannot be negative\n");
-                    return 1;
-                }
-                break;
-            case 'm':
-                memoryParseResult = parser.parseMemory(optarg);
-                memoryLimit = std::get<0>(memoryParseResult);
-                if(std::get<1>(memoryParseResult)==false)
-                {
-                    fmt::print(stderr, "Bad value for --memory-limit argument: '{}'\n", optarg);
-                    return 1;
-                }
-                break;
-            case 'p':
-                fmt::print(stderr, "Prefix : {}", optarg);
-                diagnosticsPrefix = std::string(optarg);
-                break;
+				if(cpuLimit < 0)
+				{
+					fmt::print(stderr, "CPU Limit cannot be negative\n");
+					return 1;
+				}
+				break;
+			case 'm':
+			{
+				bool ok;
+				std::tie(memoryLimit, ok) = rosmon::launch::parseMemory(optarg);
+				if(!ok)
+				{
+					fmt::print(stderr, "Bad value for --memory-limit argument: '{}'\n", optarg);
+					return 1;
+				}
+				break;
+			}
+			case 'p':
+				fmt::print(stderr, "Prefix : {}", optarg);
+				diagnosticsPrefix = std::string(optarg);
+				break;
 		}
 	}
 

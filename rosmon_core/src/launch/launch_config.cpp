@@ -395,42 +395,46 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	else
 		node->setStopTimeout(m_defaultStopTimeout);
 
-    if(memoryLimit)
-    {
-        ByteParser byteParser;
-        auto parseResult = byteParser.parseMemory(std::string(memoryLimit));
-        uint64_t memoryLimitByte = std::get<0>(parseResult);
-        bool parseOk = std::get<1>(parseResult);
-        if(!parseOk)
-        {
-            throw ctx.error("{} can't be parsed as a memory limit", memoryLimit);
-        }
-        node->setMemoryLimit(memoryLimitByte);
-    }else
-    {
-        node->setMemoryLimit(m_defaultMemoryLimit);
-    }
+	if(memoryLimit)
+	{
+		uint64_t memoryLimitByte;
+		bool ok;
+		std::tie(memoryLimitByte, ok) = parseMemory(static_cast<std::string>(memoryLimit));
+		if(!ok)
+		{
+			throw ctx.error("{} cannot be parsed as a memory limit", memoryLimit);
+		}
 
-    if(cpuLimit)
-    {
-        double cpuLimitPct;
-        try
-        {
-            cpuLimitPct = boost::lexical_cast<double>(ctx.evaluate(cpuLimit));
-        }
-        catch(boost::bad_lexical_cast&)
-        {
-            throw ctx.error("bad rosmon-cpu-limit value '{}'", cpuLimit);
-        }
-        if(cpuLimit < 0)
-            throw ctx.error("negative rosmon-cpu-limit value'{}'", cpuLimit);
-        node->setCPULimit(cpuLimitPct);
-    }else
-    {
-        node->setCPULimit(m_defaultCPULimit);
-    }
+		node->setMemoryLimit(memoryLimitByte);
+	}
+	else
+	{
+		node->setMemoryLimit(m_defaultMemoryLimit);
+	}
 
-    if(args)
+	if(cpuLimit)
+	{
+		double cpuLimitPct;
+		try
+		{
+			cpuLimitPct = boost::lexical_cast<double>(ctx.evaluate(cpuLimit));
+		}
+		catch(boost::bad_lexical_cast&)
+		{
+			throw ctx.error("bad rosmon-cpu-limit value '{}'", cpuLimit);
+		}
+
+		if(cpuLimitPct < 0)
+			throw ctx.error("negative rosmon-cpu-limit value'{}'", cpuLimit);
+
+		node->setCPULimit(cpuLimitPct);
+	}
+	else
+	{
+		node->setCPULimit(m_defaultCPULimit);
+	}
+
+	if(args)
 		node->addExtraArguments(ctx.evaluate(args));
 
 	if(!fullNamespace.empty())

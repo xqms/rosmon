@@ -11,10 +11,6 @@ using namespace rosmon::launch;
 
 TEST_CASE("parse memory size", "[memory]")
 {
-	ByteParser parser;
-	uint64_t memory;
-	bool ok;
-
 	const std::vector<std::pair<std::string, uint64_t>> EXAMPLES{
 		{"1  B", 1},
 		{"100", 100},
@@ -26,7 +22,9 @@ TEST_CASE("parse memory size", "[memory]")
 
 	for(const auto& example : EXAMPLES)
 	{
-		std::tie(memory, ok) = parser.parseMemory(example.first);
+		uint64_t memory;
+		bool ok;
+		std::tie(memory, ok) = parseMemory(example.first);
 
 		CAPTURE(example.first);
 		CHECK(ok);
