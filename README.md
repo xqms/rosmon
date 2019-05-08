@@ -1,6 +1,6 @@
 # rosmon
 
-![screenshot](https://github.com/xqms/rosmon/raw/master/doc/screenshot.png)
+![screenshot](https://github.com/xqms/rosmon/raw/master/rosmon_core/doc/screenshot.png)
 
 `rosmon` is a drop-in replacement for the standard `roslaunch` tool. Rather
 unlike `roslaunch`, `rosmon` is focused on (remote) process monitoring.
