@@ -3,6 +3,7 @@
 
 #include "substitution.h"
 #include "substitution_python.h"
+#include "string_utils.h"
 
 #include "launch_config.h"
 #include "../package_registry.h"
@@ -128,6 +129,10 @@ static std::string parseOneElement(const std::string& input, const HandlerMap& h
 					std::string args;
 					if(pos != std::string::npos)
 						args = contents.substr(pos+1);
+
+					// Remove leading/trailing whitespace and simplify any
+					// internal whitespace
+					args = string_utils::simplifyWhitespace(args);
 
 					auto it = handlers.find(name);
 					if(it != handlers.end())
