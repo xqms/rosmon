@@ -297,6 +297,22 @@ TEST_CASE("eval", "[subst]")
 			</launch>
 		)EOF");
 	}
+
+	SECTION("lowercase booleans")
+	{
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<arg name="input" default="false" />
+				<param name="output" value="$(eval input == true)"/>
+			</launch>
+		)EOF");
+
+		config.evaluateParameters();
+
+		auto value = getTypedParam<bool>(config.parameters(), "/output");
+		CHECK(value == false);
+	}
 }
 
 TEST_CASE("dirname", "[subst]")
