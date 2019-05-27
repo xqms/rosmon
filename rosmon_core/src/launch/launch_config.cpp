@@ -5,6 +5,7 @@
 #include "substitution.h"
 #include "yaml_params.h"
 #include "bytes_parser.h"
+#include "string_utils.h"
 
 #include <ros/package.h>
 #include <ros/names.h>
@@ -30,64 +31,6 @@ namespace launch
 
 const char* UNSET_MARKER = "~~~~~ ROSMON-UNSET ~~~~~";
 
-/**
- * @brief Compress any sequence of whitespace to single spaces.
- *
- * Since we switch of space condensing in TinyXML to be able to properly parse
- * <rosparam> tags, this function can be used for attributes.
- *
- * roslaunch also strips whitespace at begin/end, so we do that as well.
- **/
-static std::string simplifyWhitespace(const std::string& input)
-{
-	std::string output;
-	output.reserve(input.size());
-
-	// Skip initial space
-	size_t i = 0;
-	for(; i < input.size(); ++i)
-	{
-		if(!std::isspace(static_cast<unsigned char>(input[i])))
-			break;
-	}
-
-	bool in_space = false;
-
-	for(; i < input.size(); ++i)
-	{
-		char c = input[i];
-
-		if(std::isspace(static_cast<unsigned char>(c)))
-			in_space = true;
-		else
-		{
-			if(in_space)
-				output.push_back(' ');
-
-			output.push_back(c);
-			in_space = false;
-		}
-	}
-
-	return output;
-}
-
-/**
- * @brief Check if string is whitespace only (includes '\n')
- **/
-static bool isOnlyWhitespace(const std::string& input)
-{
-	for(const char& c: input)
-	{
-		// see http://en.cppreference.com/w/cpp/string/byte/isspace
-		// for reason for casting
-		if(!std::isspace(static_cast<unsigned char>(c)))
-			return false;
-	}
-
-	return true;
-}
-
 ParseContext ParseContext::enterScope(const std::string& prefix)
 {
 	ParseContext ret = *this;
@@ -100,7 +43,7 @@ std::string ParseContext::evaluate(const std::string& tpl, bool simplifyWhitespa
 {
 	std::string simplified;
 	if(simplifyWhitespace)
-		simplified = rosmon::launch::simplifyWhitespace(tpl);
+		simplified = string_utils::simplifyWhitespace(tpl);
 	else
 		simplified = tpl;
 
@@ -862,7 +805,7 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 
 		// roslaunch silently ignores empty files (which are not valid YAML),
 		// so do the same here.
-		if(isOnlyWhitespace(contents))
+		if(string_utils::isOnlyWhitespace(contents))
 			return;
 
 		const char* subst_value = element->Attribute("subst_value");
