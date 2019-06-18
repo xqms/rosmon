@@ -121,6 +121,12 @@ std::string evaluatePython(const std::string& input, ParseContext& context)
 		global.update(mathDict);
 	}
 
+	// Lowercase booleans (why, roslaunch?)
+	{
+		global["true"] = py::object(true);
+		global["false"] = py::object(false);
+	}
+
 	py::object result;
 	try
 	{
