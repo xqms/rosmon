@@ -184,8 +184,6 @@ void Monitor::updateStats()
 	for(; it != end; ++it)
 	{
 		fs::path statPath = (*it) / "stat";
-		if(!fs::exists(statPath))
-			continue;
 
 		process_info::ProcessStat stat;
 		if(!process_info::readStatFile(statPath.c_str(), &stat))
