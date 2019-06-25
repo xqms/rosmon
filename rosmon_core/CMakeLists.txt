@@ -70,6 +70,13 @@ target_link_libraries(rosmon_launch_config
 	yaml-cpp
 )
 
+add_executable(_shim
+	src/monitor/shim.cpp
+)
+target_link_libraries(_shim
+	util
+)
+
 add_executable(rosmon
 	src/main.cpp
 	src/monitor/node_monitor.cpp
