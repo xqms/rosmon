@@ -2,6 +2,19 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* monitor: make fork() operation safe using external shim, PR #89
+* launch: handle lowercase true/false in $(eval), PR #86
+* launch: trim & simplify whitespace in subst contexts, PR #85
+* monitor: remove `exists` check for /proc/.../stat, PR #82
+* monitor: publish ROS diagnostics, PR #76
+* ros_interface: handle namespaces correctly, PRs #78, #80
+* launch: parse uppercase bool params, PR #79
+* ui: muting/unmuting of individual nodes, PR #73
+* cmake: add dependency for catkin_make builds, PR #75
+* Contributors: Adrien BARRAL, Artur Miller, Cartoonman, Christian Jülg, David Walsh, Eric Fang, Max Schwarz
+
 2.0.2 (2019-03-12)
 ------------------
 * rosmon_core: add tinyxml dependency to package.xml
