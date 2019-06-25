@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2019-06-25)
+------------------
 * monitor: make fork() operation safe using external shim, PR #89
 * launch: handle lowercase true/false in $(eval), PR #86
 * launch: trim & simplify whitespace in subst contexts, PR #85

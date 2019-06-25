@@ -2,8 +2,8 @@
 Changelog for package rqt_rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2019-06-25)
+------------------
 * handle namespaces in service calls correctly, PR #80
 * show node namespaces, PR #78
 * add dependencies for catkin_make builds, PR #75
