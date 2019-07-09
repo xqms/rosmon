@@ -157,7 +157,8 @@ catkin_add_env_hooks(50-rosmon
 	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks
 )
 
-install(TARGETS rosmon rosmon_launch_config
+install(TARGETS rosmon rosmon_launch_config _shim
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
