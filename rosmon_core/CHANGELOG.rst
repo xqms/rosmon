@@ -2,6 +2,11 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rosmon_core: add _shim to installed targets, issue #91
+* Contributors: Max Schwarz
+
 2.1.0 (2019-06-25)
 ------------------
 * monitor: make fork() operation safe using external shim, PR #89
