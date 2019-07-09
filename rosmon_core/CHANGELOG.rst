@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.1 (2019-07-09)
+------------------
 * rosmon_core: add _shim to installed targets, issue #91
 * Contributors: Max Schwarz
 
