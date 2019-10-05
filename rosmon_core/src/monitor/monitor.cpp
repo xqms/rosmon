@@ -59,7 +59,7 @@ Monitor::Monitor(launch::LaunchConfig::ConstPtr config, FDWatcher::Ptr watcher)
 	m_statTimer = m_nh.createWallTimer(
 #endif
 		ros::WallDuration(1.0),
-		boost::bind(&Monitor::updateStats, this)
+		boost::bind(&Monitor::updateStats, this, _1)
 	);
 }
 
@@ -162,7 +162,11 @@ void Monitor::log(const char* fmt, const Args& ... args)
 	);
 }
 
-void Monitor::updateStats()
+#if HAVE_STEADYTIMER
+void Monitor::updateStats(const ros::SteadyTimerEvent& event)
+#else
+void Monitor::updateStats(const ros::WallTimerEvent& event)
+#endif
 {
 	namespace fs = boost::filesystem;
 
@@ -218,8 +222,10 @@ void Monitor::updateStats()
 		infoIt->second.stat = stat;
 	}
 
+	double elapsedTime = (event.current_real - event.last_real).toSec();
+
 	for(auto& node : m_nodes)
-		node->endStatUpdate(process_info::kernel_hz());
+		node->endStatUpdate(elapsedTime * process_info::kernel_hz());
 
 	// Clean up old processes
 	for(auto it = m_processInfos.begin(); it != m_processInfos.end();)

@@ -114,7 +114,7 @@ public:
 	void beginStatUpdate();
 	void addCPUTime(uint64_t userTime, uint64_t systemTime);
 	void addMemory(uint64_t memoryBytes);
-	void endStatUpdate(uint64_t elapsedTime);
+	void endStatUpdate(double elapsedTimeInTicks);
 
 	/**
 	 * @brief Estimate of the userspace load

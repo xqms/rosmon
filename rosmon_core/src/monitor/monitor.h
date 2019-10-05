@@ -58,7 +58,11 @@ private:
 
 	void handleRequiredNodeExit(const std::string& name);
 
-	void updateStats();
+#if HAVE_STEADYTIMER
+	void updateStats(const ros::SteadyTimerEvent& event);
+#else
+	void updateStats(const ros::WallTimerEvent& event);
+#endif
 
 	launch::LaunchConfig::ConstPtr m_config;
 

@@ -1,0 +1,5 @@
+<launch>
+	<node name="busy" pkg="rosmon_core" type="busy_node.py">
+	</node>
+</launch>
+

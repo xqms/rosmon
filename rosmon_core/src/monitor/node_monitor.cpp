@@ -636,10 +636,10 @@ void NodeMonitor::addMemory(uint64_t memoryBytes)
 	m_memory += memoryBytes;
 }
 
-void NodeMonitor::endStatUpdate(uint64_t elapsedTime)
+void NodeMonitor::endStatUpdate(double elapsedTimeInTicks)
 {
-	m_userLoad = float(m_userTime) / elapsedTime;
-	m_systemLoad = float(m_systemTime) / elapsedTime;
+	m_userLoad = m_userTime / elapsedTimeInTicks;
+	m_systemLoad = m_systemTime / elapsedTimeInTicks;
 }
 
 }
