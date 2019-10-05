@@ -85,7 +85,7 @@ void NodeModel::updateState(const rosmon_msgs::StateConstPtr& state)
 		{
 			*it = key;
 			covered[row] = true;
-			dataChanged(index(row, 0), index(row, COL_COUNT));
+			dataChanged(index(row, 0), index(row, COL_COUNT-1));
 		}
 	}
 
