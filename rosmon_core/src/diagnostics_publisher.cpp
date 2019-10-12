@@ -68,6 +68,10 @@ void DiagnosticsPublisher::publish(const std::vector<NodeMonitor::Ptr>& state)
 		kv.value = memoryToString(nodeState->memory());
 		nodeStatus.values.push_back(kv);
 
+		kv.key = "restart count";
+		kv.value = std::to_string(nodeState->restartCount());
+		nodeStatus.values.push_back(kv);
+
 		// Apply the operation level rule :
 		// If process is CRASHED => ERROR
 		// If process has been automatically restarted => WARN
@@ -84,7 +88,7 @@ void DiagnosticsPublisher::publish(const std::vector<NodeMonitor::Ptr>& state)
 			if(nodeState->restartCount() > 0)
 			{
 				nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
-				msg = "restart count > 0!";
+				msg = "restart count > 0! (" + std::to_string(nodeState->restartCount()) + ")";
 			}
 
 			if(nodeState->memory() > nodeState->memoryLimit())
