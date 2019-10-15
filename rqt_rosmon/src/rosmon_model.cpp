@@ -10,6 +10,8 @@
 #include <ros/master.h>
 #include <ros/names.h>
 
+#include <algorithm>
+
 namespace rqt_rosmon
 {
 
@@ -61,7 +63,7 @@ void ROSMonModel::updateData()
 		nodeList << QString::fromStdString(ros::names::parentNamespace(topic.name));
 	}
 
-	qSort(nodeList);
+	std::sort(nodeList.begin(), nodeList.end());
 
 	nodeList.prepend("[auto]");
 
