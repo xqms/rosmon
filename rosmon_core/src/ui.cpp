@@ -181,26 +181,37 @@ void UI::drawStatusLine()
 
 		for(auto& node : m_monitor->nodes())
 		{
-			// Print key with grey background
-			Terminal::SimpleColor keyForegroundColor = Terminal::Black;
-			Terminal::SimpleColor keyBackgroundColor = Terminal::White;
-			uint32_t keyBackgroundColor256 = 0xC8C8C8;
-
-			if(isMuted(node->name()))
+			if(m_selectedNode == -1)
 			{
-				keyBackgroundColor = Terminal::Red;
-				keyForegroundColor = Terminal::White;
-				keyBackgroundColor256 = 0x0000A5;
+				// Print key with grey background
+				Terminal::SimpleColor keyForegroundColor = Terminal::Black;
+				Terminal::SimpleColor keyBackgroundColor = Terminal::White;
+				uint32_t keyBackgroundColor256 = 0xC8C8C8;
+
+				if(isMuted(node->name()))
+				{
+					keyBackgroundColor = Terminal::Red;
+					keyForegroundColor = Terminal::White;
+					keyBackgroundColor256 = 0x0000A5;
+				}
+
+				m_term.setSimpleForeground(keyForegroundColor);
+
+				if(m_term.has256Colors())
+					m_term.setBackgroundColor(keyBackgroundColor256);
+				else
+					m_term.setSimpleBackground(keyBackgroundColor);
+
+				fmt::print("{:c}", key);
 			}
-
-			m_term.setSimpleForeground(keyForegroundColor);
-
-			if(m_term.has256Colors())
-				m_term.setBackgroundColor(keyBackgroundColor256);
 			else
-				m_term.setSimpleBackground(keyBackgroundColor);
-
-			fmt::print("{:c}", key);
+			{
+				if(m_selectedNode == i)
+					m_term.setSimpleBackground(Terminal::Cyan);
+				else
+					m_term.setStandardColors();
+				fmt::print(" ");
+			}
 
 			switch(node->state())
 			{
