@@ -398,7 +398,7 @@ void UI::handleInput()
 			if(!m_searchString.empty())
 				m_searchString.pop_back();
 		}
-		else
+		else if(std::isgraph(c))
 			m_searchString.push_back(c);
 
 		m_searchSelectedIndex = 0;
