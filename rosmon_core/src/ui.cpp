@@ -103,8 +103,12 @@ void UI::drawStatusLine()
 
 	unsigned int lines = 2;
 
-	// Print menu if a node is selected
-	if(m_selectedNode != -1)
+	// Print menu / status line
+	if(m_searchActive)
+	{
+		fmt::print("Searching for: {}", m_searchString);
+	}
+	else if(m_selectedNode != -1)
 	{
 		auto& selectedNode = m_monitor->nodes()[m_selectedNode];
 		std::string muteOption = isMuted(selectedNode->name()) ? "u: unmute" : "m: mute"; 
@@ -127,88 +131,138 @@ void UI::drawStatusLine()
 
 	int col = 0;
 
-	char key = 'a';
-	int i = 0;
-
-	for(auto& node : m_monitor->nodes())
+	if(m_searchActive)
 	{
-		// Print key with grey background
-		Terminal::SimpleColor keyForegroundColor = Terminal::Black;
-		Terminal::SimpleColor keyBackgroundColor = Terminal::White;
-		uint32_t keyBackgroundColor256 = 0xC8C8C8;
+		unsigned int i = 0;
 
-		if(isMuted(node->name()))
+		for(auto& nodeIdx : m_searchNodes)
 		{
-			keyBackgroundColor = Terminal::Red;
-			keyForegroundColor = Terminal::White;
-			keyBackgroundColor256 = 0x0000A5;
-		}
-		
-		m_term.setSimpleForeground(keyForegroundColor);
-		
-		if(m_term.has256Colors())
-			m_term.setBackgroundColor(keyBackgroundColor256);
-		else
-			m_term.setSimpleBackground(keyBackgroundColor);
+			const auto& node = m_monitor->nodes()[nodeIdx];
 
-		fmt::print("{:c}", key);
+			fmt::print(" ");
 
-		switch(node->state())
-		{
-			case monitor::NodeMonitor::STATE_RUNNING:
-				m_term.setSimplePair(Terminal::Black, Terminal::Green);
-				break;
-			case monitor::NodeMonitor::STATE_IDLE:
+			if(i == m_searchSelectedIndex)
+				m_term.setSimplePair(Terminal::Black, Terminal::Cyan);
+			else
 				m_term.setStandardColors();
-				break;
-			case monitor::NodeMonitor::STATE_CRASHED:
-				m_term.setSimplePair(Terminal::Black, Terminal::Red);
-				break;
-			case monitor::NodeMonitor::STATE_WAITING:
-				m_term.setSimplePair(Terminal::Black, Terminal::Yellow);
-				break;
+
+			std::string label = node->name().substr(0, NODE_WIDTH+2);
+			fmt::print("{:^{}}", label, NODE_WIDTH+2);
+			m_term.setStandardColors();
+
+			// Primitive wrapping control
+			const int BLOCK_WIDTH = NODE_WIDTH + 3;
+			col += BLOCK_WIDTH;
+
+			if(col + 1 + BLOCK_WIDTH < m_columns)
+			{
+				printf(" ");
+				col += 1;
+			}
+			else if(col == m_columns)
+			{
+				col = 0;
+				lines++;
+			}
+			else if(col + 1 + BLOCK_WIDTH > m_columns)
+			{
+				col = 0;
+				lines++;
+				printf("\n\033[K");
+			}
+
+			++i;
 		}
+	}
+	else
+	{
+		char key = 'a';
+		int i = 0;
 
-		std::string label = node->name().substr(0, NODE_WIDTH);
-		if(i == m_selectedNode)
-			fmt::print("[{:^{}}]", label, NODE_WIDTH);
-		else
-			fmt::print(" {:^{}} ", label, NODE_WIDTH);
-		m_term.setStandardColors();
-
-		// Primitive wrapping control
-		const int BLOCK_WIDTH = NODE_WIDTH + 3;
-		col += BLOCK_WIDTH;
-
-		if(col + 1 + BLOCK_WIDTH < m_columns)
+		for(auto& node : m_monitor->nodes())
 		{
-			printf(" ");
-			col += 1;
-		}
-		else if(col == m_columns)
-		{
-			col = 0;
-			lines++;
-		}
-		else if(col + 1 + BLOCK_WIDTH > m_columns)
-		{
-			col = 0;
-			lines++;
-			printf("\n\033[K");
-		}
+			// Print key with grey background
+			Terminal::SimpleColor keyForegroundColor = Terminal::Black;
+			Terminal::SimpleColor keyBackgroundColor = Terminal::White;
+			uint32_t keyBackgroundColor256 = 0xC8C8C8;
 
-		if(key == 'z')
-			key = 'A';
-		else if(key == 'Z')
-			key = '0';
-		else if(key == '9')
-			key = ' ';
-		else if(key != ' ')
-			++key;
+			if(isMuted(node->name()))
+			{
+				keyBackgroundColor = Terminal::Red;
+				keyForegroundColor = Terminal::White;
+				keyBackgroundColor256 = 0x0000A5;
+			}
 
-		++i;
+			m_term.setSimpleForeground(keyForegroundColor);
+
+			if(m_term.has256Colors())
+				m_term.setBackgroundColor(keyBackgroundColor256);
+			else
+				m_term.setSimpleBackground(keyBackgroundColor);
+
+			fmt::print("{:c}", key);
+
+			switch(node->state())
+			{
+				case monitor::NodeMonitor::STATE_RUNNING:
+					m_term.setSimplePair(Terminal::Black, Terminal::Green);
+					break;
+				case monitor::NodeMonitor::STATE_IDLE:
+					m_term.setStandardColors();
+					break;
+				case monitor::NodeMonitor::STATE_CRASHED:
+					m_term.setSimplePair(Terminal::Black, Terminal::Red);
+					break;
+				case monitor::NodeMonitor::STATE_WAITING:
+					m_term.setSimplePair(Terminal::Black, Terminal::Yellow);
+					break;
+			}
+
+			std::string label = node->name().substr(0, NODE_WIDTH);
+			if(i == m_selectedNode)
+				fmt::print("[{:^{}}]", label, NODE_WIDTH);
+			else
+				fmt::print(" {:^{}} ", label, NODE_WIDTH);
+			m_term.setStandardColors();
+
+			// Primitive wrapping control
+			const int BLOCK_WIDTH = NODE_WIDTH + 3;
+			col += BLOCK_WIDTH;
+
+			if(col + 1 + BLOCK_WIDTH < m_columns)
+			{
+				printf(" ");
+				col += 1;
+			}
+			else if(col == m_columns)
+			{
+				col = 0;
+				lines++;
+			}
+			else if(col + 1 + BLOCK_WIDTH > m_columns)
+			{
+				col = 0;
+				lines++;
+				printf("\n\033[K");
+			}
+
+			if(key == 'z')
+				key = 'A';
+			else if(key == 'Z')
+				key = '0';
+			else if(key == '9')
+				key = ' ';
+			else if(key != ' ')
+				++key;
+
+			++i;
+		}
 	}
 
+	// Erase rest of current line
+	printf("\033[K");
+
+	// Erase rest of the lines
 	for(unsigned int i = lines; i < g_statusLines; ++i)
 		printf("\n\033[K");
 
@@ -290,6 +344,60 @@ void UI::handleInput()
 	if(c < 0)
 		return;
 
+	// Are we in search mode?
+	if(m_searchActive)
+	{
+		if(c == '\n')
+		{
+			if(m_searchSelectedIndex >= 0 && m_searchSelectedIndex < m_searchNodes.size())
+				m_selectedNode = m_searchNodes[m_searchSelectedIndex];
+			else
+				m_selectedNode = -1;
+
+			m_searchActive = false;
+			return;
+		}
+
+		if(c == '\E')
+		{
+			m_selectedNode = -1;
+			m_searchActive = false;
+			return;
+		}
+
+		if(c == '\t')
+		{
+			m_searchSelectedIndex++;
+			if(m_searchSelectedIndex >= m_searchNodes.size())
+				m_searchSelectedIndex = 0;
+
+			return;
+		}
+
+		if(c == Terminal::SK_Backspace)
+		{
+			if(!m_searchString.empty())
+				m_searchString.pop_back();
+		}
+		else
+			m_searchString.push_back(c);
+
+		m_searchSelectedIndex = 0;
+
+		// Recompute matched nodes
+		m_searchNodes.clear();
+		const auto& nodes = m_monitor->nodes();
+		for(unsigned int i = 0; i < nodes.size(); ++i)
+		{
+			const auto& node = nodes[i];
+			auto idx = node->name().find(m_searchString);
+			if(idx != std::string::npos)
+				m_searchNodes.push_back(i);
+		}
+
+		return;
+	}
+
 	if(m_selectedNode == -1)
 	{
 		int nodeIndex = -1;
@@ -304,6 +412,15 @@ void UI::handleInput()
 		if(c == Terminal::SK_F10)
 		{
 			unmuteAll();
+			return;
+		}
+		if(c == '/')
+		{
+			m_searchString = {};
+			m_searchSelectedIndex = 0;
+			m_searchNodes.resize(m_monitor->nodes().size());
+			std::iota(m_searchNodes.begin(), m_searchNodes.end(), 0);
+			m_searchActive = true;
 			return;
 		}
 
