@@ -103,6 +103,12 @@ void UI::drawStatusLine()
 
 	unsigned int lines = 2;
 
+	// Draw line using UTF-8 box characters
+	for(int i = 0; i < m_columns-1; ++i)
+		fmt::print("▁");
+	m_term.clearToEndOfLine();
+	putchar('\n');
+
 	// Print menu / status line
 	if(m_searchActive)
 	{
@@ -127,6 +133,7 @@ void UI::drawStatusLine()
 		}
 	}
 
+	m_term.clearToEndOfLine();
 	fmt::print("\n");
 
 	int col = 0;
@@ -331,8 +338,6 @@ void UI::update()
 		return;
 
 	// We currently are at the beginning of the status line.
-	putchar('\n');
-	m_term.clearToEndOfLine();
 	drawStatusLine();
 
 	// Move back
