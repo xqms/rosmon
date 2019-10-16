@@ -112,10 +112,12 @@ void UI::drawStatusLine()
 	// Print menu / status line
 	if(m_searchActive)
 	{
+		m_term.setSimpleForeground(Terminal::Yellow);
 		fmt::print("Searching for: {}", m_searchString);
 	}
 	else if(m_selectedNode != -1)
 	{
+		m_term.setSimpleForeground(Terminal::Yellow);
 		auto& selectedNode = m_monitor->nodes()[m_selectedNode];
 		std::string muteOption = isMuted(selectedNode->name()) ? "u: unmute" : "m: mute"; 
 
@@ -133,6 +135,7 @@ void UI::drawStatusLine()
 		}
 	}
 
+	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	fmt::print("\n");
 
