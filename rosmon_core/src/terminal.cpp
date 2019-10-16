@@ -469,6 +469,9 @@ int Terminal::readKey()
 		}
 	}
 
+	if(c == 0x7f) // ASCII delete
+		return SK_Backspace;
+
 	return c;
 }
 
