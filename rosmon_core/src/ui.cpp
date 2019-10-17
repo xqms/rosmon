@@ -143,7 +143,15 @@ void UI::drawStatusLine()
 
 	if(m_searchActive)
 	{
+		const auto& nodes = m_monitor->nodes();
 		unsigned int i = 0;
+
+		std::size_t nodeWidth = NODE_WIDTH+2;
+		for(auto& nodeIdx : m_searchNodes)
+			nodeWidth = std::max(nodeWidth, nodes[nodeIdx]->name().length());
+
+		if(m_searchNodes.size() * (nodeWidth+3) >= static_cast<std::size_t>(m_columns-1))
+			nodeWidth = NODE_WIDTH+2;
 
 		for(auto& nodeIdx : m_searchNodes)
 		{
@@ -156,12 +164,12 @@ void UI::drawStatusLine()
 			else
 				m_term.setStandardColors();
 
-			std::string label = node->name().substr(0, NODE_WIDTH+2);
-			fmt::print("{:^{}}", label, NODE_WIDTH+2);
+			std::string label = node->name().substr(0, nodeWidth);
+			fmt::print("{:^{}}", label, nodeWidth);
 			m_term.setStandardColors();
 
 			// Primitive wrapping control
-			const int BLOCK_WIDTH = NODE_WIDTH + 3;
+			const int BLOCK_WIDTH = nodeWidth + 3;
 			col += BLOCK_WIDTH;
 
 			if(col + 1 + BLOCK_WIDTH < m_columns)
