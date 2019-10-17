@@ -159,6 +159,7 @@ Terminal::Terminal()
 			// Sadly, there is no way to determine the Konsole version. Since
 			// any reasonably recent version supports true colors, just assume
 			// true color support
+			termOverride = "xterm-256color";
 			m_truecolor = true;
 			m_256colors = true;
 		}
@@ -166,6 +167,7 @@ Terminal::Terminal()
 		char* vte_version = getenv("VTE_VERSION");
 		if(vte_version && boost::lexical_cast<unsigned int>(vte_version) >= 3600)
 		{
+			termOverride = "xterm-256color";
 			m_256colors = true;
 			m_truecolor = true;
 		}
