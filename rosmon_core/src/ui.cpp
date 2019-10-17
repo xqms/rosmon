@@ -245,21 +245,17 @@ void UI::drawStatusLine()
 			const int BLOCK_WIDTH = nodeWidth + 3;
 			col += BLOCK_WIDTH;
 
-			if(col + 1 + BLOCK_WIDTH < m_columns)
+			if(col + 1 + BLOCK_WIDTH <= m_columns)
 			{
 				printf(" ");
 				col += 1;
-			}
-			else if(col == m_columns)
-			{
-				col = 0;
-				lines++;
 			}
 			else if(col + 1 + BLOCK_WIDTH > m_columns)
 			{
 				col = 0;
 				lines++;
-				printf("\n\033[K");
+				m_term.clearToEndOfLine();
+				putchar('\n');
 			}
 
 			++i;
@@ -336,22 +332,17 @@ void UI::drawStatusLine()
 			const int BLOCK_WIDTH = NODE_WIDTH + 3;
 			col += BLOCK_WIDTH;
 
-			if(col + BLOCK_WIDTH < m_columns)
+			if(col + 1 + BLOCK_WIDTH <= m_columns)
 			{
-				putchar(' ');
+				printf(" ");
 				col += 1;
-			}
-			else if(col == m_columns)
-			{
-				putchar('\n');
-				col = 0;
-				lines++;
 			}
 			else if(col + 1 + BLOCK_WIDTH > m_columns)
 			{
 				col = 0;
 				lines++;
-				printf("\n\033[K");
+				m_term.clearToEndOfLine();
+				putchar('\n');
 			}
 
 			if(key == 'z')
@@ -368,7 +359,7 @@ void UI::drawStatusLine()
 	}
 
 	// Erase rest of current line
-	printf("\033[K");
+	m_term.clearToEndOfLine();
 
 	// Erase rest of the lines
 	for(unsigned int i = lines; i < g_statusLines; ++i)
