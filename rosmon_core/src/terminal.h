@@ -171,6 +171,11 @@ public:
 
 	int readKey();
 
+	/**
+	 * Enable/disable terminal linewrap
+	 **/
+	void setLineWrap(bool on);
+
 private:
 	bool m_valid;
 	bool m_256colors;
@@ -183,6 +188,8 @@ private:
 	std::string m_elStr;
 	std::string m_upStr;
 	std::string m_boldStr;
+	std::string m_lineWrapOffStr;
+	std::string m_lineWrapOnStr;
 
 	std::map<std::string, SpecialKey> m_specialKeys;
 

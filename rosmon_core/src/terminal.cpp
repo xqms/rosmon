@@ -209,6 +209,9 @@ Terminal::Terminal()
 
 	m_boldStr = tigetstr("bold");
 
+	m_lineWrapOffStr = tigetstr("rmam");
+	m_lineWrapOnStr = tigetstr("smam");
+
 	auto registerKey = [&](const char* name, SpecialKey key){
 		char* code = tigetstr(name);
 
@@ -385,6 +388,14 @@ void Terminal::moveCursorUp(int numLines)
 void Terminal::moveCursorToStartOfLine()
 {
 	putchar('\r');
+}
+
+void Terminal::setLineWrap(bool on)
+{
+	if(on)
+		putp(m_lineWrapOnStr.c_str());
+	else
+		putp(m_lineWrapOffStr.c_str());
 }
 
 bool Terminal::getSize(int* outColumns, int* outRows)

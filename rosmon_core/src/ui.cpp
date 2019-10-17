@@ -340,6 +340,9 @@ void UI::update()
 	if(!m_term.interactive())
 		return;
 
+	// Disable automatic linewrap. This prevents ugliness on terminal resize.
+	m_term.setLineWrap(false);
+
 	// We currently are at the beginning of the status line.
 	drawStatusLine();
 
@@ -347,6 +350,10 @@ void UI::update()
 	m_term.clearToEndOfLine();
 	m_term.moveCursorUp(g_statusLines);
 	m_term.moveCursorToStartOfLine();
+
+	// Enable automatic linewrap again
+	m_term.setLineWrap(true);
+
 	fflush(stdout);
 }
 
