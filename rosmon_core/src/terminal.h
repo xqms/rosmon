@@ -164,10 +164,17 @@ public:
 	{
 		SK_F1 = 0x100, SK_F2, SK_F3, SK_F4,
 		SK_F5, SK_F6, SK_F7, SK_F8,
-		SK_F9, SK_F10, SK_F11, SK_F12
+		SK_F9, SK_F10, SK_F11, SK_F12,
+
+		SK_Backspace
 	};
 
 	int readKey();
+
+	/**
+	 * Enable/disable terminal linewrap
+	 **/
+	void setLineWrap(bool on);
 
 private:
 	bool m_valid;
@@ -181,6 +188,8 @@ private:
 	std::string m_elStr;
 	std::string m_upStr;
 	std::string m_boldStr;
+	std::string m_lineWrapOffStr;
+	std::string m_lineWrapOnStr;
 
 	std::map<std::string, SpecialKey> m_specialKeys;
 

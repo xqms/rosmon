@@ -76,6 +76,11 @@ private:
 	int m_selectedNode;
 
 	std::string m_strSetColor;
+
+	bool m_searchActive = false;
+	std::string m_searchString;
+	unsigned int m_searchSelectedIndex;
+	std::vector<unsigned int> m_searchNodes;
 };
 
 }

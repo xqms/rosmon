@@ -209,15 +209,28 @@ Terminal::Terminal()
 
 	m_boldStr = tigetstr("bold");
 
-	// Map function keys
-	for(int i = 0; i < 12; ++i)
-	{
-		char* code = tigetstr(fmt::format("kf{}", i+1).c_str());
+	m_lineWrapOffStr = tigetstr("rmam");
+	m_lineWrapOnStr = tigetstr("smam");
+
+	auto registerKey = [&](const char* name, SpecialKey key){
+		char* code = tigetstr(name);
 
 		// Who comes up with these return codes?
 		if(code && code != reinterpret_cast<char*>(-1))
-			m_specialKeys[code] = static_cast<SpecialKey>(SK_F1 + i);
+			m_specialKeys[code] = key;
+	};
+
+	// Map function keys
+	for(int i = 0; i < 12; ++i)
+	{
+		registerKey(
+			fmt::format("kf{}", i+1).c_str(),
+			static_cast<SpecialKey>(SK_F1 + i)
+		);
 	}
+
+	// Backspace
+	registerKey("kbs", SK_Backspace);
 }
 
 bool Terminal::has256Colors() const
@@ -377,6 +390,14 @@ void Terminal::moveCursorToStartOfLine()
 	putchar('\r');
 }
 
+void Terminal::setLineWrap(bool on)
+{
+	if(on)
+		putp(m_lineWrapOnStr.c_str());
+	else
+		putp(m_lineWrapOffStr.c_str());
+}
+
 bool Terminal::getSize(int* outColumns, int* outRows)
 {
 	struct winsize w;
@@ -458,6 +479,9 @@ int Terminal::readKey()
 			return lastMatch;
 		}
 	}
+
+	if(c == 0x7f) // ASCII delete
+		return SK_Backspace;
 
 	return c;
 }
