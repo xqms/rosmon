@@ -86,7 +86,49 @@ public:
 		bool m_bold;
 	};
 
+	class Color
+	{
+	public:
+		Color()
+		{}
+
+		void foreground() { fputs(m_fgString.c_str(), stdout); }
+		void background() { fputs(m_bgString.c_str(), stdout); }
+	private:
+		friend class Terminal;
+
+		Color(const std::string& fg, const std::string& bg)
+		 : m_fgString{fg}, m_bgString{bg}
+		{}
+
+		std::string m_fgString;
+		std::string m_bgString;
+	};
+
+	class Style
+	{
+	public:
+		Style()
+		{}
+
+		Style(Color fg, Color bg)
+		 : m_fg(std::move(fg)), m_bg(std::move(bg))
+		{}
+
+		void use()
+		{
+			m_fg.foreground();
+			m_bg.background();
+		}
+	private:
+		Color m_fg;
+		Color m_bg;
+	};
+
 	Terminal();
+
+	Color color(SimpleColor code);
+	Color color(uint32_t truecolor, SimpleColor fallback);
 
 	/**
 	 * @brief Set 24-bit foreground color

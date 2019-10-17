@@ -488,4 +488,26 @@ int Terminal::readKey()
 	return c;
 }
 
+Terminal::Color Terminal::color(SimpleColor code)
+{
+	return Color{
+		std::string{tiparm(m_fgColorStr.c_str(), code)},
+		std::string{tiparm(m_bgColorStr.c_str(), code)}
+	};
+}
+
+Terminal::Color Terminal::color(uint32_t rgb, SimpleColor fallback)
+{
+	if(!has256Colors())
+		return color(fallback);
+
+	if(!m_truecolor)
+		return color(static_cast<SimpleColor>(ansiColor(rgb)));
+
+	return Color{
+		fmt::format("\033[38;2;{};{};{}m", rgb & 0xFF, (rgb >> 8) & 0xFF, (rgb >> 16) & 0xFF),
+		fmt::format("\033[48;2;{};{};{}m", rgb & 0xFF, (rgb >> 8) & 0xFF, (rgb >> 16) & 0xFF),
+	};
+}
+
 }
