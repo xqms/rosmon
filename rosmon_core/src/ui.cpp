@@ -429,17 +429,19 @@ void UI::handleInput()
 		int nodeIndex = -1;
 
 		// Check for Mute all keys first
-
 		if(c == Terminal::SK_F9)
 		{
 			muteAll();
 			return;
 		}
+
 		if(c == Terminal::SK_F10)
 		{
 			unmuteAll();
 			return;
 		}
+
+		// Search
 		if(c == '/')
 		{
 			m_searchString = {};
