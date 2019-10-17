@@ -125,7 +125,7 @@ void UI::drawStatusLine()
 	}
 	else
 	{
-		fmt::print("Global shortcuts: <node key>: show node menu, F9: mute all, F10: unmute all ");
+		fmt::print("Global shortcuts: <node key>: show node menu, F9: mute all, F10: unmute all, /: Search");
 		if (anyMuted())
 		{
 			m_term.setSimpleForeground(Terminal::Black);
