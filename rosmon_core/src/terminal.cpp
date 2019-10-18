@@ -119,6 +119,15 @@ void Terminal::Parser::apply(Terminal* term)
 	}
 }
 
+std::string safe_tigetstr(const char* key)
+{
+	const char* ret = tigetstr(key);
+	if(!ret || ret == reinterpret_cast<const char*>(-1))
+		return {};
+
+	return ret;
+}
+
 Terminal::Terminal()
  : m_valid(false)
  , m_256colors(false)
@@ -189,30 +198,33 @@ Terminal::Terminal()
 		m_256colors = num_colors >= 256;
 	}
 
-	{
-		const char* bgColor = tigetstr("setab");
-		if(bgColor && bgColor != (char*)-1)
-			m_bgColorStr = bgColor;
-		else
-			fmt::print("Your terminal does not support ANSI background!\n");
-	}
-	{
-		const char* fgColor = tigetstr("setaf");
-		if(fgColor && fgColor != (char*)-1)
-			m_fgColorStr = fgColor;
-		else
+	m_bgColorStr = safe_tigetstr("setab");
+	if(m_bgColorStr.empty())
+		fmt::print("Your terminal does not support ANSI background!\n");
+
+	m_fgColorStr = safe_tigetstr("setaf");
+	if(m_fgColorStr.empty())
 			fmt::print("Your terminal does not support ANSI foreground!\n");
-	}
 
-	m_opStr = tigetstr("op");
-	m_sgr0Str = tigetstr("sgr0");
-	m_elStr = tigetstr("el");
-	m_upStr = tigetstr("cuu");
+	m_opStr = safe_tigetstr("op");
+	m_sgr0Str = safe_tigetstr("sgr0");
+	m_elStr = safe_tigetstr("el");
+	m_upStr = safe_tigetstr("cuu");
 
-	m_boldStr = tigetstr("bold");
+	m_boldStr = safe_tigetstr("bold");
 
-	m_lineWrapOffStr = tigetstr("rmam");
-	m_lineWrapOnStr = tigetstr("smam");
+	// The terminfo db says screen doesn't support rmam/smam, but both screen
+	// and tmux do. *sigh*
+	const char* TERM = getenv("TERM");
+	const bool isScreen = TERM && strcmp(TERM, "screen") == 0;
+
+	m_lineWrapOffStr = safe_tigetstr("rmam");
+	if(m_lineWrapOffStr.empty() && isScreen)
+		m_lineWrapOffStr = "\033[?7l";
+
+	m_lineWrapOnStr = safe_tigetstr("smam");
+	if(m_lineWrapOnStr.empty() && isScreen)
+		m_lineWrapOnStr = "\033[?7h";
 
 	auto registerKey = [&](const char* name, SpecialKey key){
 		char* code = tigetstr(name);
