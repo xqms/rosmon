@@ -63,14 +63,14 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
 	}
 
 	// Setup colors & styles
-	auto barColor = m_term.color(0x404000, Terminal::Cyan);
+	m_color_bar = m_term.color(0x404000, Terminal::Cyan);
 	auto white = m_term.color(0xffffff, Terminal::White);
 	auto barFg = m_term.color(0xffffff, Terminal::Black);
 
-	m_style_barLine = Terminal::Style{barColor, m_term.color(Terminal::Black)};
-	m_style_bar = Terminal::Style{barFg, barColor};
+	m_style_barLine = Terminal::Style{m_color_bar, m_term.color(Terminal::Black)};
+	m_style_bar = Terminal::Style{barFg, m_color_bar};
 	m_style_barKey = Terminal::Style{barFg, m_term.color(0x606000, Terminal::Blue)};
-	m_style_barHighlight = Terminal::Style{m_term.color(0x00FFFF, Terminal::Red), barColor};
+	m_style_barHighlight = Terminal::Style{m_term.color(0x00FFFF, Terminal::Red), m_color_bar};
 
 	m_style_nodeKey = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0xC8C8C8, Terminal::White)};
 	m_style_nodeKeyMuted = Terminal::Style{white, m_term.color(0x0000A5, Terminal::Red)};
@@ -148,7 +148,7 @@ void UI::drawStatusLine()
 
 	// Draw line using UTF-8 box characters
 	{
-		m_style_barLine.use();
+		m_color_bar.foreground();
 		for(int i = 0; i < m_columns; ++i)
 			fmt::print("▂");
 		m_term.setStandardColors();

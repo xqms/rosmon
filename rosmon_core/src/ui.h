@@ -82,6 +82,8 @@ private:
 	unsigned int m_searchSelectedIndex;
 	std::vector<unsigned int> m_searchNodes;
 
+	Terminal::Color m_color_bar;
+
 	Terminal::Style m_style_barLine;
 	Terminal::Style m_style_bar;
 	Terminal::Style m_style_barKey;
