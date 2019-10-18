@@ -405,7 +405,7 @@ void UI::log(const std::string& channel, const std::string& str)
 		m_term.setSimplePair(Terminal::Black, Terminal::White);
 	}
 
-	fmt::print("{:>20}:", channel);
+	fmt::print("{:>{}}:", channel, m_nodeLabelWidth);
 	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	putchar(' ');
@@ -455,6 +455,12 @@ void UI::checkWindowSize()
 	int rows, columns;
 	if(m_term.getSize(&columns, &rows))
 		m_columns = columns;
+
+	std::size_t w = 20;
+	for(const auto& node : m_monitor->nodes())
+		w = std::max(w, node->name().size());
+
+	m_nodeLabelWidth = std::min<unsigned int>(w, m_columns/4);
 }
 
 void UI::handleInput()

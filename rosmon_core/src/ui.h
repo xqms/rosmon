@@ -99,6 +99,8 @@ private:
 	Terminal::Style m_style_nodeRunningFaded;
 	Terminal::Style m_style_nodeCrashedFaded;
 	Terminal::Style m_style_nodeWaitingFaded;
+
+	unsigned int m_nodeLabelWidth = 20;
 };
 
 }
