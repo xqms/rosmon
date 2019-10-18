@@ -119,6 +119,27 @@ void UI::setupColors()
 	}
 }
 
+// Could be done more elegantly in C++14 with a variadic lambda
+namespace
+{
+	class ColumnPrinter
+	{
+	public:
+		constexpr unsigned int column() const
+		{ return m_column; }
+
+		template<typename ... Args>
+		void operator()(Args&& ... args)
+		{
+			std::string str = fmt::format(std::forward<Args>(args)...);
+			m_column += str.size();
+			fputs(str.c_str(), stdout);
+		}
+	private:
+		unsigned int m_column = 0;
+	};
+}
+
 void UI::drawStatusLine()
 {
 	const int NODE_WIDTH = 13;
@@ -139,21 +160,19 @@ void UI::drawStatusLine()
 
 	// Print menu / status line
 	{
-		int column = 0;
+		ColumnPrinter print;
 
 		auto printKey = [&](const std::string& key, const std::string& label) {
 			m_style_barKey.use();
-			fmt::print(" {}:", key);
+			print(" {}:", key);
 			m_style_bar.use();
-			fmt::print(" {} ", label);
-
-			column += key.size() + label.size() + 4;
+			print(" {} ", label);
 		};
 
 		if(m_searchActive)
 		{
 			m_style_barHighlight.use();
-			fmt::print("Searching for: {}", m_searchString);
+			print("Searching for: {}", m_searchString);
 			m_style_bar.use();
 		}
 		else if(m_selectedNode != -1)
@@ -171,7 +190,7 @@ void UI::drawStatusLine()
 				default: state = "<UNKNOWN>"; break;
 			}
 
-			fmt::print("Node '{}' {}. Actions: ", selectedNode->name(), state);
+			print("Node '{}' {}. Actions: ", selectedNode->name(), state);
 			printKey("s", "start");
 			printKey("k", "stop");
 			printKey("d", "debug");
@@ -183,8 +202,6 @@ void UI::drawStatusLine()
 		}
 		else
 		{
-			int column = 0;
-
 			printKey("A-Z", "Node actions");
 			printKey("F9", "Mute all");
 			printKey("F10", "Unmute all");
@@ -192,21 +209,19 @@ void UI::drawStatusLine()
 
 			if(anyMuted())
 			{
-				fmt::print("      ");
+				print("      ");
 				m_term.setSimpleForeground(Terminal::Black);
 				m_term.setSimpleBackground(Terminal::Yellow);
-				fmt::print("! Caution: Nodes muted !");
+				print("! Caution: Nodes muted !");
 				m_style_bar.use();
-
-				column += 30;
 			}
-
-			for(int i = column; i < m_columns-2; ++i)
-				putchar(' ');
 		}
 
-		m_term.clearToEndOfLine();
+		for(int i = print.column(); i < m_columns; ++i)
+			putchar(' ');
+
 		m_term.setStandardColors();
+		m_term.clearToEndOfLine();
 		putchar('\n');
 
 		lines++;
