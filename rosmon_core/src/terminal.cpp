@@ -216,7 +216,7 @@ Terminal::Terminal()
 	// The terminfo db says screen doesn't support rmam/smam, but both screen
 	// and tmux do. *sigh*
 	const char* TERM = getenv("TERM");
-	const bool isScreen = TERM && strcmp(TERM, "screen") == 0;
+	const bool isScreen = TERM && strncmp(TERM, "screen", strlen("screen")) == 0;
 
 	m_lineWrapOffStr = safe_tigetstr("rmam");
 	if(m_lineWrapOffStr.empty() && isScreen)
