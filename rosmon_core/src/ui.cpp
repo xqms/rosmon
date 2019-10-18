@@ -148,11 +148,11 @@ void UI::drawStatusLine()
 
 	// Draw line using UTF-8 box characters
 	{
+		m_term.setStandardColors();
+		m_term.clearToEndOfLine();
 		m_color_bar.foreground();
 		for(int i = 0; i < m_columns; ++i)
 			fmt::print("▂");
-		m_term.setStandardColors();
-		m_term.clearToEndOfLine();
 		putchar('\n');
 
 		lines++;
@@ -160,6 +160,9 @@ void UI::drawStatusLine()
 
 	// Print menu / status line
 	{
+		m_term.setStandardColors();
+		m_term.clearToEndOfLine();
+
 		ColumnPrinter print;
 
 		auto printKey = [&](const std::string& key, const std::string& label) {
@@ -220,8 +223,6 @@ void UI::drawStatusLine()
 		for(int i = print.column(); i < m_columns; ++i)
 			putchar(' ');
 
-		m_term.setStandardColors();
-		m_term.clearToEndOfLine();
 		putchar('\n');
 
 		lines++;
@@ -229,6 +230,8 @@ void UI::drawStatusLine()
 
 	int col = 0;
 
+	m_term.setStandardColors();
+	m_term.clearToEndOfLine();
 	if(m_searchActive)
 	{
 		const auto& nodes = m_monitor->nodes();
@@ -269,8 +272,8 @@ void UI::drawStatusLine()
 			{
 				col = 0;
 				lines++;
-				m_term.clearToEndOfLine();
 				putchar('\n');
+				m_term.clearToEndOfLine();
 			}
 
 			++i;
@@ -356,8 +359,8 @@ void UI::drawStatusLine()
 			{
 				col = 0;
 				lines++;
-				m_term.clearToEndOfLine();
 				putchar('\n');
+				m_term.clearToEndOfLine();
 			}
 
 			if(key == 'z')
@@ -372,9 +375,6 @@ void UI::drawStatusLine()
 			++i;
 		}
 	}
-
-	// Erase rest of current line
-	m_term.clearToEndOfLine();
 
 	// Erase rest of the lines
 	for(unsigned int i = lines; i < g_statusLines; ++i)
