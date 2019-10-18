@@ -159,6 +159,7 @@ Terminal::Terminal()
 			// Sadly, there is no way to determine the Konsole version. Since
 			// any reasonably recent version supports true colors, just assume
 			// true color support
+			termOverride = "xterm-256color";
 			m_truecolor = true;
 			m_256colors = true;
 		}
@@ -166,6 +167,7 @@ Terminal::Terminal()
 		char* vte_version = getenv("VTE_VERSION");
 		if(vte_version && boost::lexical_cast<unsigned int>(vte_version) >= 3600)
 		{
+			termOverride = "xterm-256color";
 			m_256colors = true;
 			m_truecolor = true;
 		}
@@ -484,6 +486,28 @@ int Terminal::readKey()
 		return SK_Backspace;
 
 	return c;
+}
+
+Terminal::Color Terminal::color(SimpleColor code)
+{
+	return Color{
+		std::string{tiparm(m_fgColorStr.c_str(), code)},
+		std::string{tiparm(m_bgColorStr.c_str(), code)}
+	};
+}
+
+Terminal::Color Terminal::color(uint32_t rgb, SimpleColor fallback)
+{
+	if(!has256Colors())
+		return color(fallback);
+
+	if(!m_truecolor)
+		return color(static_cast<SimpleColor>(ansiColor(rgb)));
+
+	return Color{
+		fmt::format("\033[38;2;{};{};{}m", rgb & 0xFF, (rgb >> 8) & 0xFF, (rgb >> 16) & 0xFF),
+		fmt::format("\033[48;2;{};{};{}m", rgb & 0xFF, (rgb >> 8) & 0xFF, (rgb >> 16) & 0xFF),
+	};
 }
 
 }

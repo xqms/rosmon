@@ -81,6 +81,28 @@ private:
 	std::string m_searchString;
 	unsigned int m_searchSelectedIndex;
 	std::vector<unsigned int> m_searchNodes;
+
+	Terminal::Color m_color_bar;
+
+	Terminal::Style m_style_barLine;
+	Terminal::Style m_style_bar;
+	Terminal::Style m_style_barKey;
+	Terminal::Style m_style_barHighlight;
+
+	Terminal::Style m_style_nodeKey;
+	Terminal::Style m_style_nodeKeyMuted;
+
+	Terminal::Style m_style_nodeIdle;
+	Terminal::Style m_style_nodeRunning;
+	Terminal::Style m_style_nodeCrashed;
+	Terminal::Style m_style_nodeWaiting;
+
+	Terminal::Style m_style_nodeIdleFaded;
+	Terminal::Style m_style_nodeRunningFaded;
+	Terminal::Style m_style_nodeCrashedFaded;
+	Terminal::Style m_style_nodeWaitingFaded;
+
+	unsigned int m_nodeLabelWidth = 20;
 };
 
 }

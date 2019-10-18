@@ -62,6 +62,28 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
 		g_windowTitle = title;
 	}
 
+	// Setup colors & styles
+	m_color_bar = m_term.color(0x404000, Terminal::Cyan);
+	auto white = m_term.color(0xffffff, Terminal::White);
+	auto barFg = m_term.color(0xffffff, Terminal::Black);
+
+	m_style_barLine = Terminal::Style{m_color_bar, m_term.color(Terminal::Black)};
+	m_style_bar = Terminal::Style{barFg, m_color_bar};
+	m_style_barKey = Terminal::Style{barFg, m_term.color(0x606000, Terminal::Blue)};
+	m_style_barHighlight = Terminal::Style{m_term.color(0x00FFFF, Terminal::Red), m_color_bar};
+
+	m_style_nodeKey = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0xC8C8C8, Terminal::White)};
+	m_style_nodeKeyMuted = Terminal::Style{white, m_term.color(0x0000A5, Terminal::Red)};
+	m_style_nodeIdle = Terminal::Style{white, m_term.color(Terminal::Black)};
+	m_style_nodeRunning = Terminal::Style{m_term.color(Terminal::Black), m_term.color(Terminal::Green)};
+	m_style_nodeCrashed = Terminal::Style{m_term.color(Terminal::Black), m_term.color(Terminal::Red)};
+	m_style_nodeWaiting = Terminal::Style{m_term.color(Terminal::Black), m_term.color(Terminal::Yellow)};
+
+	m_style_nodeIdleFaded = Terminal::Style{white, m_term.color(Terminal::Black)};
+	m_style_nodeRunningFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x008000, Terminal::Green)};
+	m_style_nodeCrashedFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x000080, Terminal::Red)};
+	m_style_nodeWaitingFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x004040, Terminal::Yellow)};
+
 	fdWatcher->registerFD(STDIN_FILENO, boost::bind(&UI::handleInput, this));
 }
 
@@ -97,47 +119,113 @@ void UI::setupColors()
 	}
 }
 
+// Could be done more elegantly in C++14 with a variadic lambda
+namespace
+{
+	class ColumnPrinter
+	{
+	public:
+		constexpr unsigned int column() const
+		{ return m_column; }
+
+		template<typename ... Args>
+		void operator()(Args&& ... args)
+		{
+			std::string str = fmt::format(std::forward<Args>(args)...);
+			m_column += str.size();
+			fputs(str.c_str(), stdout);
+		}
+	private:
+		unsigned int m_column = 0;
+	};
+}
+
 void UI::drawStatusLine()
 {
 	const int NODE_WIDTH = 13;
 
-	unsigned int lines = 2;
+	unsigned int lines = 0;
 
 	// Draw line using UTF-8 box characters
-	for(int i = 0; i < m_columns-1; ++i)
-		fmt::print("▁");
-	m_term.clearToEndOfLine();
-	putchar('\n');
+	{
+		m_color_bar.foreground();
+		for(int i = 0; i < m_columns; ++i)
+			fmt::print("▂");
+		m_term.setStandardColors();
+		m_term.clearToEndOfLine();
+		putchar('\n');
+
+		lines++;
+	}
 
 	// Print menu / status line
-	if(m_searchActive)
 	{
-		m_term.setSimpleForeground(Terminal::Yellow);
-		fmt::print("Searching for: {}", m_searchString);
-	}
-	else if(m_selectedNode != -1)
-	{
-		m_term.setSimpleForeground(Terminal::Yellow);
-		auto& selectedNode = m_monitor->nodes()[m_selectedNode];
-		std::string muteOption = isMuted(selectedNode->name()) ? "u: unmute" : "m: mute"; 
+		ColumnPrinter print;
 
-		fmt::print("Actions: s: start, k: stop, d: debug, {}", muteOption);
-	}
-	else
-	{
-		fmt::print("Global shortcuts: <node key>: show node menu, F9: mute all, F10: unmute all, /: Search");
-		if (anyMuted())
+		auto printKey = [&](const std::string& key, const std::string& label) {
+			m_style_barKey.use();
+			print(" {}:", key);
+			m_style_bar.use();
+			print(" {} ", label);
+		};
+
+		if(m_searchActive)
 		{
-			m_term.setSimpleForeground(Terminal::Black);
-			m_term.setSimpleBackground(Terminal::Yellow);
-			fmt::print("! Caution: Nodes muted !");
-			m_term.setStandardColors();
+			m_style_barHighlight.use();
+			print("Searching for: {}", m_searchString);
+			m_style_bar.use();
 		}
-	}
+		else if(m_selectedNode != -1)
+		{
+			m_style_barHighlight.use();
+			auto& selectedNode = m_monitor->nodes()[m_selectedNode];
 
-	m_term.setStandardColors();
-	m_term.clearToEndOfLine();
-	fmt::print("\n");
+			std::string state;
+			switch(selectedNode->state())
+			{
+				case monitor::NodeMonitor::STATE_RUNNING: state = "is running"; break;
+				case monitor::NodeMonitor::STATE_IDLE:    state = "is idle";    break;
+				case monitor::NodeMonitor::STATE_CRASHED: state = "has crashed"; break;
+				case monitor::NodeMonitor::STATE_WAITING: state = "is waiting"; break;
+				default: state = "<UNKNOWN>"; break;
+			}
+
+			print("Node '{}' {}. Actions: ", selectedNode->name(), state);
+			printKey("s", "start");
+			printKey("k", "stop");
+			printKey("d", "debug");
+
+			if(isMuted(selectedNode->name()))
+				printKey("u", "unmute");
+			else
+				printKey("m", "mute");
+		}
+		else
+		{
+			printKey("A-Z", "Node actions");
+			printKey("F9", "Mute all");
+			printKey("F10", "Unmute all");
+			printKey("/", "Node search");
+
+			if(anyMuted())
+			{
+				print("      ");
+				m_term.setSimpleForeground(Terminal::Black);
+				m_term.setSimpleBackground(Terminal::Yellow);
+				print("! Caution: Nodes muted !");
+				m_style_bar.use();
+			}
+		}
+
+		for(int i = print.column(); i < m_columns; ++i)
+			putchar(' ');
+
+		m_term.setStandardColors();
+		m_term.clearToEndOfLine();
+		putchar('\n');
+
+		lines++;
+	}
 
 	int col = 0;
 
@@ -172,21 +260,17 @@ void UI::drawStatusLine()
 			const int BLOCK_WIDTH = nodeWidth + 3;
 			col += BLOCK_WIDTH;
 
-			if(col + 1 + BLOCK_WIDTH < m_columns)
+			if(col + 1 + BLOCK_WIDTH <= m_columns)
 			{
 				printf(" ");
 				col += 1;
-			}
-			else if(col == m_columns)
-			{
-				col = 0;
-				lines++;
 			}
 			else if(col + 1 + BLOCK_WIDTH > m_columns)
 			{
 				col = 0;
 				lines++;
-				printf("\n\033[K");
+				m_term.clearToEndOfLine();
+				putchar('\n');
 			}
 
 			++i;
@@ -202,49 +286,54 @@ void UI::drawStatusLine()
 			if(m_selectedNode == -1)
 			{
 				// Print key with grey background
-				Terminal::SimpleColor keyForegroundColor = Terminal::Black;
-				Terminal::SimpleColor keyBackgroundColor = Terminal::White;
-				uint32_t keyBackgroundColor256 = 0xC8C8C8;
-
 				if(isMuted(node->name()))
-				{
-					keyBackgroundColor = Terminal::Red;
-					keyForegroundColor = Terminal::White;
-					keyBackgroundColor256 = 0x0000A5;
-				}
-
-				m_term.setSimpleForeground(keyForegroundColor);
-
-				if(m_term.has256Colors())
-					m_term.setBackgroundColor(keyBackgroundColor256);
+					m_style_nodeKeyMuted.use();
 				else
-					m_term.setSimpleBackground(keyBackgroundColor);
+					m_style_nodeKey.use();
 
 				fmt::print("{:c}", key);
 			}
 			else
 			{
-				if(m_selectedNode == i)
-					m_term.setSimpleBackground(Terminal::Cyan);
-				else
-					m_term.setStandardColors();
+				m_term.setStandardColors();
 				fmt::print(" ");
 			}
 
-			switch(node->state())
+			if(m_selectedNode == -1 || m_selectedNode == i)
 			{
-				case monitor::NodeMonitor::STATE_RUNNING:
-					m_term.setSimplePair(Terminal::Black, Terminal::Green);
-					break;
-				case monitor::NodeMonitor::STATE_IDLE:
-					m_term.setStandardColors();
-					break;
-				case monitor::NodeMonitor::STATE_CRASHED:
-					m_term.setSimplePair(Terminal::Black, Terminal::Red);
-					break;
-				case monitor::NodeMonitor::STATE_WAITING:
-					m_term.setSimplePair(Terminal::Black, Terminal::Yellow);
-					break;
+				switch(node->state())
+				{
+					case monitor::NodeMonitor::STATE_RUNNING:
+						m_style_nodeRunning.use();
+						break;
+					case monitor::NodeMonitor::STATE_IDLE:
+						m_style_nodeIdle.use();
+						break;
+					case monitor::NodeMonitor::STATE_CRASHED:
+						m_style_nodeCrashed.use();
+						break;
+					case monitor::NodeMonitor::STATE_WAITING:
+						m_style_nodeWaiting.use();
+						break;
+				}
+			}
+			else
+			{
+				switch(node->state())
+				{
+					case monitor::NodeMonitor::STATE_RUNNING:
+						m_style_nodeRunningFaded.use();
+						break;
+					case monitor::NodeMonitor::STATE_IDLE:
+						m_style_nodeIdleFaded.use();
+						break;
+					case monitor::NodeMonitor::STATE_CRASHED:
+						m_style_nodeCrashedFaded.use();
+						break;
+					case monitor::NodeMonitor::STATE_WAITING:
+						m_style_nodeWaitingFaded.use();
+						break;
+				}
 			}
 
 			std::string label = node->name().substr(0, NODE_WIDTH);
@@ -258,21 +347,17 @@ void UI::drawStatusLine()
 			const int BLOCK_WIDTH = NODE_WIDTH + 3;
 			col += BLOCK_WIDTH;
 
-			if(col + 1 + BLOCK_WIDTH < m_columns)
+			if(col + 1 + BLOCK_WIDTH <= m_columns)
 			{
 				printf(" ");
 				col += 1;
-			}
-			else if(col == m_columns)
-			{
-				col = 0;
-				lines++;
 			}
 			else if(col + 1 + BLOCK_WIDTH > m_columns)
 			{
 				col = 0;
 				lines++;
-				printf("\n\033[K");
+				m_term.clearToEndOfLine();
+				putchar('\n');
 			}
 
 			if(key == 'z')
@@ -289,7 +374,7 @@ void UI::drawStatusLine()
 	}
 
 	// Erase rest of current line
-	printf("\033[K");
+	m_term.clearToEndOfLine();
 
 	// Erase rest of the lines
 	for(unsigned int i = lines; i < g_statusLines; ++i)
@@ -320,7 +405,7 @@ void UI::log(const std::string& channel, const std::string& str)
 		m_term.setSimplePair(Terminal::Black, Terminal::White);
 	}
 
-	fmt::print("{:>20}:", channel);
+	fmt::print("{:>{}}:", channel, m_nodeLabelWidth);
 	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	putchar(' ');
@@ -370,6 +455,12 @@ void UI::checkWindowSize()
 	int rows, columns;
 	if(m_term.getSize(&columns, &rows))
 		m_columns = columns;
+
+	std::size_t w = 20;
+	for(const auto& node : m_monitor->nodes())
+		w = std::max(w, node->name().size());
+
+	m_nodeLabelWidth = std::min<unsigned int>(w, m_columns/4);
 }
 
 void UI::handleInput()
