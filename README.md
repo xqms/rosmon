@@ -9,7 +9,18 @@ Please see the [ROS wiki page](https://wiki.ros.org/rosmon) for further
 information, the rest of this README contains information for `rosmon`
 developers.
 
-## Building
+## Installation & Quick start
+
+Official `rosmon` are available. On ROS Kinetic or Melodic (Ubuntu) simply do:
+
+    sudo apt install ros-${ROSDISTRO}-rosmon
+
+Afterwards, try
+
+    # launch one of the rosmon test cases
+    mon launch rosmon_core basic.launch
+
+## Building from source
 
 Simple include this repository in your catkin workspace. `rosmon` depends on
 [rosfmt], so make sure you either have `rosfmt` installed using the ROS packages
