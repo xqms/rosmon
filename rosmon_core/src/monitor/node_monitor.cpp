@@ -183,6 +183,11 @@ void NodeMonitor::start()
 
 	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
 
+	if(!m_firstStart)
+		logMessageSignal({"[rosmon]", fmt::format("Starting node {}", name()), LogEvent::Type::Info});
+
+	m_firstStart = false;
+
 	std::vector<std::string> cmd = composeCommand();
 
 	std::vector<char*> args;
@@ -282,6 +287,8 @@ void NodeMonitor::stop(bool restart)
 
 	if(!running())
 		return;
+
+	logMessageSignal({"[rosmon]", fmt::format("Stopping node {}", name()), LogEvent::Type::Info});
 
 	// kill(-pid) sends the signal to all processes in the process group
 	kill(-m_pid, SIGINT);

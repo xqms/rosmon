@@ -232,6 +232,8 @@ private:
 
 	std::string m_processWorkingDirectory;
 	bool m_processWorkingDirectoryCreated = false;
+
+	bool m_firstStart = true;
 };
 
 }
