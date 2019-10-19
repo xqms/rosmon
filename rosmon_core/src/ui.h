@@ -7,6 +7,7 @@
 #include "monitor/monitor.h"
 #include "fd_watcher.h"
 #include "terminal.h"
+#include "log_event.h"
 
 #include <ros/wall_timer.h>
 
@@ -23,7 +24,7 @@ public:
 	~UI();
 
 	void update();
-	void log(const std::string& channel, const std::string& str);
+	void log(const LogEvent& event);
 private:
 	struct ChannelInfo
 	{

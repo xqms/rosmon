@@ -100,16 +100,16 @@ void handleSignal(int)
 	g_shouldStop = true;
 }
 
-void logToStdout(const std::string& channel, const std::string& str)
+void logToStdout(const rosmon::LogEvent& event)
 {
-	std::string clean = str;
+	std::string clean = event.message;
 	unsigned int len = clean.length();
 	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
 		len--;
 
 	clean.resize(len);
 
-	fmt::print("{:>20}: {}\n", channel, clean);
+	fmt::print("{:>20}: {}\n", event.source, clean);
 
 	if(g_flushStdout)
 		fflush(stdout);
@@ -426,7 +426,7 @@ int main(int argc, char** argv)
 	fmt::print("Running as '{}'\n", ros::this_node::getName());
 
     rosmon::monitor::Monitor monitor(config, watcher);
-	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1, _2));
+	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1));
 
 	fmt::print("\n\n");
 	monitor.setParameters();
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
 	}
 
 	if(ui)
-		ui->log("[rosmon]", "Shutting down...");
+		ui->log({"[rosmon]", "Shutting down..."});
 	monitor.shutdown();
 
 	// Wait for graceful shutdown
@@ -508,16 +508,16 @@ int main(int argc, char** argv)
 
 	if(ui && coredumpsAvailable)
 	{
-		ui->log("[rosmon]", "\n");
-		ui->log("[rosmon]", "If you want to debug one of the crashed nodes, you can use the following commands");
+		ui->log({"[rosmon]", "\n"});
+		ui->log({"[rosmon]", "If you want to debug one of the crashed nodes, you can use the following commands"});
 		for(auto& node : monitor.nodes())
 		{
 			if(node->coredumpAvailable())
 			{
-				ui->log(
+				ui->log({
 					"[rosmon]",
 					fmt::format("{:20}: # {}", node->name(), node->debuggerCommand())
-				);
+				});
 			}
 		}
 	}

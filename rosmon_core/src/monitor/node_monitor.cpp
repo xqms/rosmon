@@ -104,7 +104,7 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
 		int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY | O_CLOEXEC);
 		if(core_fd < 0)
 		{
-			log("could not open /proc/sys/kernel/core_pattern: {}", strerror(errno));
+			logTyped(LogEvent::Type::Error, "could not open /proc/sys/kernel/core_pattern: {}", strerror(errno));
 			return;
 		}
 
@@ -113,7 +113,7 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
 
 		if(bytes < 1)
 		{
-			log("Could not read /proc/sys/kernel/core_pattern: {}", strerror(errno));
+			logTyped(LogEvent::Type::Error, "Could not read /proc/sys/kernel/core_pattern: {}", strerror(errno));
 			return;
 		}
 
@@ -182,6 +182,11 @@ void NodeMonitor::start()
 	}
 
 	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
+
+	if(!m_firstStart)
+		logMessageSignal({"[rosmon]", fmt::format("Starting node {}", name()), LogEvent::Type::Info});
+
+	m_firstStart = false;
 
 	std::vector<std::string> cmd = composeCommand();
 
@@ -283,6 +288,8 @@ void NodeMonitor::stop(bool restart)
 	if(!running())
 		return;
 
+	logMessageSignal({"[rosmon]", fmt::format("Stopping node {}", name()), LogEvent::Type::Info});
+
 	// kill(-pid) sends the signal to all processes in the process group
 	kill(-m_pid, SIGINT);
 
@@ -293,7 +300,7 @@ void NodeMonitor::checkStop()
 {
 	if(running())
 	{
-		log("required SIGKILL");
+		logTyped(LogEvent::Type::Warning, "required SIGKILL");
 		kill(m_pid, SIGKILL);
 	}
 
@@ -368,13 +375,14 @@ void NodeMonitor::communicate()
 
 		if(WIFEXITED(status))
 		{
-			log("{} exited with status {}", name(), WEXITSTATUS(status));
+			auto type = (WEXITSTATUS(status) == 0) ? LogEvent::Type::Info : LogEvent::Type::Error;
+			logTyped(type, "{} exited with status {}", name(), WEXITSTATUS(status));
 			ROS_INFO("rosmon: %s exited with status %d", name().c_str(), WEXITSTATUS(status));
 			m_exitCode = WEXITSTATUS(status);
 		}
 		else if(WIFSIGNALED(status))
 		{
-			log("{} died from signal {}", name(), WTERMSIG(status));
+			logTyped(LogEvent::Type::Error, "{} died from signal {}", name(), WTERMSIG(status));
 			ROS_ERROR("rosmon: %s died from signal %d", name().c_str(), WTERMSIG(status));
 			m_exitCode = 255;
 		}
@@ -384,12 +392,12 @@ void NodeMonitor::communicate()
 		{
 			if(!m_launchNode->launchPrefix().empty())
 			{
-				log("{} used launch-prefix, not collecting core dump as it is probably useless.", name());
+				logTyped(LogEvent::Type::Info, "{} used launch-prefix, not collecting core dump as it is probably useless.", name());
 			}
 			else
 			{
 				// We have a chance to find the core dump...
-				log("{} left a core dump", name());
+				logTyped(LogEvent::Type::Info, "{} left a core dump", name());
 				gatherCoredump(WTERMSIG(status));
 			}
 		}
@@ -399,7 +407,7 @@ void NodeMonitor::communicate()
 		{
 			if(rmdir(m_processWorkingDirectory.c_str()) != 0)
 			{
-				log("Could not remove process working directory '{}' after process exit: {}",
+				logTyped(LogEvent::Type::Warning, "Could not remove process working directory '{}' after process exit: {}",
 					m_processWorkingDirectory, strerror(errno)
 				);
 			}
@@ -440,7 +448,7 @@ void NodeMonitor::communicate()
 			m_rxBuffer.linearize();
 
 			auto one = m_rxBuffer.array_one();
-			logMessageSignal(name(), one.first);
+			logMessageSignal({name(), one.first});
 
 			m_rxBuffer.clear();
 		}
@@ -448,9 +456,15 @@ void NodeMonitor::communicate()
 }
 
 template<typename... Args>
-void NodeMonitor::log(const char* format, const Args& ... args)
+void NodeMonitor::log(const char* format, Args&& ... args)
 {
-	logMessageSignal(name(), fmt::format(format, args...));
+	logMessageSignal({name(), fmt::format(format, std::forward<Args>(args)...)});
+}
+
+template<typename... Args>
+void NodeMonitor::logTyped(LogEvent::Type type, const char* format, Args&& ... args)
+{
+	logMessageSignal({name(), fmt::format(format, std::forward<Args>(args)...), type});
 }
 
 static boost::iterator_range<std::string::const_iterator>
@@ -471,7 +485,7 @@ void NodeMonitor::gatherCoredump(int signal)
 	int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY | O_CLOEXEC);
 	if(core_fd < 0)
 	{
-		log("could not open /proc/sys/kernel/core_pattern: {}", strerror(errno));
+		logTyped(LogEvent::Type::Error, "could not open /proc/sys/kernel/core_pattern: {}", strerror(errno));
 		return;
 	}
 
@@ -555,14 +569,14 @@ void NodeMonitor::gatherCoredump(int signal)
 
 	if(ret != 0 || results.gl_pathc == 0)
 	{
-		log("Could not find a matching core file :-(");
+		logTyped(LogEvent::Type::Warning, "Could not find a matching core file :-(");
 		globfree(&results);
 		return;
 	}
 
 	if(results.gl_pathc > 1)
 	{
-		log("Found multiple matching core files :-(");
+		logTyped(LogEvent::Type::Info, "Found multiple matching core files :-(");
 		globfree(&results);
 		return;
 	}
@@ -570,7 +584,7 @@ void NodeMonitor::gatherCoredump(int signal)
 	std::string coreFile = results.gl_pathv[0];
 	globfree(&results);
 
-	log("Found core file '{}'", coreFile);
+	logTyped(LogEvent::Type::Info, "Found core file '{}'", coreFile);
 
 	std::stringstream ss;
 
@@ -594,7 +608,7 @@ void NodeMonitor::launchDebugger()
 
 	if(!getenv("DISPLAY"))
 	{
-		log("No X11 available, run gdb yourself: {}", cmd);
+		logTyped(LogEvent::Type::Info, "No X11 available, run gdb yourself: {}", cmd);
 	}
 	else
 	{
@@ -607,12 +621,12 @@ void NodeMonitor::launchDebugger()
 		else if(getenv("VTE_VERSION"))
 			term = "gnome-terminal -e";
 
-		log("Launching debugger: '{}'", cmd);
+		logTyped(LogEvent::Type::Info, "Launching debugger: '{}'", cmd);
 
 		// system() is not particularly elegant here, but we trust our cmd.
 		if(system((term + " '" + cmd + "' &").c_str()) != 0)
 		{
-			log("Could not launch debugger");
+			logTyped(LogEvent::Type::Error, "Could not launch debugger");
 		}
 	}
 }

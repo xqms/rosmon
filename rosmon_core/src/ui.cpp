@@ -40,7 +40,7 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
  , m_selectedNode(-1)
 {
 	std::atexit(cleanup);
-	m_monitor->logMessageSignal.connect(boost::bind(&UI::log, this, _1, _2));
+	m_monitor->logMessageSignal.connect(boost::bind(&UI::log, this, _1));
 
 	m_sizeTimer = ros::NodeHandle().createWallTimer(ros::WallDuration(2.0), boost::bind(&UI::checkWindowSize, this));
 	m_sizeTimer.start();
@@ -383,14 +383,14 @@ void UI::drawStatusLine()
 	g_statusLines = std::max(lines, g_statusLines);
 }
 
-void UI::log(const std::string& channel, const std::string& str)
+void UI::log(const LogEvent& event)
 {
-	if (isMuted(channel))
+	if(isMuted(event.source))
 		return;
 	
-	std::string clean = str;
+	std::string clean = event.message;
 
-	auto it = m_nodeColorMap.find(channel);
+	auto it = m_nodeColorMap.find(event.source);
 
 	if(m_term.has256Colors())
 	{
@@ -405,7 +405,7 @@ void UI::log(const std::string& channel, const std::string& str)
 		m_term.setSimplePair(Terminal::Black, Terminal::White);
 	}
 
-	fmt::print("{:>{}}:", channel, m_nodeLabelWidth);
+	fmt::print("{:>{}}:", event.source, m_nodeLabelWidth);
 	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	putchar(' ');
@@ -414,10 +414,23 @@ void UI::log(const std::string& channel, const std::string& str)
 	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
 		len--;
 
-	if(it != m_nodeColorMap.end())
+	switch(event.type)
 	{
-		it->second.parser.apply(&m_term);
-		it->second.parser.parse(clean);
+		case LogEvent::Type::Raw:
+			if(it != m_nodeColorMap.end())
+			{
+				it->second.parser.apply(&m_term);
+				it->second.parser.parse(clean);
+			}
+			break;
+		case LogEvent::Type::Info:
+			break;
+		case LogEvent::Type::Warning:
+			m_term.setSimpleForeground(Terminal::Yellow);
+			break;
+		case LogEvent::Type::Error:
+			m_term.setSimpleForeground(Terminal::Red);
+			break;
 	}
 
 	fwrite(clean.c_str(), 1, len, stdout);
