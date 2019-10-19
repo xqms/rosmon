@@ -6,6 +6,7 @@
 
 #include "../launch/node.h"
 #include "../fd_watcher.h"
+#include "../log_event.h"
 
 #include <ros/node_handle.h>
 
@@ -177,7 +178,7 @@ public:
 	 *
 	 * Contains a log message (node name, message) to be printed or saved in a log file.
 	 **/
-	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
+	boost::signals2::signal<void(LogEvent)> logMessageSignal;
 
 	//! Signalled whenever the process exits.
 	boost::signals2::signal<void(std::string)> exitedSignal;
@@ -194,7 +195,11 @@ private:
 	void communicate();
 
 	template<typename... Args>
-	void log(const char* format, const Args& ... args);
+	void log(const char* format, Args&& ... args);
+
+	template<typename... Args>
+	void logTyped(LogEvent::Type type, const char* format, Args&& ... args);
+
 	void checkStop();
 	void gatherCoredump(int signal);
 

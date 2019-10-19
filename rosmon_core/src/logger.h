@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include "log_event.h"
+
 namespace rosmon
 {
 
@@ -24,7 +26,7 @@ public:
 	~Logger();
 
 	//! Log message
-	void log(const std::string& source, const std::string& msg);
+	void log(const LogEvent& event);
 private:
 	FILE* m_file = nullptr;
 	bool m_flush = false;

@@ -6,6 +6,7 @@
 
 #include "../fd_watcher.h"
 #include "../launch/launch_config.h"
+#include "../log_event.h"
 
 #include "node_monitor.h"
 #include "linux_process_info.h"
@@ -45,7 +46,7 @@ public:
 	launch::LaunchConfig::ConstPtr config() const
 	{ return m_config; }
 
-	boost::signals2::signal<void(std::string,std::string)> logMessageSignal;
+	boost::signals2::signal<void(LogEvent)> logMessageSignal;
 private:
 	struct ProcessInfo
 	{
@@ -54,7 +55,10 @@ private:
 	};
 
 	template<typename... Args>
-	void log(const char* fmt, const Args& ... args);
+	void log(const char* fmt, Args&& ... args);
+
+	template<typename... Args>
+	void logTyped(LogEvent::Type type, const char* fmt, Args&& ... args);
 
 	void handleRequiredNodeExit(const std::string& name);
 

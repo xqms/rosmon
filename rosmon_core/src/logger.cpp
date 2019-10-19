@@ -34,7 +34,7 @@ Logger::~Logger()
 		fclose(m_file);
 }
 
-void Logger::log(const std::string& source, const std::string& msg)
+void Logger::log(const LogEvent& event)
 {
 	struct timeval tv;
 	memset(&tv, 0, sizeof(tv));
@@ -47,15 +47,15 @@ void Logger::log(const std::string& source, const std::string& msg)
 	char timeString[100];
 	strftime(timeString, sizeof(timeString), "%a %F %T", &btime);
 
-	unsigned int len = msg.length();
-	while(len != 0 && (msg[len-1] == '\n' || msg[len-1] == '\r'))
+	unsigned int len = event.message.length();
+	while(len != 0 && (event.message[len-1] == '\n' || event.message[len-1] == '\r'))
 		len--;
 
 	fmt::print(m_file, "{}.{:03d}: {:>20}: ",
 		timeString, tv.tv_usec / 1000,
-		source.c_str()
+		event.source.c_str()
 	);
-	fwrite(msg.c_str(), 1, len, m_file);
+	fwrite(event.message.c_str(), 1, len, m_file);
 	fputc('\n', m_file);
 
 	if(m_flush)
