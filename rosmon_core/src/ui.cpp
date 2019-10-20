@@ -398,7 +398,7 @@ void UI::log(const LogEvent& event)
 		m_term.setLineWrap(false);
 
 		auto actualLabelWidth = std::max<unsigned int>(m_nodeLabelWidth, event.source.size());
-		auto lines = it->second.parser.wrap(clean, m_columns - actualLabelWidth);
+		auto lines = it->second.parser.wrap(clean, m_columns - actualLabelWidth - 2);
 
 		for(unsigned int line = 0; line < lines.size(); ++line)
 		{
