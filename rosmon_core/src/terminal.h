@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <string>
 #include <map>
+#include <vector>
 
 namespace rosmon
 {
@@ -49,43 +50,6 @@ public:
 		Grayscale = 0xe8
 	};
 
-	/**
-	 * @brief Terminal escape sequence parser
-	 *
-	 * This class allows the user to parse Linux escape sequences
-	 * (restricted to simple color sequences for now).
-	 **/
-	class Parser
-	{
-	public:
-		Parser();
-
-		//! parse single character c
-		void parse(char c);
-
-		//! parse string
-		void parse(const std::string& str);
-
-		//! Apply the current internal state (colors) on the terminal
-		void apply(Terminal* term);
-	private:
-		void parseSetAttributes(const std::string& str);
-
-		enum State
-		{
-			STATE_ESCAPE,
-			STATE_TYPE,
-			STATE_CSI
-		};
-
-		State m_state;
-		std::string m_buf;
-
-		int m_fgColor;
-		int m_bgColor;
-		bool m_bold;
-	};
-
 	class Color
 	{
 	public:
@@ -94,6 +58,9 @@ public:
 
 		void foreground() { fputs(m_fgString.c_str(), stdout); }
 		void background() { fputs(m_bgString.c_str(), stdout); }
+
+		const std::string& foregroundCode() const { return m_fgString; }
+		const std::string& backgroundCode() const { return m_bgString; }
 	private:
 		friend class Terminal;
 
@@ -123,6 +90,54 @@ public:
 	private:
 		Color m_fg;
 		Color m_bg;
+	};
+
+	/**
+	 * @brief Terminal escape sequence parser
+	 *
+	 * This class allows the user to parse Linux escape sequences
+	 * (restricted to simple color sequences for now).
+	 **/
+	class Parser
+	{
+	public:
+		Parser() {}
+		Parser(Terminal* terminal);
+
+		//! parse single character c
+		bool parse(char c);
+
+		//! parse string
+		void parse(const std::string& str);
+
+		//! Apply the current internal state (colors) on the terminal
+		void apply();
+
+		/**
+		 * @brief Apply line wrapping
+		 *
+		 * Each returned line contains the appropriate escape sequences to set
+		 * up the current color mode.
+		 **/
+		std::vector<std::string> wrap(const std::string& str, unsigned int columns);
+	private:
+		void parseSetAttributes(const std::string& str);
+
+		enum State
+		{
+			STATE_ESCAPE,
+			STATE_TYPE,
+			STATE_CSI
+		};
+
+		Terminal* m_term = nullptr;
+
+		State m_state = STATE_ESCAPE;
+		std::string m_buf;
+
+		Color m_fgColor;
+		Color m_bgColor;
+		bool m_bold = false;
 	};
 
 	Terminal();
@@ -168,6 +183,9 @@ public:
 
 	//! Reset fg + bg to standard terminal colors
 	void setStandardColors();
+
+	//! Escape codes for standard colors
+	std::string standardColorCode();
 
 	//! Clear characters from cursor to end of line
 	void clearToEndOfLine();

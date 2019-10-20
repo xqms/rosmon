@@ -115,7 +115,7 @@ void UI::setupColors()
 			| (std::min(255, std::max<int>(0, g)) << 8)
 			| (std::min(255, std::max<int>(0, b)) << 16);
 
-		m_nodeColorMap[m_monitor->nodes()[i]->name()] = ChannelInfo(color);
+		m_nodeColorMap[m_monitor->nodes()[i]->name()] = ChannelInfo{&m_term, color};
 	}
 }
 
@@ -388,54 +388,81 @@ void UI::log(const LogEvent& event)
 	if(isMuted(event.source))
 		return;
 	
-	std::string clean = event.message;
+	const std::string& clean = event.message;
 
 	auto it = m_nodeColorMap.find(event.source);
 
-	if(m_term.has256Colors())
+	// Is this a node message?
+	if(it != m_nodeColorMap.end())
 	{
-		if(it != m_nodeColorMap.end())
+		m_term.setLineWrap(false);
+
+		auto actualLabelWidth = std::max<unsigned int>(m_nodeLabelWidth, event.source.size());
+		auto lines = it->second.parser.wrap(clean, m_columns - actualLabelWidth);
+
+		for(unsigned int line = 0; line < lines.size(); ++line)
 		{
-			m_term.setBackgroundColor(it->second.labelColor);
-			m_term.setSimpleForeground(Terminal::White);
+			// Draw label
+			if(m_term.has256Colors())
+			{
+				if(it != m_nodeColorMap.end())
+				{
+					m_term.setBackgroundColor(it->second.labelColor);
+					m_term.setSimpleForeground(Terminal::White);
+				}
+			}
+			else
+			{
+				m_term.setSimplePair(Terminal::Black, Terminal::White);
+			}
+
+			if(line == 0)
+				fmt::print("{:>{}}:", event.source, m_nodeLabelWidth);
+			else
+			{
+				for(unsigned int i = 0; i < actualLabelWidth-1; ++i)
+					putchar(' ');
+				fmt::print("~ ");
+			}
+			m_term.setStandardColors();
+			m_term.clearToEndOfLine();
+			putchar(' ');
+
+			fputs(lines[line].c_str(), stdout);
+			putchar('\n');
 		}
+
+		m_term.setLineWrap(true);
 	}
 	else
 	{
-		m_term.setSimplePair(Terminal::Black, Terminal::White);
+		fmt::print("{:>{}}:", event.source, m_nodeLabelWidth);
+		m_term.setStandardColors();
+		m_term.clearToEndOfLine();
+		putchar(' ');
+
+		unsigned int len = clean.length();
+		while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
+			len--;
+
+		switch(event.type)
+		{
+			case LogEvent::Type::Raw:
+			case LogEvent::Type::Info:
+				break;
+			case LogEvent::Type::Warning:
+				m_term.setSimpleForeground(Terminal::Yellow);
+				break;
+			case LogEvent::Type::Error:
+				m_term.setSimpleForeground(Terminal::Red);
+				break;
+		}
+
+		fwrite(clean.c_str(), 1, len, stdout);
+		m_term.clearToEndOfLine();
+		putchar('\n');
 	}
 
-	fmt::print("{:>{}}:", event.source, m_nodeLabelWidth);
-	m_term.setStandardColors();
-	m_term.clearToEndOfLine();
-	putchar(' ');
-
-	unsigned int len = clean.length();
-	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
-		len--;
-
-	switch(event.type)
-	{
-		case LogEvent::Type::Raw:
-			if(it != m_nodeColorMap.end())
-			{
-				it->second.parser.apply(&m_term);
-				it->second.parser.parse(clean);
-			}
-			break;
-		case LogEvent::Type::Info:
-			break;
-		case LogEvent::Type::Warning:
-			m_term.setSimpleForeground(Terminal::Yellow);
-			break;
-		case LogEvent::Type::Error:
-			m_term.setSimpleForeground(Terminal::Red);
-			break;
-	}
-
-	fwrite(clean.c_str(), 1, len, stdout);
-	m_term.clearToEndOfLine();
-	putchar('\n');
 	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	fflush(stdout);

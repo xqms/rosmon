@@ -8,6 +8,11 @@
 #include <term.h>
 #include <curses.h>
 
+// really?
+#ifdef columns
+#undef columns
+#endif
+
 #include <cstdio>
 
 
@@ -23,11 +28,8 @@
 namespace rosmon
 {
 
-Terminal::Parser::Parser()
- : m_state(STATE_ESCAPE)
- , m_fgColor(-1)
- , m_bgColor(-1)
- , m_bold(false)
+Terminal::Parser::Parser(Terminal* terminal)
+ : m_term{terminal}
 {
 }
 
@@ -47,32 +49,37 @@ void Terminal::Parser::parseSetAttributes(const std::string& str)
 		if(errno != 0 || *endptr != 0)
 		{
 			// Error in specification, break out of here
-			m_fgColor = -1;
-			m_bgColor = -1;
+			m_fgColor = {};
+			m_bgColor = {};
 			return;
 		}
 
 		if(code == 0)
 		{
-			m_fgColor = -1;
-			m_bgColor = -1;
+			m_fgColor = {};
+			m_bgColor = {};
 		}
 		else if(code >= 30 && code <= 37)
-			m_fgColor = code - 30;
+			m_fgColor = m_term->color(static_cast<SimpleColor>(code - 30));
 		else if(code >= 40 && code <= 47)
-			m_bgColor = code - 40;
+			m_bgColor = m_term->color(static_cast<SimpleColor>(code - 40));
 		else if(code == 1)
 			m_bold = true;
 	}
 }
 
-void Terminal::Parser::parse(char c)
+bool Terminal::Parser::parse(char c)
 {
+	if(!m_term)
+		return false;
+
 	switch(m_state)
 	{
 		case STATE_ESCAPE:
 			if(c == '\033')
 				m_state = STATE_TYPE;
+			else
+				return true;
 			break;
 		case STATE_TYPE:
 			if(c == '[')
@@ -97,26 +104,68 @@ void Terminal::Parser::parse(char c)
 			}
 			break;
 	}
+
+	return false;
 }
 
 void Terminal::Parser::parse(const std::string& str)
 {
+	if(!m_term)
+		return;
+
 	for(char c : str)
 		parse(c);
 }
 
-void Terminal::Parser::apply(Terminal* term)
+std::vector<std::string> Terminal::Parser::wrap(const std::string& str, unsigned int columns)
 {
-	if(m_fgColor >= 0 && m_bgColor >= 0)
-		term->setSimplePair((SimpleColor)m_fgColor, (SimpleColor)m_bgColor);
-	else
+	if(!m_term)
+		return {};
+
+	unsigned int col = 0;
+	std::vector<std::string> ret;
+	std::string currentLine;
+
+	auto setupLine = [&](){
+		currentLine = m_term->standardColorCode();
+		currentLine += m_fgColor.foregroundCode();
+		currentLine += m_bgColor.backgroundCode();
+	};
+
+	setupLine();
+
+	for(char c : str)
 	{
-		term->setStandardColors();
-		if(m_fgColor >= 0)
-			term->setSimpleForeground((SimpleColor)m_fgColor);
-		else if(m_bgColor >= 0)
-			term->setSimpleBackground((SimpleColor)m_fgColor);
+		if(c == '\r' || c == '\n')
+			continue;
+
+		if(parse(c))
+			col++;
+
+		currentLine.push_back(c);
+
+		if(col == columns)
+		{
+			ret.push_back(std::move(currentLine));
+			setupLine();
+			col = 0;
+		}
 	}
+
+	if(col != 0)
+		ret.push_back(std::move(currentLine));
+
+	return ret;
+}
+
+void Terminal::Parser::apply()
+{
+	if(!m_term)
+		return;
+
+	m_term->setStandardColors();
+	m_fgColor.foreground();
+	m_bgColor.background();
 }
 
 std::string safe_tigetstr(const char* key)
@@ -381,6 +430,14 @@ void Terminal::setStandardColors()
 
 	putp(m_opStr.c_str());
 	putp(m_sgr0Str.c_str());
+}
+
+std::string Terminal::standardColorCode()
+{
+	if(!m_valid)
+		return {};
+
+	return m_opStr + m_sgr0Str;
 }
 
 void Terminal::clearToEndOfLine()

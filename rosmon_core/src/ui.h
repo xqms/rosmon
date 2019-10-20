@@ -31,12 +31,17 @@ private:
 		ChannelInfo()
 		{}
 
-		ChannelInfo(uint32_t color)
-		 : labelColor(color)
+		ChannelInfo(Terminal* term)
+		 : parser{term}
 		{}
 
-		uint32_t labelColor;
+		ChannelInfo(Terminal* term, uint32_t color)
+		 : parser{term}
+		 , labelColor(color)
+		{}
+
 		Terminal::Parser parser;
+		uint32_t labelColor;
 	};
 
 	void drawStatusLine();
