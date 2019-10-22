@@ -84,7 +84,7 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
 
 	m_style_nodeIdleFaded = Terminal::Style{white, m_term.color(Terminal::Black)};
 	m_style_nodeRunningFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x008000, Terminal::Green)};
-	m_style_nodeCrashedFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x000080, Terminal::Red)};
+	m_style_nodeCrashedFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x000040, Terminal::Red)};
 	m_style_nodeWaitingFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x004040, Terminal::Yellow)};
 
 	fdWatcher->registerFD(STDIN_FILENO, boost::bind(&UI::readInput, this));
