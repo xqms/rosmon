@@ -275,12 +275,14 @@ Terminal::Terminal()
 	if(m_lineWrapOnStr.empty() && isScreen)
 		m_lineWrapOnStr = "\033[?7h";
 
-	auto registerKey = [&](const char* name, SpecialKey key){
+	auto registerKey = [&](const char* name, SpecialKey key, const std::string& fallback = ""){
 		char* code = tigetstr(name);
 
 		// Who comes up with these return codes?
 		if(code && code != reinterpret_cast<char*>(-1))
 			m_specialKeys[code] = key;
+		else if(!fallback.empty())
+			m_specialKeys[fallback] = key;
 	};
 
 	// Map function keys
@@ -293,7 +295,13 @@ Terminal::Terminal()
 	}
 
 	// Backspace
-	registerKey("kbs", SK_Backspace);
+	registerKey(key_backspace, SK_Backspace);
+
+	// Arrow keys
+	registerKey(key_up, SK_Up, "\033[A");
+	registerKey(key_down, SK_Down, "\033[B");
+	registerKey(key_right, SK_Right, "\033[C");
+	registerKey(key_left, SK_Left, "\033[D");
 }
 
 bool Terminal::has256Colors() const
@@ -595,6 +603,8 @@ int Terminal::readKey()
 			m_currentEscapeStr.clear();
 			return lastMatch;
 		}
+		else
+			return -1;
 	}
 
 	if(c == 0x7f) // ASCII delete

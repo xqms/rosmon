@@ -227,7 +227,9 @@ public:
 		SK_F5, SK_F6, SK_F7, SK_F8,
 		SK_F9, SK_F10, SK_F11, SK_F12,
 
-		SK_Backspace
+		SK_Backspace,
+
+		SK_Up, SK_Down, SK_Left, SK_Right
 	};
 
 	int readKey();
