@@ -5,6 +5,7 @@
 #define TERMINAL_H
 
 #include <stdint.h>
+#include <chrono>
 #include <string>
 #include <map>
 #include <vector>
@@ -230,6 +231,7 @@ public:
 	};
 
 	int readKey();
+	int readLeftover();
 
 	/**
 	 * Enable/disable terminal linewrap
@@ -254,6 +256,9 @@ private:
 	std::map<std::string, SpecialKey> m_specialKeys;
 
 	std::string m_currentEscapeStr;
+	std::chrono::steady_clock::time_point m_escapeStartTime;
+	bool m_currentEscapeAborted = false;
+	unsigned int m_currentEscapeAbortIdx = 0;
 };
 
 }

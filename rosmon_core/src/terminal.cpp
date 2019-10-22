@@ -503,8 +503,51 @@ void Terminal::clearWindowTitle(const std::string& backup)
 	fmt::print("\033k{}\033\\", backup);
 }
 
+int Terminal::readLeftover()
+{
+	// Are we currently aborting an escape string that we did not recognize?
+	if(m_currentEscapeAborted)
+	{
+		char c = m_currentEscapeStr[m_currentEscapeAbortIdx++];
+		if(m_currentEscapeAbortIdx >= m_currentEscapeStr.size())
+		{
+			m_currentEscapeAborted = false;
+			m_currentEscapeStr.clear();
+		}
+
+		return c;
+	}
+
+	// Should we abort the current escape since it is taking too long?
+	if(!m_currentEscapeStr.empty())
+	{
+		auto now = std::chrono::steady_clock::now();
+		if(now - m_escapeStartTime > std::chrono::milliseconds(100))
+		{
+			m_currentEscapeAborted = true;
+			m_currentEscapeAbortIdx = 0;
+			return readLeftover(); // immediately return first character
+		}
+	}
+
+	return -1;
+}
+
 int Terminal::readKey()
 {
+	// Are we currently aborting an escape string that we did not recognize?
+	if(m_currentEscapeAborted)
+	{
+		char c = m_currentEscapeStr[m_currentEscapeAbortIdx++];
+		if(m_currentEscapeAbortIdx >= m_currentEscapeStr.size())
+		{
+			m_currentEscapeAborted = false;
+			m_currentEscapeStr.clear();
+		}
+
+		return c;
+	}
+
 	char c;
 	if(read(STDIN_FILENO, &c, 1) != 1)
 		return -1;
@@ -512,10 +555,13 @@ int Terminal::readKey()
 	if(m_currentEscapeStr.empty() && c == '\E')
 	{
 		m_currentEscapeStr.push_back(c);
+		m_escapeStartTime = std::chrono::steady_clock::now();
+		return -1;
 	}
 	else if(!m_currentEscapeStr.empty())
 	{
 		m_currentEscapeStr.push_back(c);
+		m_escapeStartTime = std::chrono::steady_clock::now();
 
 		std::size_t matches = 0;
 		int lastMatch = -1;

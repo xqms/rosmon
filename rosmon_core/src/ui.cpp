@@ -45,6 +45,9 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
 	m_sizeTimer = ros::NodeHandle().createWallTimer(ros::WallDuration(2.0), boost::bind(&UI::checkWindowSize, this));
 	m_sizeTimer.start();
 
+	m_terminalCheckTimer = ros::NodeHandle().createWallTimer(ros::WallDuration(0.1), boost::bind(&UI::checkTerminal, this));
+	m_terminalCheckTimer.start();
+
 	checkWindowSize();
 	setupColors();
 
@@ -84,7 +87,7 @@ UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
 	m_style_nodeCrashedFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x000080, Terminal::Red)};
 	m_style_nodeWaitingFaded = Terminal::Style{m_term.color(Terminal::Black), m_term.color(0x004040, Terminal::Yellow)};
 
-	fdWatcher->registerFD(STDIN_FILENO, boost::bind(&UI::handleInput, this));
+	fdWatcher->registerFD(STDIN_FILENO, boost::bind(&UI::readInput, this));
 }
 
 UI::~UI()
@@ -503,12 +506,26 @@ void UI::checkWindowSize()
 	m_nodeLabelWidth = std::min<unsigned int>(w, m_columns/4);
 }
 
-void UI::handleInput()
+void UI::readInput()
 {
 	int c = m_term.readKey();
 	if(c < 0)
 		return;
 
+	handleKey(c);
+}
+
+void UI::checkTerminal()
+{
+	int c = m_term.readLeftover();
+	if(c < 0)
+		return;
+
+	handleKey(c);
+}
+
+void UI::handleKey(int c)
+{
 	// Are we in search mode?
 	if(m_searchActive)
 	{

@@ -47,7 +47,11 @@ private:
 	void drawStatusLine();
 	void checkWindowSize();
 	void setupColors();
-	void handleInput();
+
+	void readInput();
+	void checkTerminal();
+
+	void handleKey(int key);
 
 	inline bool anyMuted()
 	{ return !m_mutedSet.empty(); }
@@ -74,6 +78,7 @@ private:
 
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
+	ros::WallTimer m_terminalCheckTimer;
 
 	std::unordered_set<std::string> m_mutedSet;
 
