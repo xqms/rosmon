@@ -240,18 +240,21 @@ void UI::drawStatusLine()
 		const auto& nodes = m_monitor->nodes();
 		unsigned int i = 0;
 
-		std::size_t nodeWidth = NODE_WIDTH+2;
+		// We can use the space of the [ ] and key characters
+		constexpr auto SEARCH_NODE_WIDTH = NODE_WIDTH+3;
+
+		std::size_t nodeWidth = SEARCH_NODE_WIDTH;
 		for(auto& nodeIdx : m_searchNodes)
 			nodeWidth = std::max(nodeWidth, nodes[nodeIdx]->name().length());
 
-		if(m_searchNodes.size() * (nodeWidth+3) >= static_cast<std::size_t>(m_columns-1))
-			nodeWidth = NODE_WIDTH+2;
+		// If it doesn't fit on one line, constrain to SEARCH_NODE_WIDTH
+		if(m_searchNodes.size() * (nodeWidth+1) >= static_cast<std::size_t>(m_columns-1))
+			nodeWidth = SEARCH_NODE_WIDTH;
 
+		const int BLOCK_WIDTH = nodeWidth;
 		for(auto& nodeIdx : m_searchNodes)
 		{
 			const auto& node = m_monitor->nodes()[nodeIdx];
-
-			fmt::print(" ");
 
 			if(i == m_searchSelectedIndex)
 				m_term.setSimplePair(Terminal::Black, Terminal::Cyan);
@@ -263,7 +266,6 @@ void UI::drawStatusLine()
 			m_term.setStandardColors();
 
 			// Primitive wrapping control
-			const int BLOCK_WIDTH = nodeWidth + 3;
 			col += BLOCK_WIDTH;
 
 			if(col + 1 + BLOCK_WIDTH <= m_columns)
@@ -281,6 +283,8 @@ void UI::drawStatusLine()
 
 			++i;
 		}
+
+		m_searchDisplayColumns = (m_columns+1) / (BLOCK_WIDTH+1);
 	}
 	else
 	{
@@ -554,6 +558,41 @@ void UI::handleKey(int c)
 				m_searchSelectedIndex = 0;
 
 			return;
+		}
+
+		if(m_searchSelectedIndex >= 0 && m_searchSelectedIndex < m_searchNodes.size())
+		{
+			int col = m_searchSelectedIndex % m_searchDisplayColumns;
+			int row = m_searchSelectedIndex / m_searchDisplayColumns;
+
+			if(c == Terminal::SK_Right)
+			{
+				if(col < static_cast<int>(m_searchDisplayColumns)-1 && m_searchSelectedIndex < m_searchNodes.size()-1)
+					m_searchSelectedIndex++;
+				return;
+			}
+
+			if(c == Terminal::SK_Left)
+			{
+				if(col > 0)
+					m_searchSelectedIndex--;
+				return;
+			}
+
+			if(c == Terminal::SK_Up)
+			{
+				if(row > 0)
+					m_searchSelectedIndex -= m_searchDisplayColumns;
+				return;
+			}
+
+			if(c == Terminal::SK_Down)
+			{
+				int numRows = (m_searchNodes.size() + m_searchDisplayColumns - 1) / m_searchDisplayColumns;
+				if(row < numRows - 1)
+					m_searchSelectedIndex = std::min<int>(m_searchNodes.size(), m_searchSelectedIndex + m_searchDisplayColumns);
+				return;
+			}
 		}
 
 		if(c == Terminal::SK_Backspace)

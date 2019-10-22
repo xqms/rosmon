@@ -92,6 +92,7 @@ private:
 	std::string m_searchString;
 	unsigned int m_searchSelectedIndex;
 	std::vector<unsigned int> m_searchNodes;
+	unsigned int m_searchDisplayColumns = 0;
 
 	Terminal::Color m_color_bar;
 
