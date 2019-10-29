@@ -2,6 +2,25 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* ui: adjust "faded" crashed color
+  This makes the selected node more visible if it is a crashed one.
+* terminal: new input system that hides known escape codes
+  The old system would pass through all escape codes and generate
+  *additional* SK\_* events whenever a complete escape code was recognized.
+  The new system hides those events, but will yield incomplete escape codes
+  after a timeout (this is useful for supporting the escape key itself).
+* ui: line wrap for node output
+* node_monitor: Log manual start/stop actions
+* colored log output from rosmon itself
+* improved support for running under tmux and screen
+* UI modernization (PR: #99) with new colors, redesigned status bar
+* Interactive node search (PR: #97)
+* Add restart count to ROS diagnostics (PR: #96)
+* monitor: make updateStats() rate-independent (Issue: #95)
+* Contributors: Max Schwarz, Tim Clephas
+
 2.1.1 (2019-07-09)
 ------------------
 * rosmon_core: add _shim to installed targets, issue #91
