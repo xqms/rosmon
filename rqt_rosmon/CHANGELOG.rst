@@ -2,8 +2,8 @@
 Changelog for package rqt_rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.0 (2019-10-29)
+------------------
 * rqt_rosmon: use std::sort() instead of qSort()
   qSort() is deprecated in newer Qt versions.
 * rqt_rosmon: node_model: fix dataChanged() column indices

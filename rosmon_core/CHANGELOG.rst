@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.0 (2019-10-29)
+------------------
 * ui: adjust "faded" crashed color
   This makes the selected node more visible if it is a crashed one.
 * terminal: new input system that hides known escape codes
