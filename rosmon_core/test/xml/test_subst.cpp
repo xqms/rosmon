@@ -175,6 +175,35 @@ TEST_CASE("anon", "[subst]")
 			</launch>
 		)EOF");
 	}
+
+	SECTION("nested")
+	{
+		LaunchConfig config;
+		config.parseString(R"EOF(
+			<launch>
+				<param name="test_1_global" value="$(anon test_1)" />
+
+				<group>
+					<param name="test_1_local" value="$(anon test_1)" />
+					<param name="test_2_local" value="$(anon test_2)" />
+				</group>
+
+				<param name="test_2_global" value="$(anon test_2)" />
+			</launch>
+		)EOF");
+
+		config.evaluateParameters();
+
+		CAPTURE(config.parameters());
+
+		auto test_1_global = getTypedParam<std::string>(config.parameters(), "/test_1_global");
+		auto test_1_local = getTypedParam<std::string>(config.parameters(), "/test_1_local");
+		auto test_2_global = getTypedParam<std::string>(config.parameters(), "/test_2_global");
+		auto test_2_local = getTypedParam<std::string>(config.parameters(), "/test_2_local");
+
+		CHECK(test_1_global == test_1_local);
+		CHECK(test_2_global != test_2_local);
+	}
 }
 
 TEST_CASE("arg", "[subst]")
