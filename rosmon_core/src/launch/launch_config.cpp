@@ -118,6 +118,20 @@ void ParseContext::setRemap(const std::string& from, const std::string& to)
 	m_remappings[from] = to;
 }
 
+std::string ParseContext::anonName(const std::string& base)
+{
+	auto it = m_anonNames.find(base);
+	if(it == m_anonNames.end())
+	{
+		auto name = base + "_" + m_config->generateAnonHash();
+
+		it = m_anonNames.emplace(base, name).first;
+	}
+
+	return it->second;
+}
+
+
 LaunchConfig::LaunchConfig()
  : m_rootContext(this)
  , m_anonGen(std::random_device()())
@@ -1009,22 +1023,9 @@ void LaunchConfig::parseRemap(TiXmlElement* element, ParseContext& ctx)
 	ctx.setRemap(ctx.evaluate(from), ctx.evaluate(to));
 }
 
-std::string LaunchConfig::anonName(const std::string& base)
+std::string LaunchConfig::generateAnonHash()
 {
-	auto it = m_anonNames.find(base);
-	if(it == m_anonNames.end())
-	{
-		uint32_t r = m_anonGen();
-
-		char buf[20];
-		snprintf(buf, sizeof(buf), "%08X", r);
-
-		auto name = base + "_" + buf;
-
-		it = m_anonNames.emplace(base, name).first;
-	}
-
-	return it->second;
+	return fmt::format("{:08X}", m_anonGen());
 }
 
 template<class Iterator>

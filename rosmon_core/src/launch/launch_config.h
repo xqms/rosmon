@@ -107,6 +107,8 @@ public:
 	const std::map<std::string, std::string>& remappings()
 	{ return m_remappings; }
 
+	std::string anonName(const std::string& base);
+
 	template<typename... Args>
 	ParseException error(const char* fmt, const Args& ... args) const
 	{
@@ -147,6 +149,7 @@ private:
 	std::map<std::string, std::string> m_args;
 	std::map<std::string, std::string> m_environment;
 	std::map<std::string, std::string> m_remappings;
+	std::map<std::string, std::string> m_anonNames;
 };
 
 class LaunchConfig
@@ -188,6 +191,8 @@ public:
 
 	std::string windowTitle() const
 	{ return m_windowTitle; }
+
+	std::string generateAnonHash();
 private:
 	enum ParamContext
 	{
@@ -227,7 +232,6 @@ private:
 	std::map<std::string, ParameterFuture> m_paramJobs;
 	std::vector<std::future<YAMLResult>> m_yamlParamJobs;
 
-	std::map<std::string, std::string> m_anonNames;
 	std::mt19937_64 m_anonGen;
 
 	std::string m_rosmonNodeName;
