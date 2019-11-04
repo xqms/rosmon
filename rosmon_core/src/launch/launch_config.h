@@ -198,9 +198,9 @@ private:
 	void parseTopLevelAttributes(TiXmlElement* element);
 
 	void parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments = false);
-	void parseNode(TiXmlElement* element, ParseContext ctx);
-	void parseParam(TiXmlElement* element, ParseContext ctx, ParamContext paramContext = PARAM_GENERAL);
-	void parseROSParam(TiXmlElement* element, ParseContext ctx);
+	void parseNode(TiXmlElement* element, ParseContext& ctx);
+	void parseParam(TiXmlElement* element, ParseContext& ctx, ParamContext paramContext = PARAM_GENERAL);
+	void parseROSParam(TiXmlElement* element, ParseContext& ctx);
 	void parseInclude(TiXmlElement* element, ParseContext ctx);
 	void parseArgument(TiXmlElement* element, ParseContext& ctx);
 	void parseEnv(TiXmlElement* element, ParseContext& ctx);
