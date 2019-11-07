@@ -2,6 +2,12 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* correctly terminate execvp() arguments (issue: #102, PR: #103).
+  Curiously, this bug has remained hidden until now.
+* Contributors: Max Schwarz
+
 2.2.0 (2019-10-29)
 ------------------
 * ui: adjust "faded" crashed color

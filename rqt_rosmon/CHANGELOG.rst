@@ -2,6 +2,9 @@
 Changelog for package rqt_rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 2.2.0 (2019-10-29)
 ------------------
 * rqt_rosmon: use std::sort() instead of qSort()
