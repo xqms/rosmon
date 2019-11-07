@@ -1,0 +1,15 @@
+language: generic
+services:
+  - docker
+
+env:
+  global:
+    - CMAKE_ARGS="-DCMAKE_CXX_FLAGS='-fsanitize=address -fsanitize=leak'"
+  matrix:
+    - ROS_DISTRO="melodic"
+
+install:
+  - git clone --quiet --depth 1 https://github.com/ros-industrial/industrial_ci.git .industrial_ci
+script:
+  - .industrial_ci/travis.sh
+
