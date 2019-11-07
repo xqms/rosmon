@@ -161,6 +161,8 @@ int main(int argc, char** argv)
 	for(int i = nodeOptionsBegin; i < argc; ++i)
 		args.push_back(argv[i]);
 
+	args.push_back(nullptr);
+
 	// Go!
 	if(execvp(nodeExecutable, args.data()) != 0)
 	{
