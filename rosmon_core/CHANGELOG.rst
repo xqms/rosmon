@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.2.1 (2019-11-08)
+------------------
 * correctly terminate execvp() arguments (issue: #102, PR: #103).
   Curiously, this bug has remained hidden until now.
 * Contributors: Max Schwarz
