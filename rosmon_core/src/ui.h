@@ -20,7 +20,7 @@ namespace rosmon
 class UI
 {
 public:
-	explicit UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher);
+	explicit UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher, const std::unordered_set<std::string>& muted = std::unordered_set<std::string>());
 	~UI();
 
 	void update();

@@ -29,6 +29,7 @@ Node::Node(std::string name, std::string package, std::string type)
  : m_name(std::move(name))
  , m_package(std::move(package))
  , m_type(std::move(type))
+ , m_muted(false)
 
  // NOTE: roslaunch documentation seems to suggest that this is true by default,
  //  however, the source tells a different story...

@@ -437,6 +437,14 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
+	//Get muted nodes by default
+	std::unordered_set<std::string> muted_nodes;
+	for(const auto & n : config->nodes()){
+		if(n->isMuted()){
+			muted_nodes.insert(n->name());
+		}
+	}
+
 	// Should we automatically start the nodes?
 	if(startNodes)
 		monitor.start();
@@ -445,7 +453,7 @@ int main(int argc, char** argv)
 	boost::scoped_ptr<rosmon::UI> ui;
 	if(enableUI)
 	{
-		ui.reset(new rosmon::UI(&monitor, watcher));
+		ui.reset(new rosmon::UI(&monitor, watcher, muted_nodes));
 	}
 	else
 	{

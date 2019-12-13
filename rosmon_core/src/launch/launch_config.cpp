@@ -286,6 +286,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	const char* stopTimeout = element->Attribute("rosmon-stop-timeout");
     const char* memoryLimit = element->Attribute("rosmon-memory-limit");
     const char* cpuLimit = element->Attribute("rosmon-cpu-limit");
+	const char* output = element->Attribute("output");
 
 
 	if(!name || !pkg || !type)
@@ -445,6 +446,11 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		node->setClearParams(ctx.parseBool(clearParams, element->Row()));
 
 	node->setRemappings(ctx.remappings());
+
+		if(!output || ctx.evaluate(output) != "screen")
+		{
+			node->setMutedDefault(true);
+		}
 
 	m_nodes.push_back(node);
 }

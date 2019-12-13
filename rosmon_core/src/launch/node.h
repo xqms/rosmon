@@ -46,6 +46,11 @@ public:
 
     void setCPULimit(float cpuLimit);
 
+	void setMutedDefault(bool muted)
+	{
+		m_muted = muted;
+	}
+
 	std::string name() const
 	{ return m_name; }
 
@@ -101,6 +106,10 @@ public:
 
     float cpuLimit()const
     { return m_cpuLimit; }
+
+	bool isMuted()const
+	{return m_muted; }
+
 private:
 	std::string m_name;
 	std::string m_package;
@@ -132,6 +141,8 @@ private:
 
     uint64_t m_memoryLimitByte;
     float m_cpuLimit;
+
+	bool m_muted;
 };
 
 }

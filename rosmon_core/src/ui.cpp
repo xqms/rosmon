@@ -33,10 +33,11 @@ void cleanup()
 namespace rosmon
 {
 
-UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher)
+UI::UI(monitor::Monitor* monitor, const FDWatcher::Ptr& fdWatcher,const std::unordered_set<std::string>& muted)
  : m_monitor(monitor)
  , m_fdWatcher(fdWatcher)
  , m_columns(80)
+ , m_mutedSet(muted)
  , m_selectedNode(-1)
 {
 	std::atexit(cleanup);
