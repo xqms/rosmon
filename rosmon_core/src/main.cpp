@@ -86,6 +86,8 @@ void usage()
         "                  CPU usage.\n"
         "  --memory-limit=15MB\n"
         "                  Default memory limit usage of monitored process.\n"
+		"  --obey-output\n"
+		"                  Obey node output tag. It mutes a node by default unless output=screen is set\n"
 		"\n"
 		"rosmon also obeys some environment variables:\n"
 		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
@@ -131,6 +133,7 @@ static const struct option OPTIONS[] = {
     {"cpu-limit", required_argument, nullptr, 'c'},
     {"memory-limit", required_argument, nullptr, 'm'},
     {"diagnostics-prefix", required_argument, nullptr, 'p'},
+	{"obey-output", no_argument, nullptr, 'o'},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -155,6 +158,7 @@ int main(int argc, char** argv)
 	float cpuLimit = rosmon::launch::LaunchConfig::DEFAULT_CPU_LIMIT;
 	bool disableDiagnostics = false;
 	std::string diagnosticsPrefix;
+	bool obey_output = false;
 
 	// Parse options
 	while(true)
@@ -246,6 +250,8 @@ int main(int argc, char** argv)
 				fmt::print(stderr, "Prefix : {}", optarg);
 				diagnosticsPrefix = std::string(optarg);
 				break;
+			case 'o':
+				obey_output = true;
 		}
 	}
 
@@ -439,9 +445,12 @@ int main(int argc, char** argv)
 
 	//Get muted nodes by default
 	std::unordered_set<std::string> muted_nodes;
-	for(const auto & n : config->nodes()){
-		if(n->isMuted()){
-			muted_nodes.insert(n->name());
+	if(obey_output)
+	{
+		for(const auto & n : config->nodes())
+		{
+			if(n->isMuted())
+				muted_nodes.insert(n->name());
 		}
 	}
 
