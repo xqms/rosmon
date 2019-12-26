@@ -118,6 +118,20 @@ void ParseContext::setRemap(const std::string& from, const std::string& to)
 	m_remappings[from] = to;
 }
 
+std::string ParseContext::anonName(const std::string& base)
+{
+	auto it = m_anonNames.find(base);
+	if(it == m_anonNames.end())
+	{
+		auto name = base + "_" + m_config->generateAnonHash();
+
+		it = m_anonNames.emplace(base, name).first;
+	}
+
+	return it->second;
+}
+
+
 LaunchConfig::LaunchConfig()
  : m_rootContext(this)
  , m_anonGen(std::random_device()())
@@ -269,7 +283,7 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArgu
 	}
 }
 
-void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
+void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 {
 	const char* name = element->Attribute("name");
 	const char* pkg = element->Attribute("pkg");
@@ -290,8 +304,11 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	if(!name || !pkg || !type)
 	{
-		throw ctx.error("name, pkg, type are mandatory for node elements!");
+		throw attr_ctx.error("name, pkg, type are mandatory for node elements!");
 	}
+
+	// Attributes are evaluated *outside* of the node context, so keep that one
+	ParseContext ctx = attr_ctx;
 
 	if(ns)
 		ctx = ctx.enterScope(ctx.evaluate(ns));
@@ -302,7 +319,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	ctx = ctx.enterScope(ctx.evaluate(name));
 
 	Node::Ptr node = std::make_shared<Node>(
-		ctx.evaluate(name), ctx.evaluate(pkg), ctx.evaluate(type)
+		attr_ctx.evaluate(name), attr_ctx.evaluate(pkg), attr_ctx.evaluate(type)
 	);
 
 	// Check name uniqueness
@@ -322,7 +339,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		double seconds;
 		try
 		{
-			seconds = boost::lexical_cast<double>(ctx.evaluate(stopTimeout));
+			seconds = boost::lexical_cast<double>(attr_ctx.evaluate(stopTimeout));
 		}
 		catch(boost::bad_lexical_cast&)
 		{
@@ -358,7 +375,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		double cpuLimitPct;
 		try
 		{
-			cpuLimitPct = boost::lexical_cast<double>(ctx.evaluate(cpuLimit));
+			cpuLimitPct = boost::lexical_cast<double>(attr_ctx.evaluate(cpuLimit));
 		}
 		catch(boost::bad_lexical_cast&)
 		{
@@ -383,14 +400,14 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 
 	if(respawn)
 	{
-		node->setRespawn(ctx.parseBool(respawn, element->Row()));
+		node->setRespawn(attr_ctx.parseBool(respawn, element->Row()));
 
 		if(respawnDelay)
 		{
 			double seconds;
 			try
 			{
-				seconds = boost::lexical_cast<double>(ctx.evaluate(respawnDelay));
+				seconds = boost::lexical_cast<double>(attr_ctx.evaluate(respawnDelay));
 			}
 			catch(boost::bad_lexical_cast&)
 			{
@@ -401,7 +418,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 		}
 	}
 
-	if(required && ctx.parseBool(required, element->Row()))
+	if(required && attr_ctx.parseBool(required, element->Row()))
 	{
 		node->setRequired(true);
 	}
@@ -433,16 +450,16 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext ctx)
 	node->setExtraEnvironment(ctx.environment());
 
 	if(launchPrefix)
-		node->setLaunchPrefix(ctx.evaluate(launchPrefix));
+		node->setLaunchPrefix(attr_ctx.evaluate(launchPrefix));
 
 	if(coredumpsEnabled)
-		node->setCoredumpsEnabled(ctx.parseBool(coredumpsEnabled, element->Row()));
+		node->setCoredumpsEnabled(attr_ctx.parseBool(coredumpsEnabled, element->Row()));
 
 	if(cwd)
-		node->setWorkingDirectory(ctx.evaluate(cwd));
+		node->setWorkingDirectory(attr_ctx.evaluate(cwd));
 
 	if(clearParams)
-		node->setClearParams(ctx.parseBool(clearParams, element->Row()));
+		node->setClearParams(attr_ctx.parseBool(clearParams, element->Row()));
 
 	node->setRemappings(ctx.remappings());
 
@@ -468,7 +485,7 @@ static XmlRpc::XmlRpcValue autoXmlRpcValue(const std::string& fullValue)
 	}
 }
 
-void LaunchConfig::parseParam(TiXmlElement* element, ParseContext ctx, ParamContext paramContext)
+void LaunchConfig::parseParam(TiXmlElement* element, ParseContext& ctx, ParamContext paramContext)
 {
 	const char* name = element->Attribute("name");
 	const char* value = element->Attribute("value");
@@ -775,7 +792,7 @@ XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const ParseContext& ctx, const s
 	}
 }
 
-void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
+void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext& ctx)
 {
 	const char* command = element->Attribute("command");
 
@@ -822,18 +839,19 @@ void LaunchConfig::parseROSParam(TiXmlElement* element, ParseContext ctx)
 			throw ctx.error("Could not parse YAML: {}", e.what());
 		}
 
+		ParseContext nameContext = ctx;
 		const char* ns = element->Attribute("ns");
 		if(ns)
-			ctx = ctx.enterScope(ctx.evaluate(ns));
+			nameContext = nameContext.enterScope(ctx.evaluate(ns));
 
 		const char* name = element->Attribute("param");
 		if(name)
-			ctx = ctx.enterScope(ctx.evaluate(name));
+			nameContext = nameContext.enterScope(ctx.evaluate(name));
 
 		// Remove trailing / from prefix to get param name
 		try
 		{
-			loadYAMLParams(ctx, n, ctx.prefix().substr(0, ctx.prefix().length()-1));
+			loadYAMLParams(ctx, n, nameContext.prefix().substr(0, nameContext.prefix().length()-1));
 		}
 		catch(ParseException& e)
 		{
@@ -1005,22 +1023,9 @@ void LaunchConfig::parseRemap(TiXmlElement* element, ParseContext& ctx)
 	ctx.setRemap(ctx.evaluate(from), ctx.evaluate(to));
 }
 
-std::string LaunchConfig::anonName(const std::string& base)
+std::string LaunchConfig::generateAnonHash()
 {
-	auto it = m_anonNames.find(base);
-	if(it == m_anonNames.end())
-	{
-		uint32_t r = m_anonGen();
-
-		char buf[20];
-		snprintf(buf, sizeof(buf), "%08X", r);
-
-		auto name = base + "_" + buf;
-
-		it = m_anonNames.emplace(base, name).first;
-	}
-
-	return it->second;
+	return fmt::format("{:08X}", m_anonGen());
 }
 
 template<class Iterator>
