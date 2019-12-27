@@ -147,12 +147,12 @@ void Node::setStopTimeout(double timeout)
 
 void Node::setMemoryLimit(uint64_t memoryLimitByte)
 {
-    m_memoryLimitByte = memoryLimitByte;
+	m_memoryLimitByte = memoryLimitByte;
 }
 
 void Node::setCPULimit(float cpuLimit)
 {
-    m_cpuLimit = cpuLimit;
+	m_cpuLimit = cpuLimit;
 }
 
 }

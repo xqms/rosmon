@@ -298,9 +298,8 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 	const char* cwd = element->Attribute("cwd");
 	const char* clearParams = element->Attribute("clear_params");
 	const char* stopTimeout = element->Attribute("rosmon-stop-timeout");
-    const char* memoryLimit = element->Attribute("rosmon-memory-limit");
-    const char* cpuLimit = element->Attribute("rosmon-cpu-limit");
-
+	const char* memoryLimit = element->Attribute("rosmon-memory-limit");
+	const char* cpuLimit = element->Attribute("rosmon-cpu-limit");
 
 	if(!name || !pkg || !type)
 	{
