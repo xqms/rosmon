@@ -251,6 +251,69 @@ TEST_CASE("node remap", "[remap]")
 	CHECK(remappings.at("private2") == "local_target");
 }
 
+TEST_CASE("node output attr", "[output]")
+{
+	SECTION("ignore")
+	{
+		LaunchConfig config;
+		config.setOutputAttrMode(LaunchConfig::OutputAttr::Ignore);
+		config.parseString(R"EOF(
+			<launch>
+				<node name="test_node" pkg="rosmon_core" type="abort" output="log">
+				</node>
+			</launch>
+		)EOF");
+
+		auto node = getNode(config.nodes(), "test_node");
+		CHECK(!node->isMuted());
+	}
+
+	SECTION("obey")
+	{
+		LaunchConfig config;
+		config.setOutputAttrMode(LaunchConfig::OutputAttr::Obey);
+		config.parseString(R"EOF(
+			<launch>
+				<node name="test_node" pkg="rosmon_core" type="abort">
+				</node>
+			</launch>
+		)EOF");
+
+		auto node = getNode(config.nodes(), "test_node");
+		CHECK(node->isMuted());
+	}
+
+	SECTION("obey log")
+	{
+		LaunchConfig config;
+		config.setOutputAttrMode(LaunchConfig::OutputAttr::Obey);
+		config.parseString(R"EOF(
+			<launch>
+				<node name="test_node" pkg="rosmon_core" type="abort" output="log">
+				</node>
+			</launch>
+		)EOF");
+
+		auto node = getNode(config.nodes(), "test_node");
+		CHECK(node->isMuted());
+	}
+
+	SECTION("obey screen")
+	{
+		LaunchConfig config;
+		config.setOutputAttrMode(LaunchConfig::OutputAttr::Obey);
+		config.parseString(R"EOF(
+			<launch>
+				<node name="test_node" pkg="rosmon_core" type="abort" output="screen">
+				</node>
+			</launch>
+		)EOF");
+
+		auto node = getNode(config.nodes(), "test_node");
+		CHECK(!node->isMuted());
+	}
+}
+
 // rosmon extensions
 
 TEST_CASE("node enable-coredumps", "[node]")
