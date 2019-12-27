@@ -31,6 +31,7 @@ public:
 	std::string source;
 	std::string message;
 	Type type;
+	bool muted = false;
 };
 
 }

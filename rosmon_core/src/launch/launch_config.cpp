@@ -300,6 +300,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 	const char* stopTimeout = element->Attribute("rosmon-stop-timeout");
 	const char* memoryLimit = element->Attribute("rosmon-memory-limit");
 	const char* cpuLimit = element->Attribute("rosmon-cpu-limit");
+	const char* output = element->Attribute("output");
 
 	if(!name || !pkg || !type)
 	{
@@ -459,6 +460,22 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 
 	if(clearParams)
 		node->setClearParams(attr_ctx.parseBool(clearParams, element->Row()));
+
+	if(m_outputAttrMode == OutputAttr::Obey)
+	{
+		node->setMuted(true); // output=log is default
+
+		if(output)
+		{
+			std::string outputStr = attr_ctx.evaluate(output);
+			if(outputStr == "screen")
+				node->setMuted(false);
+			else if(outputStr == "log")
+				node->setMuted(true);
+			else
+				throw ctx.error("Invalid output attribute value: '{}'", outputStr);
+		}
+	}
 
 	node->setRemappings(ctx.remappings());
 
@@ -1109,6 +1126,11 @@ void LaunchConfig::evaluateParameters()
 		throw caughtException;
 
 	m_paramJobs.clear();
+}
+
+void LaunchConfig::setOutputAttrMode(OutputAttr mode)
+{
+	m_outputAttrMode = mode;
 }
 
 }

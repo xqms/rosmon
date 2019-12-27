@@ -86,6 +86,9 @@ void usage()
 		"                  CPU usage.\n"
 		"  --memory-limit=15MB\n"
 		"                  Default memory limit usage of monitored process.\n"
+		"  --output-attr=obey|ignore\n"
+		"                  Obey or ignore output=\"*\" attributes on node tags.\n"
+		"                  Default is to ignore.\n"
 		"\n"
 		"rosmon also obeys some environment variables:\n"
 		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
@@ -131,6 +134,7 @@ static const struct option OPTIONS[] = {
 	{"cpu-limit", required_argument, nullptr, 'c'},
 	{"memory-limit", required_argument, nullptr, 'm'},
 	{"diagnostics-prefix", required_argument, nullptr, 'p'},
+	{"output-attr", required_argument, nullptr, 'o'},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -155,6 +159,7 @@ int main(int argc, char** argv)
 	float cpuLimit = rosmon::launch::LaunchConfig::DEFAULT_CPU_LIMIT;
 	bool disableDiagnostics = false;
 	std::string diagnosticsPrefix;
+	rosmon::launch::LaunchConfig::OutputAttr outputAttrMode = rosmon::launch::LaunchConfig::OutputAttr::Ignore;
 
 	// Parse options
 	while(true)
@@ -242,6 +247,17 @@ int main(int argc, char** argv)
 				}
 				break;
 			}
+			case 'o':
+				if(optarg == std::string("obey"))
+					outputAttrMode = rosmon::launch::LaunchConfig::OutputAttr::Obey;
+				else if(optarg == std::string("ignore"))
+					outputAttrMode = rosmon::launch::LaunchConfig::OutputAttr::Ignore;
+				else
+				{
+					fmt::print(stderr, "Bad value for --output-attr argument: '{}'\n", optarg);
+					return 1;
+				}
+				break;
 			case 'p':
 				fmt::print(stderr, "Prefix : {}", optarg);
 				diagnosticsPrefix = std::string(optarg);
@@ -334,6 +350,7 @@ int main(int argc, char** argv)
 	config->setDefaultStopTimeout(stopTimeout);
 	config->setDefaultCPULimit(cpuLimit);
 	config->setDefaultMemoryLimit(memoryLimit);
+	config->setOutputAttrMode(outputAttrMode);
 
 	// Parse launch file arguments from command line
 	for(int i = firstArg; i < argc; ++i)
