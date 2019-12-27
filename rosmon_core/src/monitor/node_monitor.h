@@ -173,6 +173,11 @@ public:
 	inline double stopTimeout() const
 	{ return m_launchNode->stopTimeout(); }
 
+	void setMuted(bool muted);
+
+	bool isMuted() const
+	{ return m_muted; }
+
 	/**
 	 * @brief Logging signal
 	 *
@@ -234,6 +239,8 @@ private:
 	bool m_processWorkingDirectoryCreated = false;
 
 	bool m_firstStart = true;
+
+	bool m_muted = false;
 };
 
 }

@@ -201,7 +201,7 @@ void UI::drawStatusLine()
 			printKey("k", "stop");
 			printKey("d", "debug");
 
-			if(isMuted(selectedNode->name()))
+			if(selectedNode->isMuted())
 				printKey("u", "unmute");
 			else
 				printKey("m", "mute");
@@ -296,7 +296,7 @@ void UI::drawStatusLine()
 			if(m_selectedNode == -1)
 			{
 				// Print key with grey background
-				if(isMuted(node->name()))
+				if(node->isMuted())
 					m_style_nodeKeyMuted.use();
 				else
 					m_style_nodeKey.use();
@@ -392,9 +392,11 @@ void UI::drawStatusLine()
 
 void UI::log(const LogEvent& event)
 {
-	if(isMuted(event.source))
+	// Is this node muted? Muted events go into the log, but are not shown in
+	// the UI.
+	if(event.muted)
 		return;
-	
+
 	const std::string& clean = event.message;
 
 	auto it = m_nodeColorMap.find(event.source);
@@ -675,15 +677,34 @@ void UI::handleKey(int c)
 				node->launchDebugger();
 				break;
 			case 'm':
-				mute(node->name());
+				node->setMuted(true);
 				break;
 			case 'u':
-				unmute(node->name());
+				node->setMuted(false);
 				break;
 		}
 
 		m_selectedNode = -1;
 	}
+}
+
+bool UI::anyMuted() const
+{
+	return std::any_of(m_monitor->nodes().begin(), m_monitor->nodes().end(), [](const monitor::NodeMonitor::Ptr& n){
+		return n->isMuted();
+	});
+}
+
+void UI::muteAll()
+{
+	for(auto& n : m_monitor->nodes())
+		n->setMuted(true);
+}
+
+void UI::unmuteAll()
+{
+	for(auto& n : m_monitor->nodes())
+		n->setMuted(false);
 }
 
 }

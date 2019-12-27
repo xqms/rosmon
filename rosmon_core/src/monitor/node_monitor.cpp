@@ -92,6 +92,7 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
  , m_exitCode(0)
  , m_command(CMD_STOP) // we start in stopped state
  , m_restarting(false)
+ , m_muted(m_launchNode->isMuted())
 {
 	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&NodeMonitor::start, this), false, false);
 	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(m_launchNode->stopTimeout()), boost::bind(&NodeMonitor::checkStop, this));
@@ -448,7 +449,11 @@ void NodeMonitor::communicate()
 			m_rxBuffer.linearize();
 
 			auto one = m_rxBuffer.array_one();
-			logMessageSignal({name(), one.first});
+
+			LogEvent event{name(), one.first};
+			event.muted = isMuted();
+
+			logMessageSignal(std::move(event));
 
 			m_rxBuffer.clear();
 		}
@@ -654,6 +659,11 @@ void NodeMonitor::endStatUpdate(double elapsedTimeInTicks)
 {
 	m_userLoad = m_userTime / elapsedTimeInTicks;
 	m_systemLoad = m_systemTime / elapsedTimeInTicks;
+}
+
+void NodeMonitor::setMuted(bool muted)
+{
+	m_muted = muted;
 }
 
 }

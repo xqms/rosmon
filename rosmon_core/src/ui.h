@@ -53,23 +53,11 @@ private:
 
 	void handleKey(int key);
 
-	inline bool anyMuted()
-	{ return !m_mutedSet.empty(); }
+	bool anyMuted() const;
 
-	inline bool isMuted(const std::string &s) 
-	{ return m_mutedSet.find(s) != m_mutedSet.end(); }
+	void muteAll();
 
-	inline void mute(const std::string &s)
-	{ m_mutedSet.insert(s); }
-
-	inline void unmute(const std::string &s)
-	{ m_mutedSet.erase(s); }
-
-	inline void muteAll()
-	{ for(auto& node : m_monitor->nodes()) m_mutedSet.insert(node->name()); }
-
-	inline void unmuteAll()
-	{ m_mutedSet.clear(); }
+	void unmuteAll();
 
 	monitor::Monitor* m_monitor;
 	FDWatcher::Ptr m_fdWatcher;
@@ -79,8 +67,6 @@ private:
 	int m_columns;
 	ros::WallTimer m_sizeTimer;
 	ros::WallTimer m_terminalCheckTimer;
-
-	std::unordered_set<std::string> m_mutedSet;
 
 	std::map<std::string, ChannelInfo> m_nodeColorMap;
 
