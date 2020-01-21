@@ -1,2 +1,2 @@
 #!/bin/bash
-exec rosrun rosmon_core rosmon $*
+exec rosrun rosmon_core rosmon "$@"
