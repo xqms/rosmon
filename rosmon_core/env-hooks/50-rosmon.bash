@@ -10,7 +10,7 @@ function mon() {
 	case $1 in
 		launch)
 			shift
-			rosrun rosmon_core rosmon $*
+			rosrun rosmon_core rosmon "$@"
 			;;
 	esac
 }
