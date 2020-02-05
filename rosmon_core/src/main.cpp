@@ -105,14 +105,10 @@ void handleSignal(int)
 
 void logToStdout(const rosmon::LogEvent& event)
 {
-	std::string clean = event.message;
-	unsigned int len = clean.length();
-	while(len != 0 && (clean[len-1] == '\n' || clean[len-1] == '\r'))
-		len--;
+	std::cout << event.message;
 
-	clean.resize(len);
-
-	fmt::print("{:>20}: {}\n", event.source, clean);
+	if(!event.message.empty() && event.message.back() != '\n')
+		std::cout << '\n';
 
 	if(g_flushStdout)
 		fflush(stdout);
