@@ -201,6 +201,9 @@ public:
 	{ return m_windowTitle; }
 
 	std::string generateAnonHash();
+
+	bool disableUI() const
+	{ return m_disableUI; }
 private:
 	enum ParamContext
 	{
@@ -251,6 +254,8 @@ private:
 	double m_defaultCPULimit{DEFAULT_CPU_LIMIT};
 
 	OutputAttr m_outputAttrMode{OutputAttr::Ignore};
+
+	bool m_disableUI = false;
 };
 
 }

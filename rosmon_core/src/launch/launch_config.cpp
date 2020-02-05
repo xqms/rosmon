@@ -222,6 +222,10 @@ void LaunchConfig::parseTopLevelAttributes(TiXmlElement* element)
 	const char* windowTitle = element->Attribute("rosmon-window-title");
 	if(windowTitle)
 		m_windowTitle = windowTitle;
+
+	const char* disableUI = element->Attribute("rosmon-disable-ui");
+	if(disableUI)
+		m_disableUI = m_rootContext.parseBool(disableUI, element->Row());
 }
 
 void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments)

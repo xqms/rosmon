@@ -394,6 +394,9 @@ int main(int argc, char** argv)
 			break;
 	}
 
+	if(config->disableUI())
+		enableUI = false;
+
 	// Initialize the ROS node.
 	{
 		uint32_t init_options = ros::init_options::NoSigintHandler;
