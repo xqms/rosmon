@@ -356,6 +356,24 @@ NodeMonitor::State NodeMonitor::state() const
 
 void NodeMonitor::communicate()
 {
+	auto handleByte = [&](char c){
+		m_rxBuffer.push_back(c);
+		if(c == '\n')
+		{
+			m_rxBuffer.push_back(0);
+			m_rxBuffer.linearize();
+
+			auto one = m_rxBuffer.array_one();
+
+			LogEvent event{name(), one.first};
+			event.muted = isMuted();
+
+			logMessageSignal(std::move(event));
+
+			m_rxBuffer.clear();
+		}
+	};
+
 	char buf[1024];
 	int bytes = read(m_fd, buf, sizeof(buf));
 
@@ -373,6 +391,10 @@ void NodeMonitor::communicate()
 
 			throw error("{}: Could not waitpid(): {}", m_launchNode->name(), strerror(errno));
 		}
+
+		// Flush out any remaining stdout
+		if(!m_rxBuffer.empty())
+			handleByte('\n');
 
 		if(WIFEXITED(status))
 		{
@@ -442,21 +464,7 @@ void NodeMonitor::communicate()
 
 	for(int i = 0; i < bytes; ++i)
 	{
-		m_rxBuffer.push_back(buf[i]);
-		if(buf[i] == '\n')
-		{
-			m_rxBuffer.push_back(0);
-			m_rxBuffer.linearize();
-
-			auto one = m_rxBuffer.array_one();
-
-			LogEvent event{name(), one.first};
-			event.muted = isMuted();
-
-			logMessageSignal(std::move(event));
-
-			m_rxBuffer.clear();
-		}
+		handleByte(buf[i]);
 	}
 }
 
