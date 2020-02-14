@@ -198,6 +198,7 @@ private:
 	std::vector<std::string> composeCommand() const;
 
 	void communicate();
+	void communicateStderr();
 
 	template<typename... Args>
 	void log(const char* format, Args&& ... args);
@@ -213,9 +214,11 @@ private:
 	FDWatcher::Ptr m_fdWatcher;
 
 	boost::circular_buffer<char> m_rxBuffer;
+	boost::circular_buffer<char> m_stderrBuffer;
 
 	int m_pid = -1;
 	int m_fd = -1;
+	int m_stderrFD = -1;
 	int m_exitCode;
 
 	ros::WallTimer m_stopCheckTimer;

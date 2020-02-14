@@ -397,6 +397,10 @@ void UI::log(const LogEvent& event)
 	if(event.muted)
 		return;
 
+	// Are we supposed to show stdout?
+	if(event.channel == LogEvent::Channel::Stdout && !event.showStdout)
+		return;
+
 	const std::string& clean = event.message;
 
 	auto it = m_nodeColorMap.find(event.source);
