@@ -9,10 +9,10 @@
 #include <cstdio>
 #include <cstring>
 #include <sstream>
-
 #include <fcntl.h>
 #include <glob.h>
 #include <pty.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -172,15 +172,32 @@ void NodeMonitor::start()
 	if(running())
 		return;
 
-	if(m_launchNode->coredumpsEnabled() && g_coreIsRelative && m_processWorkingDirectory.empty())
+        if(m_launchNode->coredumpsEnabled() && g_coreIsRelative && m_processWorkingDirectory.empty())
 	{
-		char tmpfile[256];
-		strncpy(tmpfile, "/tmp/rosmon-node-XXXXXX", sizeof(tmpfile));
-		tmpfile[sizeof(tmpfile)-1] = 0;
-		m_processWorkingDirectory = mkdtemp(tmpfile);
-		m_processWorkingDirectoryCreated = true;
+                if (const char* logDir = std::getenv("ROSMON_LOG_PATH")) 
+                {
+                        std::string dir(logDir);
+                        dir = dir + "/rosmon/core_dumps";
+                        if (chdir(dir.c_str()) == 0 || mkdir(dir.c_str(), 0777) == 0) 
+                        {
+                                m_processWorkingDirectory = dir;
+                                m_processWorkingDirectoryCreated = true;
+                        } 
+                        else 
+                        {
+                                perror("Could not create rosmon/core_dumps directory");
+                        }
+                }
+                else 
+                {
+                        char tmpfile[256];
+                        strncpy(tmpfile, "/tmp/rosmon-node-XXXXXX", sizeof(tmpfile));
+                        tmpfile[sizeof(tmpfile)-1] = 0;
+                        m_processWorkingDirectory = mkdtemp(tmpfile);
+                        m_processWorkingDirectoryCreated = true;
+                }
 	}
-
+        
 	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
 
 	if(!m_firstStart)
@@ -403,16 +420,16 @@ void NodeMonitor::communicate()
 		}
 #endif
 
-		if(m_processWorkingDirectoryCreated)
-		{
-			if(rmdir(m_processWorkingDirectory.c_str()) != 0)
-			{
-				logTyped(LogEvent::Type::Warning, "Could not remove process working directory '{}' after process exit: {}",
-					m_processWorkingDirectory, strerror(errno)
-				);
-			}
-			m_processWorkingDirectory.clear();
-		}
+//		if(m_processWorkingDirectoryCreated)
+//		{
+//			if(rmdir(m_processWorkingDirectory.c_str()) != 0)
+//			{
+//				logTyped(LogEvent::Type::Warning, "Could not remove process working directory '{}' after process exit: {}",
+//					m_processWorkingDirectory, strerror(errno)
+//				);
+//			}
+//			m_processWorkingDirectory.clear();
+//		}
 
 		m_pid = -1;
 		m_fdWatcher->removeFD(m_fd);
@@ -557,10 +574,10 @@ void NodeMonitor::gatherCoredump(int signal)
 
 	std::string coreGlob = boost::find_format_all_copy(std::string(core_pattern), corePatternFormatFinder, formatter);
 
-	// If the pattern is not absolute, it is relative to our node's cwd.
+	// If the pattern is not absolute, it is relative to our node's cwd. 
 	if(coreGlob[0] != '/')
 		coreGlob = m_processWorkingDirectory + "/" + coreGlob;
-
+        
 	log("Determined pattern '{}'", coreGlob);
 
 	glob_t results;
@@ -591,6 +608,20 @@ void NodeMonitor::gatherCoredump(int signal)
 	ss << "gdb " << m_launchNode->executable() << " " << coreFile;
 
 	m_debuggerCommand = ss.str();
+        
+        
+        time_t t = time(nullptr);
+        tm currentTime;
+        memset(&currentTime, 0, sizeof(currentTime));
+        localtime_r(&t, &currentTime);
+
+        char buf[256];
+        strftime(buf, sizeof(buf), "_%Y_%m_%d_%H_%M_%S", &currentTime);
+        std::string core_rename = coreGlob + "_" + m_launchNode->name() + std::string(buf);
+        
+        if (rename(const_cast<char*>(coreGlob.c_str()), const_cast<char*>(core_rename.c_str())) != 0) {
+                perror("Error renaming core files");
+        }
 }
 
 void NodeMonitor::launchDebugger()
