@@ -19,7 +19,7 @@ namespace rosmon
 Logger::Logger(const std::string& path, bool flush)
  : m_flush(flush)
 {
-	m_file = fopen(path.c_str(), "we");
+	m_file = fopen(path.c_str(), "a");
 	if(!m_file)
 	{
 		throw std::runtime_error(fmt::format(
