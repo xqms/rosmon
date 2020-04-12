@@ -914,6 +914,11 @@ void LaunchConfig::loadYAMLParams(const ParseContext& ctx, const YAML::Node& n, 
 			m_paramJobs.erase(prefix);
 			break;
 		}
+		case YAML::NodeType::Null:
+		{
+			// Nothing to do, empty node
+			break;
+		}
 		default:
 		{
 			throw ctx.error("invalid yaml node type");
