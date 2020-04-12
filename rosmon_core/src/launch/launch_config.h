@@ -127,19 +127,7 @@ public:
 	}
 
 	template<typename... Args>
-	void warning(const char* fmt, const Args& ... args) const
-	{
-		std::string msg = fmt::format(fmt, args...);
-
-		if(m_currentLine >= 0)
-		{
-			fmt::print(stderr, "{}:{}: Warning: {}\n", m_filename, m_currentLine, msg);
-		}
-		else
-		{
-			fmt::print(stderr, "{}: Warning: {}\n", m_filename, msg);
-		}
-	}
+	void warning(const char* fmt, const Args& ... args) const;
 private:
 	LaunchConfig* m_config;
 
@@ -169,6 +157,10 @@ public:
 		Obey,
 		Ignore
 	};
+
+	void setWarningOutput(std::ostream* warningStream);
+	std::ostream& warningOutput()
+	{ return *m_warningOutput; }
 
 	void setArgument(const std::string& name, const std::string& value);
 
@@ -256,7 +248,28 @@ private:
 	OutputAttr m_outputAttrMode{OutputAttr::Ignore};
 
 	bool m_disableUI = false;
+
+	std::ostream* m_warningOutput = &std::cerr;
 };
+
+template<typename... Args>
+void ParseContext::warning(const char* fmt, const Args& ... args) const
+{
+	std::string msg = fmt::format(fmt, args...);
+
+	if(m_currentLine >= 0)
+	{
+		m_config->warningOutput() << fmt::format(
+			"{}:{}: Warning: {}\n", m_filename, m_currentLine, msg
+		);
+	}
+	else
+	{
+		m_config->warningOutput() << fmt::format(
+			"{}: Warning: {}\n", m_filename, msg
+		);
+	}
+}
 
 }
 }

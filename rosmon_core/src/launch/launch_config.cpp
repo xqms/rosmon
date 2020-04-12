@@ -1142,5 +1142,10 @@ void LaunchConfig::setOutputAttrMode(OutputAttr mode)
 	m_outputAttrMode = mode;
 }
 
+void LaunchConfig::setWarningOutput(std::ostream* output)
+{
+	m_warningOutput = output;
+}
+
 }
 }
