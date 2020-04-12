@@ -34,7 +34,10 @@ TEST_CASE("include default", "[include]")
 	// roslaunch allows this - to me it seems quite confusing, since the value
 	// of the arg tag cannot be overriden, despite using "default".
 
+	std::stringstream warnings;
+
 	LaunchConfig config;
+	config.setWarningOutput(&warnings);
 	config.parseString(R"EOF(
 		<launch>
 			<arg name="test_argument" value="hello" />
@@ -50,6 +53,9 @@ TEST_CASE("include default", "[include]")
 	auto params = config.parameters();
 
 	CHECK(getTypedParam<std::string>(params, "/test_argument") == "hello");
+
+	CAPTURE(warnings.str());
+	CHECK(warnings.str().find("default") != std::string::npos);
 }
 
 TEST_CASE("include pass_all", "[include]")

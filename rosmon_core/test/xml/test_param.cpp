@@ -175,7 +175,10 @@ TEST_CASE("param binfile", "[param]")
 
 TEST_CASE("scoped params", "[param]")
 {
+	std::stringstream warnings;
+
 	LaunchConfig config;
+	config.setWarningOutput(&warnings);
 	config.parseString(R"EOF(
 		<launch>
 			<param name="global/param" value="abc" />
@@ -208,6 +211,9 @@ TEST_CASE("scoped params", "[param]")
 	checkTypedParam<std::string>(params, "/test_node/private2", XmlRpc::XmlRpcValue::TypeString, "val4");
 
 	checkTypedParam<std::string>(params, "/test_node/leading_slash", XmlRpc::XmlRpcValue::TypeString, "val5");
+
+	CAPTURE(warnings.str());
+	CHECK(warnings.str().find("leading slash") != std::string::npos);
 }
 
 TEST_CASE("scoped params with double slash (#49)", "[param]")
