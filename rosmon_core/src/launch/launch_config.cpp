@@ -899,9 +899,21 @@ void LaunchConfig::loadYAMLParams(const ParseContext& ctx, const YAML::Node& n, 
 	{
 		case YAML::NodeType::Map:
 		{
+			// Pass 1:
 			for(YAML::const_iterator it = n.begin(); it != n.end(); ++it)
 			{
-				loadYAMLParams(ctx, it->second, prefix + "/" + it->first.as<std::string>());
+				if (it->first.as<std::string>() == "<<")
+				{
+					loadYAMLParams(ctx, it->second, prefix);
+				}
+			}
+			// Pass 2:
+			for(YAML::const_iterator it = n.begin(); it != n.end(); ++it)
+			{
+				if (it->first.as<std::string>() != "<<")
+				{
+					loadYAMLParams(ctx, it->second, prefix + "/" + it->first.as<std::string>());
+				}											
 			}
 			break;
 		}
