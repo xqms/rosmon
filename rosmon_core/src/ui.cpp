@@ -475,6 +475,7 @@ void UI::log(const LogEvent& event)
 	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	fflush(stdout);
+	scheduleUpdate();
 }
 
 void UI::update()
@@ -482,21 +483,27 @@ void UI::update()
 	if(!m_term.interactive())
 		return;
 
-	// Disable automatic linewrap. This prevents ugliness on terminal resize.
-	m_term.setLineWrap(false);
 
-	// We currently are at the beginning of the status line.
-	drawStatusLine();
+	if (m_refresh_required)
+	{
+		m_refresh_required = false;
+		
+		// Disable automatic linewrap. This prevents ugliness on terminal resize.
+		m_term.setLineWrap(false);
 
-	// Move back
-	m_term.clearToEndOfLine();
-	m_term.moveCursorUp(g_statusLines);
-	m_term.moveCursorToStartOfLine();
+		// We currently are at the beginning of the status line.
+		drawStatusLine();
 
-	// Enable automatic linewrap again
-	m_term.setLineWrap(true);
+		// Move back
+		m_term.clearToEndOfLine();
+		m_term.moveCursorUp(g_statusLines);
+		m_term.moveCursorToStartOfLine();
 
-	fflush(stdout);
+		// Enable automatic linewrap again
+		m_term.setLineWrap(true);
+
+		fflush(stdout);
+	}
 }
 
 void UI::checkWindowSize()
@@ -543,6 +550,7 @@ void UI::handleKey(int c)
 				m_selectedNode = -1;
 
 			m_searchActive = false;
+			scheduleUpdate();
 			return;
 		}
 
@@ -550,6 +558,7 @@ void UI::handleKey(int c)
 		{
 			m_selectedNode = -1;
 			m_searchActive = false;
+			scheduleUpdate();
 			return;
 		}
 
@@ -558,7 +567,7 @@ void UI::handleKey(int c)
 			m_searchSelectedIndex++;
 			if(m_searchSelectedIndex >= m_searchNodes.size())
 				m_searchSelectedIndex = 0;
-
+			scheduleUpdate();
 			return;
 		}
 
@@ -571,6 +580,7 @@ void UI::handleKey(int c)
 			{
 				if(col < static_cast<int>(m_searchDisplayColumns)-1 && m_searchSelectedIndex < m_searchNodes.size()-1)
 					m_searchSelectedIndex++;
+				scheduleUpdate();
 				return;
 			}
 
@@ -578,6 +588,7 @@ void UI::handleKey(int c)
 			{
 				if(col > 0)
 					m_searchSelectedIndex--;
+				scheduleUpdate();
 				return;
 			}
 
@@ -585,6 +596,7 @@ void UI::handleKey(int c)
 			{
 				if(row > 0)
 					m_searchSelectedIndex -= m_searchDisplayColumns;
+				scheduleUpdate();
 				return;
 			}
 
@@ -593,6 +605,7 @@ void UI::handleKey(int c)
 				int numRows = (m_searchNodes.size() + m_searchDisplayColumns - 1) / m_searchDisplayColumns;
 				if(row < numRows - 1)
 					m_searchSelectedIndex = std::min<int>(m_searchNodes.size(), m_searchSelectedIndex + m_searchDisplayColumns);
+				scheduleUpdate();
 				return;
 			}
 		}
@@ -617,7 +630,7 @@ void UI::handleKey(int c)
 			if(idx != std::string::npos)
 				m_searchNodes.push_back(i);
 		}
-
+		scheduleUpdate();
 		return;
 	}
 
@@ -629,12 +642,14 @@ void UI::handleKey(int c)
 		if(c == Terminal::SK_F9)
 		{
 			muteAll();
+			scheduleUpdate();
 			return;
 		}
 
 		if(c == Terminal::SK_F10)
 		{
 			unmuteAll();
+			scheduleUpdate();
 			return;
 		}
 
@@ -646,6 +661,8 @@ void UI::handleKey(int c)
 			m_searchNodes.resize(m_monitor->nodes().size());
 			std::iota(m_searchNodes.begin(), m_searchNodes.end(), 0);
 			m_searchActive = true;
+
+			scheduleUpdate();
 			return;
 		}
 
@@ -686,6 +703,7 @@ void UI::handleKey(int c)
 
 		m_selectedNode = -1;
 	}
+	scheduleUpdate();
 }
 
 bool UI::anyMuted() const
@@ -705,6 +723,11 @@ void UI::unmuteAll()
 {
 	for(auto& n : m_monitor->nodes())
 		n->setMuted(false);
+}
+
+inline void UI::scheduleUpdate()
+{
+	m_refresh_required = true;
 }
 
 }
