@@ -5,6 +5,7 @@
 
 #include "../../src/launch/launch_config.h"
 
+#include "node_utils.h"
 #include "param_utils.h"
 
 using namespace rosmon::launch;
@@ -74,4 +75,25 @@ TEST_CASE("include pass_all", "[include]")
 	auto params = config.parameters();
 
 	CHECK(getTypedParam<std::string>(params, "/test_argument") == "hello");
+}
+
+TEST_CASE("include scoped attributes", "[include]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<include file="$(find rosmon_core)/test/basic_sub.launch"
+				enable-coredumps="false" rosmon-memory-limit="100" rosmon-stop-timeout="10.0" />
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto nodes = config.nodes();
+	CAPTURE(nodes);
+
+	auto n = getNode(nodes, "test_node");
+	CHECK(!n->coredumpsEnabled());
+	CHECK(n->memoryLimitByte() == 100);
+	CHECK(n->stopTimeout() == Approx(10.0));
 }

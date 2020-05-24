@@ -2,4 +2,6 @@
 	<arg name="test_argument" default="321" />
 
 	<param name="test_argument" value="$(arg test_argument)" />
+
+	<node pkg="rosmon_core" type="abort" name="test_node" />
 </launch>
