@@ -76,8 +76,9 @@ namespace
 		return final_act<F>(std::forward<F>(f));
 	}
 
+	static bool g_corePatternAnalyzed = false;
 	static bool g_coreIsRelative = true;
-	static bool g_coreIsRelative_valid = false;
+	static bool g_coreIsSystemd = false;
 }
 
 namespace rosmon
@@ -99,7 +100,7 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
 
 	m_processWorkingDirectory = m_launchNode->workingDirectory();
 
-	if(!g_coreIsRelative_valid)
+	if(!g_corePatternAnalyzed)
 	{
 		char core_pattern[256];
 		int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY | O_CLOEXEC);
@@ -119,7 +120,11 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
 		}
 
 		g_coreIsRelative = (core_pattern[0] != '/');
-		g_coreIsRelative_valid = true;
+
+		if(std::string(core_pattern).find("systemd-coredump") != std::string::npos)
+			g_coreIsSystemd = true;
+
+		g_corePatternAnalyzed = true;
 	}
 }
 
@@ -494,6 +499,14 @@ corePatternFormatFinder(std::string::const_iterator begin, std::string::const_it
 
 void NodeMonitor::gatherCoredump(int signal)
 {
+	// If systemd-coredump is enabled, our job is easy
+	if(g_coreIsSystemd)
+	{
+		m_debuggerCommand = fmt::format("coredumpctl gdb COREDUMP_PID={}", m_pid);
+		return;
+	}
+
+	// Otherwise we have to find the core ourselves...
 	char core_pattern[256];
 	int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY | O_CLOEXEC);
 	if(core_fd < 0)
