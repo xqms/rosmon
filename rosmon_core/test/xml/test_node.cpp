@@ -342,6 +342,10 @@ TEST_CASE("node memory/cpu limit", "[node]")
 		<launch>
 			<node name="test_node_default" pkg="rosmon_core" type="abort" />
 			<node name="test_node_custom" pkg="rosmon_core" type="abort" rosmon-memory-limit="200" rosmon-cpu-limit="0.2" />
+
+			<group rosmon-memory-limit="100">
+				<node name="test_node_grouped" pkg="rosmon_core" type="abort" />
+			</group>
 		</launch>
 	)EOF");
 
@@ -357,4 +361,7 @@ TEST_CASE("node memory/cpu limit", "[node]")
 	auto custom = getNode(nodes, "test_node_custom");
 	CHECK(custom->memoryLimitByte() == 200);
 	CHECK(custom->cpuLimit() == Approx(0.2f));
+
+	auto grouped = getNode(nodes, "test_node_grouped");
+	CHECK(grouped->memoryLimitByte() == 100);
 }

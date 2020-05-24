@@ -281,6 +281,8 @@ void LaunchConfig::parseTopLevelAttributes(TiXmlElement* element)
 
 void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArguments)
 {
+	ctx->parseScopeAttributes(element, *ctx);
+
 	// First pass: Parse arguments
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
 	{
@@ -320,12 +322,12 @@ void LaunchConfig::parse(TiXmlElement* element, ParseContext* ctx, bool onlyArgu
 			parseROSParam(e, *ctx);
 		else if(e->ValueStr() == "group")
 		{
-			const char* ns = e->Attribute("ns");
-
 			ParseContext cctx = *ctx;
 
-			if(ns)
+			if(const char* ns = e->Attribute("ns"))
 				cctx = cctx.enterScope(ctx->evaluate(ns));
+
+			cctx.parseScopeAttributes(e, *ctx);
 
 			parse(e, &cctx);
 		}
@@ -974,6 +976,7 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 		childCtx = childCtx.enterScope(ctx.evaluate(ns));
 
 	// Parse any arguments
+	childCtx.parseScopeAttributes(element, ctx);
 
 	// If pass_all_args is not set, delete the current arguments.
 	if(!passAllArgs || !ctx.parseBool(passAllArgs, element->Row()))
