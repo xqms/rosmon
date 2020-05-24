@@ -427,7 +427,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 		node->setRequired(true);
 	}
 
-	// First Pass
+	// We have to parse rosparam tags first, see #118
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
 	{
 		TiXmlElement* e = n->ToElement();
@@ -443,7 +443,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 			parseROSParam(e, ctx);
 	}
 
-	// Second Pass
+	// Now we can parse everything else.
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
 	{
 		TiXmlElement* e = n->ToElement();
