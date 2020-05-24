@@ -88,6 +88,11 @@ void ParseContext::parseScopeAttributes(TiXmlElement* e, ParseContext& attr_ctx)
 
 		m_cpuLimit = cpuLimitPct;
 	}
+
+	if(const char* coredumpsEnabled = e->Attribute("enable-coredumps"))
+	{
+		m_coredumpsEnabled = attr_ctx.parseBool(coredumpsEnabled, e->Row());
+	}
 }
 
 std::string ParseContext::evaluate(const std::string& tpl, bool simplifyWhitespace)
@@ -351,7 +356,6 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 	const char* respawnDelay = element->Attribute("respawn_delay");
 	const char* required = element->Attribute("required");
 	const char* launchPrefix = element->Attribute("launch-prefix");
-	const char* coredumpsEnabled = element->Attribute("enable-coredumps");
 	const char* cwd = element->Attribute("cwd");
 	const char* clearParams = element->Attribute("clear_params");
 	const char* output = element->Attribute("output");
@@ -394,6 +398,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 	node->setStopTimeout(ctx.stopTimeout());
 	node->setMemoryLimit(ctx.memoryLimit());
 	node->setCPULimit(ctx.cpuLimit());
+	node->setCoredumpsEnabled(ctx.coredumpsEnabled());
 
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));
@@ -469,9 +474,6 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 
 	if(launchPrefix)
 		node->setLaunchPrefix(attr_ctx.evaluate(launchPrefix));
-
-	if(coredumpsEnabled)
-		node->setCoredumpsEnabled(attr_ctx.parseBool(coredumpsEnabled, element->Row()));
 
 	if(cwd)
 		node->setWorkingDirectory(attr_ctx.evaluate(cwd));

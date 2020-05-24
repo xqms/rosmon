@@ -150,6 +150,11 @@ public:
 	void setStopTimeout(float timeout)
 	{ m_stopTimeout = timeout; }
 
+	bool coredumpsEnabled() const
+	{ return m_coredumpsEnabled; }
+	void setCoredumpsEnabled(bool enabled)
+	{ m_coredumpsEnabled = enabled; }
+
 private:
 	LaunchConfig* m_config;
 
@@ -164,6 +169,7 @@ private:
 	float m_cpuLimit = DEFAULT_CPU_LIMIT;
 	uint64_t m_memoryLimit = DEFAULT_MEMORY_LIMIT;
 	float m_stopTimeout = DEFAULT_STOP_TIMEOUT;
+	bool m_coredumpsEnabled = true;
 };
 
 class LaunchConfig
