@@ -427,6 +427,23 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 		node->setRequired(true);
 	}
 
+	// We have to parse rosparam tags first, see #118
+	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
+	{
+		TiXmlElement* e = n->ToElement();
+		if(!e)
+			continue;
+
+		if(ctx.shouldSkip(e))
+			continue;
+
+		ctx.setCurrentElement(e);
+
+		if(e->ValueStr() == "rosparam")
+			parseROSParam(e, ctx);
+	}
+
+	// Now we can parse everything else.
 	for(TiXmlNode* n = element->FirstChild(); n; n = n->NextSibling())
 	{
 		TiXmlElement* e = n->ToElement();
@@ -440,8 +457,6 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 
 		if(e->ValueStr() == "param")
 			parseParam(e, ctx, PARAM_IN_NODE);
-		else if(e->ValueStr() == "rosparam")
-			parseROSParam(e, ctx);
 		else if(e->ValueStr() == "remap")
 			parseRemap(e, ctx);
 		else if(e->ValueStr() == "env")
