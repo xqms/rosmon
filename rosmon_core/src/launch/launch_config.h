@@ -25,6 +25,10 @@ namespace launch
 
 class LaunchConfig;
 
+constexpr float DEFAULT_CPU_LIMIT = 0.9f;
+constexpr uint64_t DEFAULT_MEMORY_LIMIT = 500*1024*1024;
+constexpr float DEFAULT_STOP_TIMEOUT = 5.0f;
+
 class ParseException : public std::exception
 {
 public:
@@ -78,6 +82,7 @@ public:
 	}
 
 	ParseContext enterScope(const std::string& prefix);
+	void parseScopeAttributes(TiXmlElement* e, ParseContext& attr_ctx);
 
 	std::string evaluate(const std::string& tpl, bool simplifyWhitespace = true);
 
@@ -128,6 +133,23 @@ public:
 
 	template<typename... Args>
 	void warning(const char* fmt, const Args& ... args) const;
+
+
+	float cpuLimit() const
+	{ return m_cpuLimit; }
+	void setCPULimit(float limit)
+	{ m_cpuLimit = limit; }
+
+	uint64_t memoryLimit() const
+	{ return m_memoryLimit; }
+	void setMemoryLimit(uint64_t limit)
+	{ m_memoryLimit = limit; }
+
+	float stopTimeout() const
+	{ return m_stopTimeout; }
+	void setStopTimeout(float timeout)
+	{ m_stopTimeout = timeout; }
+
 private:
 	LaunchConfig* m_config;
 
@@ -138,6 +160,10 @@ private:
 	std::map<std::string, std::string> m_environment;
 	std::map<std::string, std::string> m_remappings;
 	std::map<std::string, std::string> m_anonNames;
+
+	float m_cpuLimit = DEFAULT_CPU_LIMIT;
+	uint64_t m_memoryLimit = DEFAULT_MEMORY_LIMIT;
+	float m_stopTimeout = DEFAULT_STOP_TIMEOUT;
 };
 
 class LaunchConfig
@@ -145,10 +171,6 @@ class LaunchConfig
 public:
 	typedef std::shared_ptr<LaunchConfig> Ptr;
 	typedef std::shared_ptr<const LaunchConfig> ConstPtr;
-
-	constexpr static float DEFAULT_CPU_LIMIT = 0.9f;
-	constexpr static uint64_t DEFAULT_MEMORY_LIMIT = 500*1024*1024;
-	constexpr static float DEFAULT_STOP_TIMEOUT = 5.0f;
 
 	LaunchConfig();
 
@@ -240,10 +262,6 @@ private:
 	std::string m_rosmonNodeName;
 
 	std::string m_windowTitle;
-
-	double m_defaultStopTimeout{DEFAULT_STOP_TIMEOUT};
-	uint64_t m_defaultMemoryLimit{DEFAULT_MEMORY_LIMIT};
-	double m_defaultCPULimit{DEFAULT_CPU_LIMIT};
 
 	OutputAttr m_outputAttrMode{OutputAttr::Ignore};
 

@@ -334,3 +334,27 @@ TEST_CASE("node enable-coredumps", "[node]")
 	CHECK(getNode(nodes, "test_node_on")->coredumpsEnabled() == true);
 	CHECK(getNode(nodes, "test_node_off")->coredumpsEnabled() == false);
 }
+
+TEST_CASE("node memory/cpu limit", "[node]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+			<node name="test_node_default" pkg="rosmon_core" type="abort" />
+			<node name="test_node_custom" pkg="rosmon_core" type="abort" rosmon-memory-limit="200" rosmon-cpu-limit="0.2" />
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto nodes = config.nodes();
+	CAPTURE(nodes);
+
+	auto def = getNode(nodes, "test_node_default");
+	CHECK(def->memoryLimitByte() == rosmon::launch::DEFAULT_MEMORY_LIMIT);
+	CHECK(def->cpuLimit() == Approx(rosmon::launch::DEFAULT_CPU_LIMIT));
+
+	auto custom = getNode(nodes, "test_node_custom");
+	CHECK(custom->memoryLimitByte() == 200);
+	CHECK(custom->cpuLimit() == Approx(0.2f));
+}

@@ -39,6 +39,57 @@ ParseContext ParseContext::enterScope(const std::string& prefix)
 	return ret;
 }
 
+void ParseContext::parseScopeAttributes(TiXmlElement* e, ParseContext& attr_ctx)
+{
+	if(const char* stopTimeout = e->Attribute("rosmon-stop-timeout"))
+	{
+		double seconds;
+		try
+		{
+			seconds = boost::lexical_cast<double>(attr_ctx.evaluate(stopTimeout));
+		}
+		catch(boost::bad_lexical_cast&)
+		{
+			throw error("bad rosmon-stop-timeout value '{}'", stopTimeout);
+		}
+		if(seconds < 0)
+			throw error("negative rosmon-stop-timeout value '{}'", stopTimeout);
+
+		m_stopTimeout = seconds;
+	}
+
+	if(const char* memoryLimit = e->Attribute("rosmon-memory-limit"))
+	{
+		uint64_t memoryLimitByte;
+		bool ok;
+		std::tie(memoryLimitByte, ok) = parseMemory(static_cast<std::string>(memoryLimit));
+		if(!ok)
+		{
+			throw error("{} cannot be parsed as a memory limit", memoryLimit);
+		}
+
+		m_memoryLimit = memoryLimitByte;
+	}
+
+	if(const char* cpuLimit = e->Attribute("rosmon-cpu-limit"))
+	{
+		double cpuLimitPct;
+		try
+		{
+			cpuLimitPct = boost::lexical_cast<double>(attr_ctx.evaluate(cpuLimit));
+		}
+		catch(boost::bad_lexical_cast&)
+		{
+			throw error("bad rosmon-cpu-limit value '{}'", cpuLimit);
+		}
+
+		if(cpuLimitPct < 0)
+			throw error("negative rosmon-cpu-limit value'{}'", cpuLimit);
+
+		m_cpuLimit = cpuLimitPct;
+	}
+}
+
 std::string ParseContext::evaluate(const std::string& tpl, bool simplifyWhitespace)
 {
 	std::string simplified;
@@ -152,17 +203,17 @@ void LaunchConfig::setArgument(const std::string& name, const std::string& value
 
 void LaunchConfig::setDefaultStopTimeout(double timeout)
 {
-    m_defaultStopTimeout = timeout;
+	m_rootContext.setStopTimeout(timeout);
 }
 
 void LaunchConfig::setDefaultCPULimit(double CPULimit)
 {
-    m_defaultCPULimit = CPULimit;
+	m_rootContext.setCPULimit(CPULimit);
 }
 
 void LaunchConfig::setDefaultMemoryLimit(uint64_t memoryLimit)
 {
-    m_defaultMemoryLimit = memoryLimit;
+	m_rootContext.setMemoryLimit(memoryLimit);
 }
 
 void LaunchConfig::parse(const std::string& filename, bool onlyArguments)
@@ -301,9 +352,6 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 	const char* coredumpsEnabled = element->Attribute("enable-coredumps");
 	const char* cwd = element->Attribute("cwd");
 	const char* clearParams = element->Attribute("clear_params");
-	const char* stopTimeout = element->Attribute("rosmon-stop-timeout");
-	const char* memoryLimit = element->Attribute("rosmon-memory-limit");
-	const char* cpuLimit = element->Attribute("rosmon-cpu-limit");
 	const char* output = element->Attribute("output");
 
 	if(!name || !pkg || !type)
@@ -322,6 +370,9 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 	// Enter scope
 	ctx = ctx.enterScope(ctx.evaluate(name));
 
+	// Parse scoped attributes such as rosmon-stop-timeout
+	ctx.parseScopeAttributes(element, attr_ctx);
+
 	Node::Ptr node = std::make_shared<Node>(
 		attr_ctx.evaluate(name), attr_ctx.evaluate(pkg), attr_ctx.evaluate(type)
 	);
@@ -338,63 +389,9 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 		}
 	}
 
-	if(stopTimeout)
-	{
-		double seconds;
-		try
-		{
-			seconds = boost::lexical_cast<double>(attr_ctx.evaluate(stopTimeout));
-		}
-		catch(boost::bad_lexical_cast&)
-		{
-			throw ctx.error("bad rosmon-stop-timeout value '{}'", stopTimeout);
-		}
-		if(seconds < 0)
-			throw ctx.error("negative rosmon-stop-timeout value '{}'", stopTimeout);
-
-		node->setStopTimeout(seconds);
-	}
-	else
-		node->setStopTimeout(m_defaultStopTimeout);
-
-	if(memoryLimit)
-	{
-		uint64_t memoryLimitByte;
-		bool ok;
-		std::tie(memoryLimitByte, ok) = parseMemory(static_cast<std::string>(memoryLimit));
-		if(!ok)
-		{
-			throw ctx.error("{} cannot be parsed as a memory limit", memoryLimit);
-		}
-
-		node->setMemoryLimit(memoryLimitByte);
-	}
-	else
-	{
-		node->setMemoryLimit(m_defaultMemoryLimit);
-	}
-
-	if(cpuLimit)
-	{
-		double cpuLimitPct;
-		try
-		{
-			cpuLimitPct = boost::lexical_cast<double>(attr_ctx.evaluate(cpuLimit));
-		}
-		catch(boost::bad_lexical_cast&)
-		{
-			throw ctx.error("bad rosmon-cpu-limit value '{}'", cpuLimit);
-		}
-
-		if(cpuLimitPct < 0)
-			throw ctx.error("negative rosmon-cpu-limit value'{}'", cpuLimit);
-
-		node->setCPULimit(cpuLimitPct);
-	}
-	else
-	{
-		node->setCPULimit(m_defaultCPULimit);
-	}
+	node->setStopTimeout(ctx.stopTimeout());
+	node->setMemoryLimit(ctx.memoryLimit());
+	node->setCPULimit(ctx.cpuLimit());
 
 	if(args)
 		node->addExtraArguments(ctx.evaluate(args));

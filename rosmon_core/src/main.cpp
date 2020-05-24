@@ -150,9 +150,9 @@ int main(int argc, char** argv)
 	bool enableUI = true;
 	bool flushLog = false;
 	bool startNodes = true;
-	double stopTimeout = rosmon::launch::LaunchConfig::DEFAULT_STOP_TIMEOUT;
-	uint64_t memoryLimit = rosmon::launch::LaunchConfig::DEFAULT_MEMORY_LIMIT;
-	float cpuLimit = rosmon::launch::LaunchConfig::DEFAULT_CPU_LIMIT;
+	double stopTimeout = rosmon::launch::DEFAULT_STOP_TIMEOUT;
+	uint64_t memoryLimit = rosmon::launch::DEFAULT_MEMORY_LIMIT;
+	float cpuLimit = rosmon::launch::DEFAULT_CPU_LIMIT;
 	bool disableDiagnostics = false;
 	std::string diagnosticsPrefix;
 	rosmon::launch::LaunchConfig::OutputAttr outputAttrMode = rosmon::launch::LaunchConfig::OutputAttr::Ignore;
