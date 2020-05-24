@@ -475,12 +475,19 @@ void UI::log(const LogEvent& event)
 	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	fflush(stdout);
+
+	scheduleUpdate();
 }
 
 void UI::update()
 {
 	if(!m_term.interactive())
 		return;
+
+	if(!m_refresh_required)
+		return;
+
+	m_refresh_required = false;
 
 	// Disable automatic linewrap. This prevents ugliness on terminal resize.
 	m_term.setLineWrap(false);
@@ -532,6 +539,10 @@ void UI::checkTerminal()
 
 void UI::handleKey(int c)
 {
+	// Instead of trying to figure out when exactly we need a redraw, just
+	// redraw on every keystroke.
+	scheduleUpdate();
+
 	// Are we in search mode?
 	if(m_searchActive)
 	{
@@ -705,6 +716,11 @@ void UI::unmuteAll()
 {
 	for(auto& n : m_monitor->nodes())
 		n->setMuted(false);
+}
+
+void UI::scheduleUpdate()
+{
+	m_refresh_required = true;
 }
 
 }
