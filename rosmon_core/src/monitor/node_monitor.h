@@ -236,6 +236,7 @@ private:
 	uint64_t m_memory = 0;
 
 	std::string m_processWorkingDirectory;
+	std::string m_lastWorkingDirectory;
 	bool m_processWorkingDirectoryCreated = false;
 
 	bool m_firstStart = true;

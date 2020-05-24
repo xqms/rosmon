@@ -25,9 +25,13 @@
 #include <boost/range.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <boost/filesystem.hpp>
+
 #include <fmt/format.h>
 
 #define TASK_COMM_LEN 16 // from linux/sched.h
+
+namespace fs = boost::filesystem;
 
 namespace
 {
@@ -433,12 +437,38 @@ void NodeMonitor::communicate()
 
 		if(m_processWorkingDirectoryCreated)
 		{
+			// Our removal strategy is two-fold: After a process exits,
+			// we immediately try to delete the temporary working directory.
+			// If that fails (e.g. because there is a core dump in there),
+			// we remember the directory in m_lastWorkingDirectory.
+
+			// and then delete it recursively on the next process exit.
+			// That way, we always keep the last core dump around, but prevent
+			// infinite pile-up.
+			if(!m_lastWorkingDirectory.empty())
+			{
+				boost::system::error_code error;
+				boost::filesystem::remove_all(m_lastWorkingDirectory, error);
+				if(error)
+				{
+					logTyped(LogEvent::Type::Warning,
+						"Could not remove old working directory '{}' after process died twice: {}",
+						m_lastWorkingDirectory, error.message()
+					);
+				}
+
+				m_lastWorkingDirectory.clear();
+			}
+
 			if(rmdir(m_processWorkingDirectory.c_str()) != 0)
 			{
 				logTyped(LogEvent::Type::Warning, "Could not remove process working directory '{}' after process exit: {}",
 					m_processWorkingDirectory, strerror(errno)
 				);
+
+				m_lastWorkingDirectory = m_processWorkingDirectory;
 			}
+
 			m_processWorkingDirectory.clear();
 		}
 
