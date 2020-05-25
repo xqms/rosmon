@@ -265,7 +265,7 @@ TEST_CASE("node output attr", "[output]")
 		)EOF");
 
 		auto node = getNode(config.nodes(), "test_node");
-		CHECK(!node->isMuted());
+		CHECK(!node->stdoutDisplayed());
 	}
 
 	SECTION("obey")
@@ -280,7 +280,7 @@ TEST_CASE("node output attr", "[output]")
 		)EOF");
 
 		auto node = getNode(config.nodes(), "test_node");
-		CHECK(node->isMuted());
+		CHECK(!node->stdoutDisplayed());
 	}
 
 	SECTION("obey log")
@@ -295,7 +295,7 @@ TEST_CASE("node output attr", "[output]")
 		)EOF");
 
 		auto node = getNode(config.nodes(), "test_node");
-		CHECK(node->isMuted());
+		CHECK(!node->stdoutDisplayed());
 	}
 
 	SECTION("obey screen")
@@ -310,7 +310,7 @@ TEST_CASE("node output attr", "[output]")
 		)EOF");
 
 		auto node = getNode(config.nodes(), "test_node");
-		CHECK(!node->isMuted());
+		CHECK(node->stdoutDisplayed());
 	}
 }
 
