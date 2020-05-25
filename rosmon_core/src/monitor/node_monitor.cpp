@@ -25,9 +25,13 @@
 #include <boost/range.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <boost/filesystem.hpp>
+
 #include <fmt/format.h>
 
 #define TASK_COMM_LEN 16 // from linux/sched.h
+
+namespace fs = boost::filesystem;
 
 namespace
 {
@@ -76,8 +80,9 @@ namespace
 		return final_act<F>(std::forward<F>(f));
 	}
 
+	static bool g_corePatternAnalyzed = false;
 	static bool g_coreIsRelative = true;
-	static bool g_coreIsRelative_valid = false;
+	static bool g_coreIsSystemd = false;
 }
 
 namespace rosmon
@@ -99,7 +104,7 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
 
 	m_processWorkingDirectory = m_launchNode->workingDirectory();
 
-	if(!g_coreIsRelative_valid)
+	if(!g_corePatternAnalyzed)
 	{
 		char core_pattern[256];
 		int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY | O_CLOEXEC);
@@ -119,7 +124,11 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
 		}
 
 		g_coreIsRelative = (core_pattern[0] != '/');
-		g_coreIsRelative_valid = true;
+
+		if(std::string(core_pattern).find("systemd-coredump") != std::string::npos)
+			g_coreIsSystemd = true;
+
+		g_corePatternAnalyzed = true;
 	}
 }
 
@@ -428,12 +437,38 @@ void NodeMonitor::communicate()
 
 		if(m_processWorkingDirectoryCreated)
 		{
+			// Our removal strategy is two-fold: After a process exits,
+			// we immediately try to delete the temporary working directory.
+			// If that fails (e.g. because there is a core dump in there),
+			// we remember the directory in m_lastWorkingDirectory.
+
+			// and then delete it recursively on the next process exit.
+			// That way, we always keep the last core dump around, but prevent
+			// infinite pile-up.
+			if(!m_lastWorkingDirectory.empty())
+			{
+				boost::system::error_code error;
+				boost::filesystem::remove_all(m_lastWorkingDirectory, error);
+				if(error)
+				{
+					logTyped(LogEvent::Type::Warning,
+						"Could not remove old working directory '{}' after process died twice: {}",
+						m_lastWorkingDirectory, error.message()
+					);
+				}
+
+				m_lastWorkingDirectory.clear();
+			}
+
 			if(rmdir(m_processWorkingDirectory.c_str()) != 0)
 			{
 				logTyped(LogEvent::Type::Warning, "Could not remove process working directory '{}' after process exit: {}",
 					m_processWorkingDirectory, strerror(errno)
 				);
+
+				m_lastWorkingDirectory = m_processWorkingDirectory;
 			}
+
 			m_processWorkingDirectory.clear();
 		}
 
@@ -494,6 +529,14 @@ corePatternFormatFinder(std::string::const_iterator begin, std::string::const_it
 
 void NodeMonitor::gatherCoredump(int signal)
 {
+	// If systemd-coredump is enabled, our job is easy
+	if(g_coreIsSystemd)
+	{
+		m_debuggerCommand = fmt::format("coredumpctl gdb COREDUMP_PID={}", m_pid);
+		return;
+	}
+
+	// Otherwise we have to find the core ourselves...
 	char core_pattern[256];
 	int core_fd = open("/proc/sys/kernel/core_pattern", O_RDONLY | O_CLOEXEC);
 	if(core_fd < 0)
