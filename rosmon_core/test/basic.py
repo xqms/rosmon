@@ -46,7 +46,7 @@ class BasicTest(unittest.TestCase):
 		except rospy.ROSException:
 			self.fail('Did not get state msg on /rosmon_uut/state' + repr(rospy.client.get_published_topics()))
 
-		self.assertEqual(len(state.nodes), 3)
+		self.assertEqual(len(state.nodes), 4)
 
 		test1 = [ n for n in state.nodes if n.name == 'test1' ]
 		self.assertEqual(len(test1), 1)
