@@ -59,11 +59,16 @@ private:
 
 	void unmuteAll();
 
+	bool stderrOnly();
+
+	void toggleStderrOnly();
+
 	void scheduleUpdate();
 
 	monitor::Monitor* m_monitor;
 	FDWatcher::Ptr m_fdWatcher;
 	bool m_refresh_required = true;
+	bool m_stderr_only = false;
 
 	Terminal m_term;
 

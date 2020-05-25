@@ -209,9 +209,19 @@ void UI::drawStatusLine()
 		else
 		{
 			printKey("A-Z", "Node actions");
+			printKey("F8", "Toggle WARN+ only");
 			printKey("F9", "Mute all");
 			printKey("F10", "Unmute all");
 			printKey("/", "Node search");
+
+			if(stderrOnly())
+			{
+				print("      ");
+				m_term.setSimpleForeground(Terminal::Black);
+				m_term.setSimpleBackground(Terminal::Magenta);
+				print("! WARN+ output only !");
+				m_style_bar.use();
+			}
 
 			if(anyMuted())
 			{
@@ -398,7 +408,7 @@ void UI::log(const LogEvent& event)
 		return;
 
 	// Are we supposed to show stdout?
-	if(event.channel == LogEvent::Channel::Stdout && !event.showStdout)
+	if(event.channel == LogEvent::Channel::Stdout && (!event.showStdout || stderrOnly()))
 		return;
 
 	const std::string& clean = event.message;
@@ -653,6 +663,13 @@ void UI::handleKey(int c)
 			return;
 		}
 
+		// Check for Stderr Only Toggle
+		if(c == Terminal::SK_F8)
+		{
+			toggleStderrOnly();
+			return;
+		}
+
 		// Search
 		if(c == '/')
 		{
@@ -725,6 +742,16 @@ void UI::unmuteAll()
 void UI::scheduleUpdate()
 {
 	m_refresh_required = true;
+}
+
+bool UI::stderrOnly()
+{
+	return m_stderr_only;
+}
+
+void UI::toggleStderrOnly()
+{
+	m_stderr_only = !m_stderr_only;
 }
 
 }
