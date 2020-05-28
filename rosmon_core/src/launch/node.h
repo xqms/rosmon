@@ -47,6 +47,7 @@ public:
 	void setCPULimit(float cpuLimit);
 
 	void setMuted(bool muted);
+	void setStdoutDisplayed(bool showStdout);
 
 	std::string name() const
 	{ return m_name; }
@@ -106,6 +107,9 @@ public:
 
 	bool isMuted() const
 	{ return m_muted; }
+
+	bool stdoutDisplayed() const
+	{ return m_stdoutDisplayed; }
 private:
 	std::string m_name;
 	std::string m_package;
@@ -139,6 +143,7 @@ private:
 	float m_cpuLimit;
 
 	bool m_muted;
+	bool m_stdoutDisplayed;
 };
 
 }

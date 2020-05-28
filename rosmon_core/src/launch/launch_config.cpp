@@ -483,18 +483,18 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 
 	if(m_outputAttrMode == OutputAttr::Obey)
 	{
-		node->setMuted(true); // output=log is default
+		node->setStdoutDisplayed(false); // output=log is default
+	}
 
-		if(output)
-		{
-			std::string outputStr = attr_ctx.evaluate(output);
-			if(outputStr == "screen")
-				node->setMuted(false);
-			else if(outputStr == "log")
-				node->setMuted(true);
-			else
-				throw ctx.error("Invalid output attribute value: '{}'", outputStr);
-		}
+	if(output)
+	{
+		std::string outputStr = attr_ctx.evaluate(output);
+		if(outputStr == "screen")
+			node->setStdoutDisplayed(true);
+		else if(outputStr == "log")
+			node->setStdoutDisplayed(false);
+		else
+			throw ctx.error("Invalid output attribute value: '{}'", outputStr);
 	}
 
 	node->setRemappings(ctx.remappings());

@@ -94,6 +94,7 @@ NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWat
  : m_launchNode(std::move(launchNode))
  , m_fdWatcher(std::move(fdWatcher))
  , m_rxBuffer(4096)
+ , m_stderrBuffer(4096)
  , m_exitCode(0)
  , m_command(CMD_STOP) // we start in stopped state
  , m_restarting(false)
@@ -215,6 +216,11 @@ void NodeMonitor::start()
 	if(openpty(&master, &slave, nullptr, nullptr, nullptr) == -1)
 		throw error("Could not open pseudo terminal for child process: {}", strerror(errno));
 
+	// For stderr, we open a separate pipe
+	int stderr_pipe[2];
+	if(pipe(stderr_pipe) != 0)
+		throw error("Could not create stderr pipe: {}", strerror(errno));
+
 	// Compose args
 	{
 		args.push_back(strdup("rosrun"));
@@ -223,6 +229,9 @@ void NodeMonitor::start()
 
 		args.push_back(strdup("--tty"));
 		args.push_back(strdup(fmt::format("{}", slave).c_str()));
+
+		args.push_back(strdup("--stderr"));
+		args.push_back(strdup(fmt::format("{}", stderr_pipe[1]).c_str()));
 
 		if(!m_launchNode->namespaceString().empty())
 		{
@@ -263,6 +272,7 @@ void NodeMonitor::start()
 	if(pid == 0)
 	{
 		close(master);
+		close(stderr_pipe[0]);
 
 		if(execvp("rosrun", args.data()) != 0)
 		{
@@ -279,10 +289,13 @@ void NodeMonitor::start()
 
 	// Parent
 	close(slave);
+	close(stderr_pipe[1]);
 
 	m_fd = master;
+	m_stderrFD = stderr_pipe[0];
 	m_pid = pid;
 	m_fdWatcher->registerFD(m_fd, boost::bind(&NodeMonitor::communicate, this));
+	m_fdWatcher->registerFD(m_stderrFD, boost::bind(&NodeMonitor::communicateStderr, this));
 }
 
 void NodeMonitor::stop(bool restart)
@@ -363,6 +376,49 @@ NodeMonitor::State NodeMonitor::state() const
 	return STATE_CRASHED;
 }
 
+void NodeMonitor::communicateStderr()
+{
+	auto handleByte = [&](char c){
+		m_stderrBuffer.push_back(c);
+		if(c == '\n')
+		{
+			m_stderrBuffer.push_back(0);
+			m_stderrBuffer.linearize();
+
+			auto one = m_stderrBuffer.array_one();
+
+			LogEvent event{name(), one.first};
+			event.muted = isMuted();
+			event.channel = LogEvent::Channel::Stderr;
+
+			logMessageSignal(std::move(event));
+
+			m_stderrBuffer.clear();
+		}
+	};
+
+	char buf[1024];
+	int bytes = read(m_stderrFD, buf, sizeof(buf));
+
+	if(bytes == 0)
+	{
+		// Flush out any remaining stdout
+		if(!m_stderrBuffer.empty())
+			handleByte('\n');
+
+		m_fdWatcher->removeFD(m_stderrFD);
+		return; // handled in communicate()
+	}
+
+	if(bytes < 0)
+		throw error("{}: Could not read: {}", name(), strerror(errno));
+
+	for(int i = 0; i < bytes; ++i)
+	{
+		handleByte(buf[i]);
+	}
+}
+
 void NodeMonitor::communicate()
 {
 	auto handleByte = [&](char c){
@@ -376,6 +432,8 @@ void NodeMonitor::communicate()
 
 			LogEvent event{name(), one.first};
 			event.muted = isMuted();
+			event.channel = LogEvent::Channel::Stdout;
+			event.showStdout = m_launchNode->stdoutDisplayed();
 
 			logMessageSignal(std::move(event));
 
