@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.1 (2020-05-28)
+------------------
 * Fix build issues on Debian connected to Boost & Python 3
 * Contributors: Max Schwarz
 
