@@ -33,6 +33,12 @@ else()
 	message(WARNING "Please install libpython-dev (or equivalent) for $(eval ...) support")
 endif()
 
+# Newer boost versions need a specific python version
+if(${PYTHON_VERSION_MAJOR} GREATER_EQUAL 3)
+	set(boost_python_component "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+else()
+	set(boost_python_component "python")
+endif()
 find_package(Boost REQUIRED COMPONENTS python REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
