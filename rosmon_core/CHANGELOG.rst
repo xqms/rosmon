@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.3.0 (2020-05-28)
+------------------
 * Optionally filter stdout (INFO/DEBUG, PR #119)
 * Capture stderr separately and correctly do output=log (PR #119)
 * Prevent infinite coredump aggregation & support systemd-coredump (PR #125)
