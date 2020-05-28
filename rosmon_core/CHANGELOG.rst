@@ -2,6 +2,24 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Prevent infinite coredump aggregation & support systemd-coredump (PR #125)
+* Support certain rosmon-* attributes on all scopes (fixes #116)
+* ui: UI DrawStatus optimized to only refresh on events (PR #121)
+* Adding fix for rosparam parsing to equivilate with undocumented behavior of roslaunch (PR #118)
+* depend on python2/3 conditioned on ROS_PYTHON_VERSION (PR #123)
+* Add YAML merge key parsing functionality (PR #117)
+* test: unit tests for the warnings we trigger
+* LaunchConfig warnings to stderr & make them captureable
+* rosmon_core: Handle empty yaml file (PR #114)
+* Improved support for nodes with terminal UI (PR #112)
+* Fix Issue "Can not handle arguments with spaces" (PR #111)
+* Option to obey output=XY tags (PR #109)
+* fix a lot of whitespace issues introduced in #76
+* Handle nesting with $(anon) subst correctly (PR #101)
+* Contributors: Carl Colena, Kazuhiro Hiratsuka, Max Schwarz, marco-tranzatto
+
 2.2.1 (2019-11-08)
 ------------------
 * correctly terminate execvp() arguments (issue: #102, PR: #103).
