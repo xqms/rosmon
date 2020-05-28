@@ -4,6 +4,8 @@ Changelog for package rosmon_core
 
 Forthcoming
 -----------
+* Optionally filter stdout (INFO/DEBUG, PR #119)
+* Capture stderr separately and correctly do output=log (PR #119)
 * Prevent infinite coredump aggregation & support systemd-coredump (PR #125)
 * Support certain rosmon-* attributes on all scopes (fixes #116)
 * ui: UI DrawStatus optimized to only refresh on events (PR #121)
