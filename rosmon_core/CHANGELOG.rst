@@ -2,6 +2,12 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rosmon_core: cmake: increase minimum version to address policy warnings
+* rosmon_core: *really* fix search for boost_python for python 3
+* Contributors: Max Schwarz
+
 2.3.1 (2020-05-28)
 ------------------
 * Fix build issues on Debian connected to Boost & Python 3
