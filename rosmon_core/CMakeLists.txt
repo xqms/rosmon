@@ -34,7 +34,7 @@ else()
 endif()
 
 # Newer boost versions need a specific python version
-if(${PYTHON_VERSION_MAJOR} GREATER_EQUAL 3)
+if(${PYTHON_VERSION_MAJOR} GREATER 2)
 	set(boost_python_component "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
 else()
 	set(boost_python_component "python")
