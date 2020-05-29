@@ -39,7 +39,9 @@ if(${PYTHON_VERSION_MAJOR} GREATER_EQUAL 3)
 else()
 	set(boost_python_component "python")
 endif()
-find_package(Boost REQUIRED COMPONENTS python REQUIRED)
+message(STATUS "Searching for boost_python with keyword '${boost_python_component}'")
+
+find_package(Boost REQUIRED COMPONENTS ${boost_python_component} REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Specific feature tests
