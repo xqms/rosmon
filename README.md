@@ -15,6 +15,10 @@ Official `rosmon` packages are available. On ROS Kinetic or Melodic (Ubuntu) sim
 
     sudo apt install ros-${ROS_DISTRO}-rosmon
 
+In case you don't need the rqt GUI, you can install the core package only:
+
+    sudo apt install ros-${ROS_DISTRO}-rosmon-core
+
 Afterwards, try
 
     # launch one of the rosmon test cases
