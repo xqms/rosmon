@@ -927,9 +927,14 @@ void LaunchConfig::loadYAMLParams(const ParseContext& ctx, const YAML::Node& n, 
 			// Pass 2: Everything else.
 			for(YAML::const_iterator it = n.begin(); it != n.end(); ++it)
 			{
-				if(it->first.as<std::string>() != "<<")
+				auto key = it->first.as<std::string>();
+				if(key != "<<")
 				{
-					loadYAMLParams(ctx, it->second, prefix + "/" + it->first.as<std::string>());
+					// Load "global" params without prefix (see #130)
+					if(!key.empty() && key[0] == '/')
+						loadYAMLParams(ctx, it->second, key);
+					else
+						loadYAMLParams(ctx, it->second, prefix + "/" + it->first.as<std::string>());
 				}
 			}
 
