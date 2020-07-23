@@ -254,5 +254,35 @@ class6:
 	checkTypedParam<double>(params, class_ns + "/testclass/param2", XmlRpc::XmlRpcValue::TypeDouble, 10.0);
 	checkTypedParam<std::string>(params, class_ns + "/testclass/param3", XmlRpc::XmlRpcValue::TypeString, "hello");
 	checkTypedParam<int>(params, class_ns + "/testclass/testparam", XmlRpc::XmlRpcValue::TypeInt, 140);
+}
 
+TEST_CASE("rosparam /param", "[rosparam]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+		<launch>
+<rosparam ns="ns">
+/fake_param: 20.0
+namespace:
+  /other_param: 10.0
+  /global_ns:
+    third_param: 5.0
+</rosparam>
+		</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	CAPTURE(config.parameters());
+
+	auto& params = config.parameters();
+
+	double param1 = getTypedParam<double>(params, "/fake_param", XmlRpc::XmlRpcValue::TypeDouble);
+	CHECK(param1 == Approx(20.0));
+
+	double param2 = getTypedParam<double>(params, "/other_param", XmlRpc::XmlRpcValue::TypeDouble);
+	CHECK(param2 == Approx(10.0));
+
+	double param3 = getTypedParam<double>(params, "/global_ns/third_param", XmlRpc::XmlRpcValue::TypeDouble);
+	CHECK(param3 == Approx(5.0));
 }
