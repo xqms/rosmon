@@ -44,7 +44,7 @@ public:
 
 	void setMemoryLimit(uint64_t memoryLimitByte);
 
-	void setCPULimit(float cpuLimit);
+	void setCPULimit(double cpuLimit);
 
 	void setMuted(bool muted);
 	void setStdoutDisplayed(bool showStdout);
@@ -102,7 +102,7 @@ public:
 	uint64_t memoryLimitByte() const
 	{ return m_memoryLimitByte;}
 
-	float cpuLimit() const
+	double cpuLimit() const
 	{ return m_cpuLimit; }
 
 	bool isMuted() const
@@ -140,7 +140,7 @@ private:
 	double m_stopTimeout;
 
 	uint64_t m_memoryLimitByte;
-	float m_cpuLimit;
+	double m_cpuLimit;
 
 	bool m_muted;
 	bool m_stdoutDisplayed;
