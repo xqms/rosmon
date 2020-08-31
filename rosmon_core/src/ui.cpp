@@ -109,14 +109,14 @@ void UI::setupColors()
 		float r, g, b;
 		HUSLtoRGB(&r, &g, &b, hue, sat, lum);
 
-		r *= 255.0;
-		g *= 255.0;
-		b *= 255.0;
+		r *= 255.0f;
+		g *= 255.0f;
+		b *= 255.0f;
 
 		unsigned int color =
-			std::min(255, std::max<int>(0, r))
-			| (std::min(255, std::max<int>(0, g)) << 8)
-			| (std::min(255, std::max<int>(0, b)) << 16);
+			std::min(255, std::max(0, static_cast<int>(r)))
+			| (std::min(255, std::max(0, static_cast<int>(g))) << 8)
+			| (std::min(255, std::max(0, static_cast<int>(b))) << 16);
 
 		m_nodeColorMap[m_monitor->nodes()[i]->name()] = ChannelInfo{&m_term, color};
 	}
