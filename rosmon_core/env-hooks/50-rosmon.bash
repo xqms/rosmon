@@ -68,7 +68,7 @@ function _mon() {
 			# If we have no launch file yet, offer launch files
 			elif [[ ( ! -f $package_name ) && -z $launch_name ]]; then
 				local package_dir="$(rospack find ${COMP_WORDS[2]})"
-				local launchfiles=$(find "$package_dir" -name '*.launch' -type f -printf "%f\n")
+				local launchfiles=$(find -L "$package_dir" -name '*.launch' -type f -printf "%f\n")
 				COMPREPLY=( $(compgen -W "${launchfiles} ${FLAGS[*]} ${OPTS[*]}" -- $cur) )
 
 			# Only arguments now
