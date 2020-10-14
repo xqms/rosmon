@@ -270,7 +270,7 @@ double evaluateROSParamPython(const std::string& input)
 	{
 		return py::extract<double>(result);
 	}
-	catch(py::error_already_set)
+	catch(py::error_already_set&)
 	{
 		throw SubstitutionException::format("got strange python type from rosparam python expression (should be numeric): '{}'", input);
 	}
