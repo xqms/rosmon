@@ -143,6 +143,21 @@ namespace
 	};
 }
 
+std::string UI::nodeDisplayName(monitor::NodeMonitor& node, std::size_t maxWidth)
+{
+	std::string fullName;
+	if(node.namespaceString().empty())
+		fullName = node.name();
+	else
+		fullName = node.namespaceString() + "/" + node.name();
+
+	// Strip initial / to save space
+	if(!fullName.empty() && fullName[0] == '/')
+		fullName = fullName.substr(1);
+
+	return fullName.substr(0, maxWidth);
+}
+
 void UI::drawStatusLine()
 {
 	const int NODE_WIDTH = 13;
@@ -255,7 +270,7 @@ void UI::drawStatusLine()
 
 		std::size_t nodeWidth = SEARCH_NODE_WIDTH;
 		for(auto& nodeIdx : m_searchNodes)
-			nodeWidth = std::max(nodeWidth, nodes[nodeIdx]->name().length());
+			nodeWidth = std::max(nodeWidth, nodeDisplayName(*nodes[nodeIdx]).length());
 
 		// If it doesn't fit on one line, constrain to SEARCH_NODE_WIDTH
 		if(m_searchNodes.size() * (nodeWidth+1) >= static_cast<std::size_t>(m_columns-1))
@@ -271,7 +286,7 @@ void UI::drawStatusLine()
 			else
 				m_term.setStandardColors();
 
-			std::string label = node->name().substr(0, nodeWidth);
+			std::string label = nodeDisplayName(*node, nodeWidth);
 			fmt::print("{:^{}}", label, nodeWidth);
 			m_term.setStandardColors();
 
@@ -356,7 +371,7 @@ void UI::drawStatusLine()
 				}
 			}
 
-			std::string label = node->name().substr(0, NODE_WIDTH);
+			std::string label = nodeDisplayName(*node, NODE_WIDTH);
 			if(i == m_selectedNode)
 				fmt::print("[{:^{}}]", label, NODE_WIDTH);
 			else
@@ -638,7 +653,7 @@ void UI::handleKey(int c)
 		for(unsigned int i = 0; i < nodes.size(); ++i)
 		{
 			const auto& node = nodes[i];
-			auto idx = node->name().find(m_searchString);
+			auto idx = nodeDisplayName(*node).find(m_searchString);
 			if(idx != std::string::npos)
 				m_searchNodes.push_back(i);
 		}

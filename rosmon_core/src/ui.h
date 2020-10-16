@@ -65,6 +65,8 @@ private:
 
 	void scheduleUpdate();
 
+	std::string nodeDisplayName(monitor::NodeMonitor& node, std::size_t maxWidth = std::string::npos);
+
 	monitor::Monitor* m_monitor;
 	FDWatcher::Ptr m_fdWatcher;
 	bool m_refresh_required = true;
