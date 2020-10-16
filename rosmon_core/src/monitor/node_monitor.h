@@ -165,6 +165,12 @@ public:
 	inline std::string namespaceString() const
 	{ return m_launchNode->namespaceString(); }
 
+	//! Full name including namespace
+	inline std::string fullName() const
+	{
+		return namespaceString() + "/" + name();
+	}
+
 	//! Node PID
 	inline int pid() const
 	{ return m_pid; }
