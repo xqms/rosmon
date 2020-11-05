@@ -224,6 +224,8 @@ void UI::drawStatusLine()
 		else
 		{
 			printKey("A-Z", "Node actions");
+			printKey("F6", "Start all");
+			printKey("F7", "Stop all");
 			printKey("F8", "Toggle WARN+ only");
 			printKey("F9", "Mute all");
 			printKey("F10", "Unmute all");
@@ -665,6 +667,18 @@ void UI::handleKey(int c)
 	{
 		int nodeIndex = -1;
 
+		if(c == Terminal::SK_F6)
+		{
+			startAll();
+			return;
+		}
+
+		if(c == Terminal::SK_F7)
+		{
+			stopAll();
+			return;
+		}
+
 		// Check for Mute all keys first
 		if(c == Terminal::SK_F9)
 		{
@@ -740,6 +754,18 @@ bool UI::anyMuted() const
 	return std::any_of(m_monitor->nodes().begin(), m_monitor->nodes().end(), [](const monitor::NodeMonitor::Ptr& n){
 		return n->isMuted();
 	});
+}
+
+void UI::startAll()
+{
+	for(auto& n : m_monitor->nodes())
+		n->start();
+}
+
+void UI::stopAll()
+{
+	for(auto& n : m_monitor->nodes())
+		n->stop();
 }
 
 void UI::muteAll()

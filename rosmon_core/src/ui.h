@@ -55,6 +55,10 @@ private:
 
 	bool anyMuted() const;
 
+	void startAll();
+
+	void stopAll();
+
 	void muteAll();
 
 	void unmuteAll();
