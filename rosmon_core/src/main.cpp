@@ -33,7 +33,6 @@ namespace fs = boost::filesystem;
 
 bool g_shouldStop = false;
 bool g_flushStdout = false;
-bool g_stdoutPrintSource = false;
 
 static fs::path findFile(const fs::path& base, const std::string& name)
 {
@@ -90,8 +89,6 @@ void usage()
 		"  --output-attr=obey|ignore\n"
 		"                  Obey or ignore output=\"*\" attributes on node tags.\n"
 		"                  Default is to ignore.\n"
-		"  --stdout-print-source\n"
-		"                  Print source (node name) when --disable-ui is used\n"
 		"\n"
 		"rosmon also obeys some environment variables:\n"
 		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
@@ -106,11 +103,9 @@ void handleSignal(int)
 	g_shouldStop = true;
 }
 
-void logToStdout(const rosmon::LogEvent& event)
+void logToStdout(const rosmon::LogEvent& event, const int max_width)
 {
-	if (g_stdoutPrintSource)
-		std::cout << '(' << event.source << ") ";
-	std::cout << event.message;
+	fmt::print("{:>{}}: {}", event.source, max_width, event.message);
 
 	if(!event.message.empty() && event.message.back() != '\n')
 		std::cout << '\n';
@@ -122,7 +117,6 @@ void logToStdout(const rosmon::LogEvent& event)
 // Options
 static const struct option OPTIONS[] = {
 	{"disable-ui", no_argument, nullptr, 'd'},
-	{"stdout-print-source", no_argument, nullptr, 'P'},
 	{"benchmark", no_argument, nullptr, 'b'},
 	{"flush-log", no_argument, nullptr, 'f'},
 	{"flush-stdout", no_argument, nullptr, 'F'},
@@ -145,6 +139,18 @@ enum Action {
 	ACTION_BENCHMARK,
 	ACTION_LIST_ARGS,
 };
+
+static int get_max_node_name(const rosmon::monitor::Monitor &monitor)
+{
+	std::size_t max_width = 0;
+
+	for(const auto& node : monitor.nodes())
+	{
+		max_width = std::max(max_width, node->fullName().size());
+	}
+
+	return max_width;
+}
 
 int main(int argc, char** argv)
 {
@@ -263,9 +269,6 @@ int main(int argc, char** argv)
 			case 'p':
 				fmt::print(stderr, "Prefix : {}", optarg);
 				diagnosticsPrefix = std::string(optarg);
-				break;
-			case 'P':
-				g_stdoutPrintSource = true;
 				break;
 		}
 	}
@@ -474,7 +477,11 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		monitor.logMessageSignal.connect(logToStdout);
+		monitor.logMessageSignal.connect(
+			boost::bind(
+				logToStdout,
+				boost::placeholders::_1,
+				get_max_node_name(monitor)));
 	}
 
 	// ROS interface
