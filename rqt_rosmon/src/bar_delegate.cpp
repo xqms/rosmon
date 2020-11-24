@@ -34,11 +34,11 @@ void BarDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, c
 	double alpha = std::min(1.0, std::max(0.0, (data - m_min) / (m_max - m_min)));
 
 	QRect rect = option.rect;
-	rect.setWidth(alpha * rect.width());
+	rect.setWidth(static_cast<int>(alpha * rect.width()));
 
 	QColor color(
-		alpha * 255,
-		(1.0f - alpha) * 255,
+		static_cast<int>(alpha * 255),
+		static_cast<int>((1.0f - alpha) * 255),
 		0
 // 		(1.0f - alpha) * 255
 	);

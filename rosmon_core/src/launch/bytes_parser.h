@@ -4,6 +4,8 @@
 #ifndef ROSMON_LAUNCH_BYTES_PARSER_H
 #define ROSMON_LAUNCH_BYTES_PARSER_H
 
+#include <cstdint>
+#include <string>
 #include <tuple>
 
 namespace rosmon

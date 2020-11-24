@@ -43,7 +43,7 @@ function _launch_file() {
 		_launch_arg
 	else
 		package=${line[2]}
-		files=("${(@f)$(find $(rospack find ${package}) -name '*.launch' -type f -printf "%f\n")}")
+		files=("${(@f)$(find -L $(rospack find ${package}) -name '*.launch' -type f -printf "%f\n")}")
 		if [[ $#files -gt 0 ]]; then
 			_values 'launch files' $files
 		fi

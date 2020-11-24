@@ -25,9 +25,9 @@ namespace launch
 
 class LaunchConfig;
 
-constexpr float DEFAULT_CPU_LIMIT = 0.9f;
+constexpr double DEFAULT_CPU_LIMIT = 0.9f;
 constexpr uint64_t DEFAULT_MEMORY_LIMIT = 500*1024*1024;
-constexpr float DEFAULT_STOP_TIMEOUT = 5.0f;
+constexpr double DEFAULT_STOP_TIMEOUT = 5.0f;
 
 class ParseException : public std::exception
 {
@@ -135,9 +135,9 @@ public:
 	void warning(const char* fmt, const Args& ... args) const;
 
 
-	float cpuLimit() const
+	double cpuLimit() const
 	{ return m_cpuLimit; }
-	void setCPULimit(float limit)
+	void setCPULimit(double limit)
 	{ m_cpuLimit = limit; }
 
 	uint64_t memoryLimit() const
@@ -145,9 +145,9 @@ public:
 	void setMemoryLimit(uint64_t limit)
 	{ m_memoryLimit = limit; }
 
-	float stopTimeout() const
+	double stopTimeout() const
 	{ return m_stopTimeout; }
-	void setStopTimeout(float timeout)
+	void setStopTimeout(double timeout)
 	{ m_stopTimeout = timeout; }
 
 	bool coredumpsEnabled() const
@@ -166,9 +166,9 @@ private:
 	std::map<std::string, std::string> m_remappings;
 	std::map<std::string, std::string> m_anonNames;
 
-	float m_cpuLimit = DEFAULT_CPU_LIMIT;
+	double m_cpuLimit = DEFAULT_CPU_LIMIT;
 	uint64_t m_memoryLimit = DEFAULT_MEMORY_LIMIT;
-	float m_stopTimeout = DEFAULT_STOP_TIMEOUT;
+	double m_stopTimeout = DEFAULT_STOP_TIMEOUT;
 	bool m_coredumpsEnabled = true;
 };
 

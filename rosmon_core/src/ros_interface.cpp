@@ -61,8 +61,8 @@ void ROSInterface::update()
 
 		nstate.restart_count = node->restartCount();
 
-		nstate.user_load = node->userLoad();
-		nstate.system_load = node->systemLoad();
+		nstate.user_load = static_cast<float>(node->userLoad());
+		nstate.system_load = static_cast<float>(node->systemLoad());
 
 		nstate.memory = node->memory();
 

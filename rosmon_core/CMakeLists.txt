@@ -159,7 +159,7 @@ if(CATKIN_ENABLE_TESTING)
 	endif()
 endif()
 
-# Version 1.5 (increment this comment to trigger a CMake update)
+# Version 1.6 (increment this comment to trigger a CMake update)
 catkin_add_env_hooks(50-rosmon
 	SHELLS bash zsh
 	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks

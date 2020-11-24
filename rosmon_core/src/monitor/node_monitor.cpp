@@ -192,10 +192,10 @@ void NodeMonitor::start()
 		m_processWorkingDirectoryCreated = true;
 	}
 
-	ROS_INFO("rosmon: starting '%s'", m_launchNode->name().c_str());
+	ROS_INFO("rosmon: starting '%s'", fullName().c_str());
 
 	if(!m_firstStart)
-		logMessageSignal({"[rosmon]", fmt::format("Starting node {}", name()), LogEvent::Type::Info});
+		logMessageSignal({"[rosmon]", fmt::format("Starting node {}", fullName()), LogEvent::Type::Info});
 
 	m_firstStart = false;
 
@@ -311,7 +311,7 @@ void NodeMonitor::stop(bool restart)
 	if(!running())
 		return;
 
-	logMessageSignal({"[rosmon]", fmt::format("Stopping node {}", name()), LogEvent::Type::Info});
+	logMessageSignal({"[rosmon]", fmt::format("Stopping node {}", fullName()), LogEvent::Type::Info});
 
 	// kill(-pid) sends the signal to all processes in the process group
 	kill(-m_pid, SIGINT);
@@ -387,7 +387,7 @@ void NodeMonitor::communicateStderr()
 
 			auto one = m_stderrBuffer.array_one();
 
-			LogEvent event{name(), one.first};
+			LogEvent event{fullName(), one.first};
 			event.muted = isMuted();
 			event.channel = LogEvent::Channel::Stderr;
 
@@ -411,7 +411,7 @@ void NodeMonitor::communicateStderr()
 	}
 
 	if(bytes < 0)
-		throw error("{}: Could not read: {}", name(), strerror(errno));
+		throw error("{}: Could not read: {}", fullName(), strerror(errno));
 
 	for(int i = 0; i < bytes; ++i)
 	{
@@ -430,7 +430,7 @@ void NodeMonitor::communicate()
 
 			auto one = m_rxBuffer.array_one();
 
-			LogEvent event{name(), one.first};
+			LogEvent event{fullName(), one.first};
 			event.muted = isMuted();
 			event.channel = LogEvent::Channel::Stdout;
 			event.showStdout = m_launchNode->stdoutDisplayed();
@@ -456,7 +456,7 @@ void NodeMonitor::communicate()
 			if(errno == EINTR || errno == EAGAIN)
 				continue;
 
-			throw error("{}: Could not waitpid(): {}", m_launchNode->name(), strerror(errno));
+			throw error("{}: Could not waitpid(): {}", fullName(), strerror(errno));
 		}
 
 		// Flush out any remaining stdout
@@ -466,14 +466,14 @@ void NodeMonitor::communicate()
 		if(WIFEXITED(status))
 		{
 			auto type = (WEXITSTATUS(status) == 0) ? LogEvent::Type::Info : LogEvent::Type::Error;
-			logTyped(type, "{} exited with status {}", name(), WEXITSTATUS(status));
-			ROS_INFO("rosmon: %s exited with status %d", name().c_str(), WEXITSTATUS(status));
+			logTyped(type, "{} exited with status {}", fullName(), WEXITSTATUS(status));
+			ROS_INFO("rosmon: %s exited with status %d", fullName().c_str(), WEXITSTATUS(status));
 			m_exitCode = WEXITSTATUS(status);
 		}
 		else if(WIFSIGNALED(status))
 		{
-			logTyped(LogEvent::Type::Error, "{} died from signal {}", name(), WTERMSIG(status));
-			ROS_ERROR("rosmon: %s died from signal %d", name().c_str(), WTERMSIG(status));
+			logTyped(LogEvent::Type::Error, "{} died from signal {}", fullName(), WTERMSIG(status));
+			ROS_ERROR("rosmon: %s died from signal %d", fullName().c_str(), WTERMSIG(status));
 			m_exitCode = 255;
 		}
 
@@ -482,12 +482,12 @@ void NodeMonitor::communicate()
 		{
 			if(!m_launchNode->launchPrefix().empty())
 			{
-				logTyped(LogEvent::Type::Info, "{} used launch-prefix, not collecting core dump as it is probably useless.", name());
+				logTyped(LogEvent::Type::Info, "{} used launch-prefix, not collecting core dump as it is probably useless.", fullName());
 			}
 			else
 			{
 				// We have a chance to find the core dump...
-				logTyped(LogEvent::Type::Info, "{} left a core dump", name());
+				logTyped(LogEvent::Type::Info, "{} left a core dump", fullName());
 				gatherCoredump(WTERMSIG(status));
 			}
 		}
@@ -547,13 +547,13 @@ void NodeMonitor::communicate()
 			m_restarting = true;
 		}
 
-		exitedSignal(name());
+		exitedSignal(fullName());
 
 		return;
 	}
 
 	if(bytes < 0)
-		throw error("{}: Could not read: {}", name(), strerror(errno));
+		throw error("{}: Could not read: {}", fullName(), strerror(errno));
 
 	for(int i = 0; i < bytes; ++i)
 	{
@@ -564,13 +564,13 @@ void NodeMonitor::communicate()
 template<typename... Args>
 void NodeMonitor::log(const char* format, Args&& ... args)
 {
-	logMessageSignal({name(), fmt::format(format, std::forward<Args>(args)...)});
+	logMessageSignal({fullName(), fmt::format(format, std::forward<Args>(args)...)});
 }
 
 template<typename... Args>
 void NodeMonitor::logTyped(LogEvent::Type type, const char* format, Args&& ... args)
 {
-	logMessageSignal({name(), fmt::format(format, std::forward<Args>(args)...), type});
+	logMessageSignal({fullName(), fmt::format(format, std::forward<Args>(args)...), type});
 }
 
 static boost::iterator_range<std::string::const_iterator>

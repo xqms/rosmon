@@ -55,6 +55,10 @@ private:
 
 	bool anyMuted() const;
 
+	void startAll();
+
+	void stopAll();
+
 	void muteAll();
 
 	void unmuteAll();
@@ -64,6 +68,8 @@ private:
 	void toggleStderrOnly();
 
 	void scheduleUpdate();
+
+	std::string nodeDisplayName(monitor::NodeMonitor& node, std::size_t maxWidth = std::string::npos);
 
 	monitor::Monitor* m_monitor;
 	FDWatcher::Ptr m_fdWatcher;
