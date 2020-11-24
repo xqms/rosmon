@@ -33,6 +33,7 @@ namespace fs = boost::filesystem;
 
 bool g_shouldStop = false;
 bool g_flushStdout = false;
+bool g_stdoutPrintSource = false;
 
 static fs::path findFile(const fs::path& base, const std::string& name)
 {
@@ -89,6 +90,8 @@ void usage()
 		"  --output-attr=obey|ignore\n"
 		"                  Obey or ignore output=\"*\" attributes on node tags.\n"
 		"                  Default is to ignore.\n"
+		"  --stdout-print-source\n"
+		"                  Print source (node name) when --disable-ui is used\n"
 		"\n"
 		"rosmon also obeys some environment variables:\n"
 		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
@@ -105,6 +108,8 @@ void handleSignal(int)
 
 void logToStdout(const rosmon::LogEvent& event)
 {
+	if (g_stdoutPrintSource)
+		std::cout << '(' << event.source << ") ";
 	std::cout << event.message;
 
 	if(!event.message.empty() && event.message.back() != '\n')
@@ -117,6 +122,7 @@ void logToStdout(const rosmon::LogEvent& event)
 // Options
 static const struct option OPTIONS[] = {
 	{"disable-ui", no_argument, nullptr, 'd'},
+	{"stdout-print-source", no_argument, nullptr, 'P'},
 	{"benchmark", no_argument, nullptr, 'b'},
 	{"flush-log", no_argument, nullptr, 'f'},
 	{"flush-stdout", no_argument, nullptr, 'F'},
@@ -257,6 +263,9 @@ int main(int argc, char** argv)
 			case 'p':
 				fmt::print(stderr, "Prefix : {}", optarg);
 				diagnosticsPrefix = std::string(optarg);
+				break;
+			case 'P':
+				g_stdoutPrintSource = true;
 				break;
 		}
 	}
