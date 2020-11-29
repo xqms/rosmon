@@ -642,6 +642,22 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext& ctx, ParamCon
 
 	auto computeString = std::make_shared<std::future<std::string>>();
 
+	// On ROS Kinetic, type="..." is not respected for command= and textfile=
+	// attributes. We support that anyway, but print a nice warning for users.
+	// See GH issue #138.
+
+#if !ROS_VERSION_MINIMUM(1,13,0)
+	if(type)
+	{
+		ctx.warning(
+			"On ROS Kinetic, roslaunch does not respect the type attribute on "
+			"<param> tags with command= or textfile= actions. However, rosmon "
+			"does support it and will create the properly typed parameter {}.",
+			fullName
+		);
+	}
+#endif
+
 	if(command)
 	{
 		// Run a command and retrieve the results.
