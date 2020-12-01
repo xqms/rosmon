@@ -480,7 +480,7 @@ int main(int argc, char** argv)
 		monitor.logMessageSignal.connect(
 			boost::bind(
 				logToStdout,
-				boost::placeholders::_1,
+				_1,
 				get_max_node_name(monitor)));
 	}
 
