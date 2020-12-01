@@ -23,6 +23,8 @@ namespace string_utils
  **/
 std::string simplifyWhitespace(const std::string& input);
 
+std::string strip(const std::string& input);
+
 /**
  * @brief Check if string is whitespace only (includes '\n')
  **/

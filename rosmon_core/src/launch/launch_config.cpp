@@ -599,7 +599,11 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext& ctx, ParamCon
 		}
 		else
 		{
-			m_params[fullName] = paramToXmlRpc(ctx, ctx.evaluate(value), fullType);
+			// Note: roslaunch strips whitespace of all simple parameters.
+			m_params[fullName] = paramToXmlRpc(ctx,
+				string_utils::strip(ctx.evaluate(value, false)),
+				fullType
+			);
 
 			// A dynamic parameter of the same name gets overwritten now
 			m_paramJobs.erase(fullName);
@@ -815,20 +819,21 @@ XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const ParseContext& ctx, const s
 	try
 	{
 		if(type == "int")
-			return boost::lexical_cast<int>(value);
+			return boost::lexical_cast<int>(string_utils::strip(value));
 		else if(type == "double")
-			return boost::lexical_cast<double>(value);
+			return boost::lexical_cast<double>(string_utils::strip(value));
 		else if(type == "bool" || type == "boolean")
 		{
-			std::string value_lowercase = boost::algorithm::to_lower_copy(value);
+			std::string value_lowercase = boost::algorithm::to_lower_copy(
+				string_utils::strip(value)
+			);
+
 			if(value_lowercase == "true")
 				return true;
 			else if(value_lowercase == "false")
 				return false;
 			else
-			{
 				throw ctx.error("invalid boolean value '{}'", value);
-			}
 		}
 		else if(type == "str" || type == "string")
 			return value;
