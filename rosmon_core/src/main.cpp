@@ -103,9 +103,9 @@ void handleSignal(int)
 	g_shouldStop = true;
 }
 
-void logToStdout(const rosmon::LogEvent& event)
+void logToStdout(const rosmon::LogEvent& event, const int max_width)
 {
-	std::cout << event.message;
+	fmt::print("{:>{}}: {}", event.source, max_width, event.message);
 
 	if(!event.message.empty() && event.message.back() != '\n')
 		std::cout << '\n';
@@ -139,6 +139,18 @@ enum Action {
 	ACTION_BENCHMARK,
 	ACTION_LIST_ARGS,
 };
+
+static int get_max_node_name(const rosmon::monitor::Monitor &monitor)
+{
+	std::size_t max_width = 0;
+
+	for(const auto& node : monitor.nodes())
+	{
+		max_width = std::max(max_width, node->fullName().size());
+	}
+
+	return max_width;
+}
 
 int main(int argc, char** argv)
 {
@@ -465,7 +477,11 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		monitor.logMessageSignal.connect(logToStdout);
+		monitor.logMessageSignal.connect(
+			boost::bind(
+				logToStdout,
+				boost::placeholders::_1,
+				get_max_node_name(monitor)));
 	}
 
 	// ROS interface
