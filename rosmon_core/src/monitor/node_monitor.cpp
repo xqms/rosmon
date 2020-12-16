@@ -407,6 +407,8 @@ void NodeMonitor::communicateStderr()
 			handleByte('\n');
 
 		m_fdWatcher->removeFD(m_stderrFD);
+        close(m_stderrFD);
+        m_stderrFD = -1;
 		return; // handled in communicate()
 	}
 
