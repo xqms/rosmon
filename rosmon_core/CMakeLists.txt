@@ -120,6 +120,12 @@ endif()
 add_executable(abort
 	src/util/abort.cpp
 )
+add_executable(dump_param
+	src/util/dump_param.cpp
+)
+target_link_libraries(dump_param
+	${catkin_LIBRARIES}
+)
 
 add_executable(abort_really_long_executable
 	src/util/abort.cpp

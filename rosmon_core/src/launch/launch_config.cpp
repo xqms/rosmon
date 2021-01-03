@@ -514,7 +514,7 @@ static XmlRpc::XmlRpcValue autoXmlRpcValue(const std::string& fullValue)
 		try { return boost::lexical_cast<int>(fullValue); }
 		catch(boost::bad_lexical_cast&) {}
 
-		try { return boost::lexical_cast<float>(fullValue); }
+		try { return boost::lexical_cast<double>(fullValue); }
 		catch(boost::bad_lexical_cast&) {}
 
 		return fullValue;
@@ -599,7 +599,15 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext& ctx, ParamCon
 		}
 		else
 		{
-			m_params[fullName] = paramToXmlRpc(ctx, ctx.evaluate(value), fullType);
+			// Note: roslaunch strips leading/trailing whitespace of all simple
+			// parameters. Furthermore, line feeds and tabs are replaced with
+			// space characters.
+			m_params[fullName] = paramToXmlRpc(ctx,
+				string_utils::convertWhitespace(
+					string_utils::strip(ctx.evaluate(value, false))
+				),
+				fullType
+			);
 
 			// A dynamic parameter of the same name gets overwritten now
 			m_paramJobs.erase(fullName);
@@ -641,6 +649,23 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext& ctx, ParamCon
 	//     case of YAML-typed parameters).
 
 	auto computeString = std::make_shared<std::future<std::string>>();
+
+	// On ROS < Lunar, type="..." is not respected for command= and textfile=
+	// attributes. We support that anyway, but print a nice warning for users.
+	// See GH issue #138.
+
+#if !ROS_VERSION_MINIMUM(1,13,0)
+	if(type)
+	{
+		ctx.warning(
+			"On ROS versions prior to Lunar, roslaunch does not respect the "
+			"type attribute on <param> tags with command= or textfile= "
+			"actions. However, rosmon does support it and will create the "
+			"properly typed parameter {}.",
+			fullName
+		);
+	}
+#endif
 
 	if(command)
 	{
@@ -798,20 +823,21 @@ XmlRpc::XmlRpcValue LaunchConfig::paramToXmlRpc(const ParseContext& ctx, const s
 	try
 	{
 		if(type == "int")
-			return boost::lexical_cast<int>(value);
+			return boost::lexical_cast<int>(string_utils::strip(value));
 		else if(type == "double")
-			return boost::lexical_cast<double>(value);
+			return boost::lexical_cast<double>(string_utils::strip(value));
 		else if(type == "bool" || type == "boolean")
 		{
-			std::string value_lowercase = boost::algorithm::to_lower_copy(value);
+			std::string value_lowercase = boost::algorithm::to_lower_copy(
+				string_utils::strip(value)
+			);
+
 			if(value_lowercase == "true")
 				return true;
 			else if(value_lowercase == "false")
 				return false;
 			else
-			{
 				throw ctx.error("invalid boolean value '{}'", value);
-			}
 		}
 		else if(type == "str" || type == "string")
 			return value;

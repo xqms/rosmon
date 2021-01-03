@@ -44,6 +44,33 @@ std::string simplifyWhitespace(const std::string& input)
 	return output;
 }
 
+std::string strip(const std::string& input)
+{
+	constexpr const char whitespace[] = " \t\f\v\r\n";
+
+	std::string ret = input;
+	ret.erase(0, ret.find_first_not_of(whitespace, 0, sizeof(whitespace)));
+	ret.erase(ret.find_last_not_of(whitespace, std::string::npos, sizeof(whitespace))+1);
+
+	return ret;
+}
+
+std::string convertWhitespace(const std::string& input)
+{
+	std::string ret;
+	ret.reserve(input.size());
+
+	for(auto c : input)
+	{
+		if(std::isspace(static_cast<unsigned char>(c)))
+			ret.push_back(' ');
+		else
+			ret.push_back(c);
+	}
+
+	return ret;
+}
+
 bool isOnlyWhitespace(const std::string& input)
 {
 	for(const char& c: input)
