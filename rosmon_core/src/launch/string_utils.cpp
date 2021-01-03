@@ -55,6 +55,22 @@ std::string strip(const std::string& input)
 	return ret;
 }
 
+std::string convertWhitespace(const std::string& input)
+{
+	std::string ret;
+	ret.reserve(input.size());
+
+	for(auto c : input)
+	{
+		if(std::isspace(static_cast<unsigned char>(c)))
+			ret.push_back(' ');
+		else
+			ret.push_back(c);
+	}
+
+	return ret;
+}
+
 bool isOnlyWhitespace(const std::string& input)
 {
 	for(const char& c: input)

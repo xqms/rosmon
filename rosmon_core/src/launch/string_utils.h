@@ -26,6 +26,13 @@ std::string simplifyWhitespace(const std::string& input);
 std::string strip(const std::string& input);
 
 /**
+ * @brief Convert any whitespace to space characters.
+ *
+ * Unlike @a simplifyWhitespace(), this does not compress whitespace.
+ **/
+std::string convertWhitespace(const std::string& input);
+
+/**
  * @brief Check if string is whitespace only (includes '\n')
  **/
 bool isOnlyWhitespace(const std::string& input);

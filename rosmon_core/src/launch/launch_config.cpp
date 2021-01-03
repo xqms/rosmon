@@ -599,9 +599,13 @@ void LaunchConfig::parseParam(TiXmlElement* element, ParseContext& ctx, ParamCon
 		}
 		else
 		{
-			// Note: roslaunch strips whitespace of all simple parameters.
+			// Note: roslaunch strips leading/trailing whitespace of all simple
+			// parameters. Furthermore, line feeds and tabs are replaced with
+			// space characters.
 			m_params[fullName] = paramToXmlRpc(ctx,
-				string_utils::strip(ctx.evaluate(value, false)),
+				string_utils::convertWhitespace(
+					string_utils::strip(ctx.evaluate(value, false))
+				),
 				fullType
 			);
 
