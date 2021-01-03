@@ -514,7 +514,7 @@ static XmlRpc::XmlRpcValue autoXmlRpcValue(const std::string& fullValue)
 		try { return boost::lexical_cast<int>(fullValue); }
 		catch(boost::bad_lexical_cast&) {}
 
-		try { return boost::lexical_cast<float>(fullValue); }
+		try { return boost::lexical_cast<double>(fullValue); }
 		catch(boost::bad_lexical_cast&) {}
 
 		return fullValue;
