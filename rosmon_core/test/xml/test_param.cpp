@@ -311,3 +311,50 @@ TEST_CASE("invalid param names", "[param]")
 	);
 }
 
+TEST_CASE("param whitespace", "[param]")
+{
+	LaunchConfig config;
+	config.parseString(R"EOF(
+<launch>
+	<param name="string" type="string" value=" 0.5 "/>
+	<param name="double" type="double" value=" 0.5 "/>
+	<param name="auto_string" value=" Hallo " />
+	<param name="auto_double" value=" 0.6 " />
+	<param name="auto_int" value="6" />
+	<param name="auto_bool" value=" true " />
+
+	<param name="command_param_string" type="string" command="echo ' Hallo '" />
+	<param name="command_param_double" type="double" command="echo -n ' 1.23 '" />
+	<param name="command_param_yaml" type="yaml" command="echo -n 1.23" />
+
+	<param name="textfile_param_string" type="string" textfile="$(find rosmon_core)/test/textfile_double.txt" />
+	<param name="textfile_param_double" type="double" textfile="$(find rosmon_core)/test/textfile_double.txt" />
+	<param name="textfile_param_yaml" type="yaml" textfile="$(find rosmon_core)/test/analyzers.yaml" />
+
+	<param name="multiple_lines1" value="first_line
+	second_line" />
+	<param name="multiple_lines2" command="echo -n first_line
+	second_line" />
+</launch>
+	)EOF");
+
+	config.evaluateParameters();
+
+	auto& params = config.parameters();
+
+	using V = XmlRpc::XmlRpcValue;
+
+	CHECK(getTypedParam<std::string>(params, "/string", V::TypeString) == "0.5");
+	CHECK(getTypedParam<double>(params, "/double", V::TypeDouble) == Approx(0.5));
+	CHECK(getTypedParam<std::string>(params, "/auto_string", V::TypeString) == "Hallo");
+	CHECK(getTypedParam<double>(params, "/auto_double", V::TypeDouble) == Approx(0.6));
+	CHECK(getTypedParam<int>(params, "/auto_int", V::TypeInt) == 6);
+	CHECK(getTypedParam<bool>(params, "/auto_bool", V::TypeBoolean) == true);
+
+	CHECK(getTypedParam<std::string>(params, "/command_param_string", V::TypeString) == " Hallo \n");
+	CHECK(getTypedParam<double>(params, "/command_param_double", V::TypeDouble) == Approx(1.23));
+
+	CHECK(getTypedParam<std::string>(params, "/multiple_lines1", V::TypeString) == "first_line  second_line");
+	CHECK(getTypedParam<std::string>(params, "/multiple_lines2", V::TypeString) == "first_line second_line");
+}
+
