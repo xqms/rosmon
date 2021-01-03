@@ -97,7 +97,7 @@ class BasicTest(unittest.TestCase):
 		self.assertEqual(self.get_param("/test1/private_param2"), "hello_world")
 
 	def test_multiLine(self):
-		self.assertEqual(self.get_param("multiple_lines1"), "first_line second_line")
+		self.assertEqual(self.get_param("multiple_lines1"), "first_line  second_line")
 		self.assertEqual(self.get_param("multiple_lines2"), "first_line second_line")
 
 	def test_yaml(self):
