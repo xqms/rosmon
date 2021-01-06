@@ -44,7 +44,11 @@ int main(int argc, char** argv)
 
 			double v = value;
 			fmt::print("Value: {}\n", v);
-			fmt::print("Hex: 0x{:08X}\n", *reinterpret_cast<uint64_t*>(&v));
+
+			uint64_t vhex = 0;
+			std::memcpy(&vhex, &v, sizeof(vhex));
+
+			fmt::print("Hex: 0x{:08X}\n", vhex);
 			break;
 		}
 
