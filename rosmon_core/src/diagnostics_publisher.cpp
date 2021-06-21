@@ -85,10 +85,12 @@ void DiagnosticsPublisher::publish(const std::vector<NodeMonitor::Ptr>& state)
 		}
 		else
 		{
-			if(nodeState->restartCount() > 0)
+			if(nodeState->numRespawnsAllowed() >= 0 &&
+				 nodeState->restartCount() > nodeState->numRespawnsAllowed())
 			{
 				nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
-				msg = "restart count > 0! (" + std::to_string(nodeState->restartCount()) + ")";
+				msg = "restart count > " + std::to_string(nodeState->numRespawnsAllowed()) +
+							"! (" + std::to_string(nodeState->restartCount()) + ")";
 			}
 
 			if(nodeState->memory() > nodeState->memoryLimit())

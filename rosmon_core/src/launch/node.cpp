@@ -102,6 +102,11 @@ void Node::setRespawnDelay(const ros::WallDuration& respawnDelay)
 	m_respawnDelay = respawnDelay;
 }
 
+void Node::setNumRespawnsAllowed(int numRespawnsAllowed)
+{
+	m_numRespawnsAllowed = numRespawnsAllowed;
+}
+
 void Node::setLaunchPrefix(const std::string& launchPrefix)
 {
 	wordexp_t tokens;
