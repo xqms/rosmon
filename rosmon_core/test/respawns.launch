@@ -1,0 +1,10 @@
+<launch>
+	<node name="test_respawns_ok" pkg="rosmon_core" type="test_node.py" respawn="true" rosmon-restart-warn-threshold="-1">
+	</node>
+
+	<node name="test_2_respawns_allowed" pkg="rosmon_core" type="test_node.py" respawn="true" rosmon-restart-warn-threshold="2">
+	</node>
+
+	<node name="test_no_respawns_allowed" pkg="rosmon_core" type="test_node.py" respawn="true" rosmon-restart-warn-threshold="0">
+	</node>
+</launch>

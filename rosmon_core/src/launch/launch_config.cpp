@@ -354,6 +354,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 	const char* ns = element->Attribute("ns");
 	const char* respawn = element->Attribute("respawn");
 	const char* respawnDelay = element->Attribute("respawn_delay");
+	const char* nRespawnsAllowed = element->Attribute("rosmon-restart-warn-threshold");
 	const char* required = element->Attribute("required");
 	const char* launchPrefix = element->Attribute("launch-prefix");
 	const char* cwd = element->Attribute("cwd");
@@ -423,6 +424,21 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 			}
 
 			node->setRespawnDelay(ros::WallDuration(seconds));
+		}
+
+		if (nRespawnsAllowed)
+		{
+			int n_respawns;
+			try
+			{
+				n_respawns = boost::lexical_cast<int>(attr_ctx.evaluate(nRespawnsAllowed));
+			}
+			catch(boost::bad_lexical_cast&)
+			{
+				throw ctx.error("bad rosmon-restart-warn-threshold value '{}'", nRespawnsAllowed);
+			}
+
+			node->setNumRespawnsAllowed(n_respawns);
 		}
 	}
 

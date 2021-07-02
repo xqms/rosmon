@@ -163,6 +163,8 @@ if(CATKIN_ENABLE_TESTING)
 	else()
 		message(WARNING "Install catch_ros to enable XML unit tests")
 	endif()
+
+	install(DIRECTORY test DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 endif()
 
 # Version 1.6 (increment this comment to trigger a CMake update)

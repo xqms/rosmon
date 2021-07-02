@@ -149,6 +149,9 @@ public:
 	inline unsigned int restartCount() const
 	{ return m_restartCount; }
 
+	inline int numRespawnsAllowed() const
+	{ return m_launchNode->numRespawnsAllowed(); }
+
 	inline uint64_t memoryLimit() const
 	{ return m_launchNode->memoryLimitByte();}
 
