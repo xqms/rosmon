@@ -216,10 +216,11 @@ void NodeMonitor::start()
 	if(openpty(&master, &slave, nullptr, nullptr, nullptr) == -1)
 		throw error("Could not open pseudo terminal for child process: {}", strerror(errno));
 
-	// For stderr, we open a separate pipe
-	int stderr_pipe[2];
-	if(pipe(stderr_pipe) != 0)
-		throw error("Could not create stderr pipe: {}", strerror(errno));
+	// For stderr, we open a second PTY
+	int stderr_master, stderr_slave;
+
+	if(openpty(&stderr_master, &stderr_slave, nullptr, nullptr, nullptr) == -1)
+		throw error("Could not open stderr pseudo terminal for child process: {}", strerror(errno));
 
 	// Compose args
 	{
@@ -231,7 +232,7 @@ void NodeMonitor::start()
 		args.push_back(strdup(fmt::format("{}", slave).c_str()));
 
 		args.push_back(strdup("--stderr"));
-		args.push_back(strdup(fmt::format("{}", stderr_pipe[1]).c_str()));
+		args.push_back(strdup(fmt::format("{}", stderr_slave).c_str()));
 
 		if(!m_launchNode->namespaceString().empty())
 		{
@@ -272,7 +273,7 @@ void NodeMonitor::start()
 	if(pid == 0)
 	{
 		close(master);
-		close(stderr_pipe[0]);
+		close(stderr_master);
 
 		if(execvp("rosrun", args.data()) != 0)
 		{
@@ -289,10 +290,10 @@ void NodeMonitor::start()
 
 	// Parent
 	close(slave);
-	close(stderr_pipe[1]);
+	close(stderr_slave);
 
 	m_fd = master;
-	m_stderrFD = stderr_pipe[0];
+	m_stderrFD = stderr_master;
 	m_pid = pid;
 	m_fdWatcher->registerFD(m_fd, boost::bind(&NodeMonitor::communicate, this));
 	m_fdWatcher->registerFD(m_stderrFD, boost::bind(&NodeMonitor::communicateStderr, this));
@@ -400,9 +401,9 @@ void NodeMonitor::communicateStderr()
 	char buf[1024];
 	int bytes = read(m_stderrFD, buf, sizeof(buf));
 
-	if(bytes == 0)
+	if(bytes == 0 || (bytes < 0 && errno == EIO))
 	{
-		// Flush out any remaining stdout
+		// Flush out any remaining stderr
 		if(!m_stderrBuffer.empty())
 			handleByte('\n');
 
