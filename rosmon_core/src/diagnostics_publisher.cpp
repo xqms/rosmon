@@ -86,7 +86,7 @@ void DiagnosticsPublisher::publish(const std::vector<NodeMonitor::Ptr>& state)
 		else
 		{
 			if(nodeState->numRespawnsAllowed() >= 0 &&
-				 nodeState->restartCount() > nodeState->numRespawnsAllowed())
+				 nodeState->restartCount() > static_cast<unsigned int>(nodeState->numRespawnsAllowed()))
 			{
 				nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
 				msg = "restart count > " + std::to_string(nodeState->numRespawnsAllowed()) +
