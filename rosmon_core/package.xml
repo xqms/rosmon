@@ -12,6 +12,7 @@
 
 	<buildtool_depend>catkin</buildtool_depend>
 	<depend>boost</depend>
+	<depend>libboost-python-dev</depend>
 	<depend>cmake_modules</depend>
 	<depend>libncurses-dev</depend>
 	<depend>rosfmt</depend>
@@ -24,7 +25,7 @@
 	<depend>tinyxml</depend>
 	<depend>yaml-cpp</depend>
 	<depend>diagnostic_msgs</depend>
-	
+
 	<build_depend condition="$ROS_PYTHON_VERSION == 2">python</build_depend>
 	<build_depend condition="$ROS_PYTHON_VERSION == 3">python3</build_depend>
 
