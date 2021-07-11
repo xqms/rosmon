@@ -85,11 +85,16 @@ void DiagnosticsPublisher::publish(const std::vector<NodeMonitor::Ptr>& state)
 		}
 		else
 		{
+			if (nodeState->state() == NodeMonitor::STATE_IDLE)
+			{
+				msg = "node idle ";
+			}
+
 			if(nodeState->numRespawnsAllowed() >= 0 &&
 				 nodeState->restartCount() > static_cast<unsigned int>(nodeState->numRespawnsAllowed()))
 			{
 				nodeStatus.level = diagnostic_msgs::DiagnosticStatus::WARN;
-				msg = "restart count > " + std::to_string(nodeState->numRespawnsAllowed()) +
+				msg += "restart count > " + std::to_string(nodeState->numRespawnsAllowed()) +
 							"! (" + std::to_string(nodeState->restartCount()) + ")";
 			}
 
