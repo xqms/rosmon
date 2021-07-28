@@ -218,6 +218,8 @@ private:
 	void checkStop();
 	void gatherCoredump(int signal);
 
+	void clearOnlcrFlagOnPty(int fd, const std::string& ptyName);
+
 	launch::Node::ConstPtr m_launchNode;
 
 	FDWatcher::Ptr m_fdWatcher;

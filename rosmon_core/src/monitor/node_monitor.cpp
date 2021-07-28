@@ -216,11 +216,15 @@ void NodeMonitor::start()
 	if(openpty(&master, &slave, nullptr, nullptr, nullptr) == -1)
 		throw error("Could not open pseudo terminal for child process: {}", strerror(errno));
 
+	clearOnlcrFlagOnPty(slave, "stdout_slave");
+
 	// For stderr, we open a second PTY
 	int stderr_master, stderr_slave;
 
 	if(openpty(&stderr_master, &stderr_slave, nullptr, nullptr, nullptr) == -1)
 		throw error("Could not open stderr pseudo terminal for child process: {}", strerror(errno));
+
+	clearOnlcrFlagOnPty(stderr_slave, "stderr_slave");
 
 	// Compose args
 	{
@@ -708,6 +712,21 @@ void NodeMonitor::gatherCoredump(int signal)
 	ss << "gdb " << m_launchNode->executable() << " " << coreFile;
 
 	m_debuggerCommand = ss.str();
+}
+
+void NodeMonitor::clearOnlcrFlagOnPty(int fd, const std::string& ptyName)
+{
+	// On Linux, a new unix98 pty is initialized with the output flag ONLCR set,
+	// which converts \n to \r\n
+	// Disable this bahavior by clearing the flag
+	struct termios termios;
+	if(tcgetattr(fd, &termios) == -1)
+		throw error("Could not get {} pty attributes: {}", ptyName, strerror(errno));
+
+	termios.c_oflag &= ~ONLCR;
+
+	if(tcsetattr(fd, TCSANOW, &termios) == -1)
+		throw error("Could not set {} pty attributes: {}", ptyName, strerror(errno));
 }
 
 void NodeMonitor::launchDebugger()
