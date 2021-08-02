@@ -208,23 +208,12 @@ void NodeMonitor::start()
 	});
 
 	// Open pseudo-terminal
-	// NOTE: We are not using forkpty() here, as it is probably not safe in
-	//  a multi-threaded process (see
-	//  https://www.linuxprogrammingblog.com/threads-and-fork-think-twice-before-using-them)
 	int master, slave;
-
-	if(openpty(&master, &slave, nullptr, nullptr, nullptr) == -1)
-		throw error("Could not open pseudo terminal for child process: {}", strerror(errno));
-
-	clearOnlcrFlagOnPty(slave, "stdout_slave");
+	std::tie(master, slave) = createPTY();
 
 	// For stderr, we open a second PTY
 	int stderr_master, stderr_slave;
-
-	if(openpty(&stderr_master, &stderr_slave, nullptr, nullptr, nullptr) == -1)
-		throw error("Could not open stderr pseudo terminal for child process: {}", strerror(errno));
-
-	clearOnlcrFlagOnPty(stderr_slave, "stderr_slave");
+	std::tie(stderr_master, stderr_slave) = createPTY();
 
 	// Compose args
 	{
@@ -714,19 +703,30 @@ void NodeMonitor::gatherCoredump(int signal)
 	m_debuggerCommand = ss.str();
 }
 
-void NodeMonitor::clearOnlcrFlagOnPty(int fd, const std::string& ptyName)
+std::pair<int,int> NodeMonitor::createPTY()
 {
+	int master, slave;
+
+	// NOTE: We are not using forkpty() here, as it is probably not safe in
+	//  a multi-threaded process (see
+	//  https://www.linuxprogrammingblog.com/threads-and-fork-think-twice-before-using-them)
+
+	if(openpty(&master, &slave, nullptr, nullptr, nullptr) == -1)
+		throw error("Could not open pseudo terminal for child process: {}", strerror(errno));
+
 	// On Linux, a new unix98 pty is initialized with the output flag ONLCR set,
 	// which converts \n to \r\n
 	// Disable this bahavior by clearing the flag
 	struct termios termios;
-	if(tcgetattr(fd, &termios) == -1)
-		throw error("Could not get {} pty attributes: {}", ptyName, strerror(errno));
+	if(tcgetattr(slave, &termios) == -1)
+		throw error("Could not get PTY slave attributes: {}", strerror(errno));
 
 	termios.c_oflag &= ~ONLCR;
 
-	if(tcsetattr(fd, TCSANOW, &termios) == -1)
-		throw error("Could not set {} pty attributes: {}", ptyName, strerror(errno));
+	if(tcsetattr(slave, TCSANOW, &termios) == -1)
+		throw error("Could not set PTY slave attributes: {}", strerror(errno));
+
+	return {master,slave};
 }
 
 void NodeMonitor::launchDebugger()

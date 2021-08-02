@@ -218,7 +218,7 @@ private:
 	void checkStop();
 	void gatherCoredump(int signal);
 
-	void clearOnlcrFlagOnPty(int fd, const std::string& ptyName);
+	std::pair<int,int> createPTY();
 
 	launch::Node::ConstPtr m_launchNode;
 
