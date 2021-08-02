@@ -46,10 +46,32 @@ XmlRpc::XmlRpcValue yamlToXmlRpc(const ParseContext& ctx, const YAML::Node& n)
 			case YAML::NodeType::Map:
 			{
 				std::map<std::string, XmlRpc::XmlRpcValue> members;
+
+				// Take care of merge keys first
 				for(YAML::const_iterator it = n.begin(); it != n.end(); ++it)
 				{
-					members[it->first.as<std::string>()] = yamlToXmlRpc(ctx, it->second);
+					auto key = it->first.as<std::string>();
+					if(key == "<<")
+					{
+						auto merger = yamlToXmlRpc(ctx, it->second);
+						if(merger.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+							throw std::runtime_error{"Expected a struct here"};
+
+						for(auto& pair : merger)
+							members[pair.first] = pair.second;
+					}
 				}
+
+				// Now everything else
+				for(YAML::const_iterator it = n.begin(); it != n.end(); ++it)
+				{
+					auto key = it->first.as<std::string>();
+					if(key == "<<")
+						continue;
+
+					members[key] = yamlToXmlRpc(ctx, it->second);
+				}
+
 				return XmlRpcValueCreator::createStruct(members);
 			}
 			case YAML::NodeType::Sequence:
