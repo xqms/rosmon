@@ -2,6 +2,12 @@
 Changelog for package rqt_rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix -Wfloat-conversion warnings
+* Increase cmake minimum version to 3.4
+* Contributors: Max Schwarz
+
 2.3.2 (2020-05-29)
 ------------------
 

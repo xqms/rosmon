@@ -2,6 +2,27 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Support YAML merge keys inside arrays (Issue #150, PR #153)
+* Clear ONLCR o_flag on pty to avoid converting \n into \r\n (PR #152)
+* Inidicate when a node is actually Idle (e.g. stopped) (PR #144)
+* Add missing dependency on libboost-python-dev (PR #149)
+* Use a second PTY for stderr (Issue #147, PR #148)
+* Provide number of restarts threshold per node via ROS-launch arguments (Issue #145, PR #146)
+* Install tests (necessary for testing with colcon)
+* Warning for type= attrs on <param> tags on Kinetic + whitespace fixes (Issue #138, PR #141)
+* Use double precision for auto type parameters (PR #141)
+* Monitor: do not leak stderr file descriptors
+* Added option to prepend node name to stdout when using --disable-ui (Issue #139, PR #140)
+* bytes_parser: add missing include (PR #137)
+* Start all and stop all keybindings (Issue #127, PR #133)
+* Display & search full name including namespace
+* Follow symbolic links during file name suggestion (fixes completion with colcon)
+* Fix problems identified with -Wfloat-conversion
+* Respect leading slashes in rosparam YAML keys (Issue #130, PR #131)
+* Contributors: Ferry Schoenmakers, Kutay YILMAZ, Max Schwarz, Romain Reignier, Steve Golton, Tim Clephas, mcfurry
+
 2.3.2 (2020-05-29)
 ------------------
 * rosmon_core: cmake: increase minimum version to address policy warnings
