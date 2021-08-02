@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.4.0 (2021-08-02)
+------------------
 * Support YAML merge keys inside arrays (Issue #150, PR #153)
 * Clear ONLCR o_flag on pty to avoid converting \n into \r\n (PR #152)
 * Inidicate when a node is actually Idle (e.g. stopped) (PR #144)
