@@ -32,6 +32,7 @@
 namespace fs = boost::filesystem;
 
 bool g_shouldStop = false;
+bool g_shouldRewindLog = false;
 bool g_flushStdout = false;
 
 static fs::path findFile(const fs::path& base, const std::string& name)
@@ -101,6 +102,11 @@ void usage()
 void handleSignal(int)
 {
 	g_shouldStop = true;
+}
+
+void handleLogRewindSignal(int)
+{
+	g_shouldRewindLog = true;
 }
 
 void logToStdout(const rosmon::LogEvent& event, const int max_width)
@@ -490,9 +496,20 @@ int main(int argc, char** argv)
 	ros::WallDuration waitDuration(0.1);
 
 	// On SIGINT, SIGTERM, SIGHUP we stop gracefully.
-	signal(SIGINT, handleSignal);
-	signal(SIGHUP, handleSignal);
-	signal(SIGTERM, handleSignal);
+	if (signal(SIGINT, handleSignal) == SIG_ERR) {
+		fmt::print(stderr, "Could not install SIGINT handler");
+	}
+	if (signal(SIGHUP, handleSignal) == SIG_ERR) {
+		fmt::print(stderr, "Could not install SIGHUP handler");
+	}
+	if (signal(SIGTERM, handleSignal) == SIG_ERR) {
+		fmt::print(stderr, "Could not install SIGTERM handler");
+	}
+
+	// On SIGUSR1 rewind the log file.
+	if (signal(SIGUSR1, handleLogRewindSignal) == SIG_ERR) {
+		fmt::print(stderr, "Could not install SIGUSR1 handler");
+	}
 
 	// Main loop
 	while(ros::ok() && monitor.ok() && !g_shouldStop)

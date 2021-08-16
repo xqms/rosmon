@@ -13,6 +13,8 @@
 
 #include <fmt/format.h>
 
+extern bool g_shouldRewindLog;
+
 namespace rosmon
 {
 
@@ -50,6 +52,12 @@ void Logger::log(const LogEvent& event)
 	unsigned int len = event.message.length();
 	while(len != 0 && (event.message[len-1] == '\n' || event.message[len-1] == '\r'))
 		len--;
+
+	if (::g_shouldRewindLog) {
+		// rewind the file pointer if the log file has been "copytruncated" by something like logrotate
+		rewind(m_file);
+		::g_shouldRewindLog = false;
+	}
 
 	fmt::print(m_file, "{}.{:03d}: {:>20}: ",
 		timeString, tv.tv_usec / 1000,
