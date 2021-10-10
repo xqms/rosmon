@@ -34,7 +34,9 @@ const char* UNSET_MARKER = "~~~~~ ROSMON-UNSET ~~~~~";
 ParseContext ParseContext::enterScope(const std::string& prefix)
 {
 	ParseContext ret = *this;
-	ret.m_prefix = ros::names::clean(ret.m_prefix + prefix) + "/";
+
+	const bool global_prefix = (!prefix.empty() && prefix.front() == '/');
+	ret.m_prefix = ros::names::clean(global_prefix ? prefix : (ret.m_prefix + prefix)) + "/";
 
 	return ret;
 }
