@@ -5,6 +5,7 @@
 #include "launch_config.h"
 #include "substitution.h"
 #include "substitution_python.h"
+#include "string_utils.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -160,10 +161,11 @@ XmlRpc::XmlRpcValue yamlToXmlRpc(const ParseContext& ctx, const YAML::Node& n)
 
 		if(boost::starts_with(str, "deg(") && boost::ends_with(str, ")"))
 		{
+			std::string arg = string_utils::strip(str.substr(4, str.size() - 5));
 			try
 			{
 				return XmlRpc::XmlRpcValue(
-					evaluateROSParamPython(str.substr(4, str.size() - 5)) * M_PI / 180.0
+					evaluateROSParamPython(arg) * M_PI / 180.0
 				);
 			}
 			catch(SubstitutionException& e)
@@ -174,9 +176,10 @@ XmlRpc::XmlRpcValue yamlToXmlRpc(const ParseContext& ctx, const YAML::Node& n)
 
 		if(boost::starts_with(str, "rad(") && boost::ends_with(str, ")"))
 		{
+			std::string arg = string_utils::strip(str.substr(4, str.size() - 5));
 			try
 			{
-				return XmlRpc::XmlRpcValue(evaluateROSParamPython(str.substr(4, str.size() - 5)));
+				return XmlRpc::XmlRpcValue(evaluateROSParamPython(arg));
 			}
 			catch(SubstitutionException& e)
 			{
