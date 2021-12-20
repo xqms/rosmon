@@ -147,6 +147,7 @@ test_ns:
   param2: deg(180)
   param3: !degrees 181.0
   param4: !radians 3.14169
+  param5: deg(  0.1)
 </rosparam>
 		</launch>
 	)EOF");
@@ -168,6 +169,9 @@ test_ns:
 
 	double param4 = getTypedParam<double>(params, "/test_ns/param4", XmlRpc::XmlRpcValue::TypeDouble);
 	CHECK(param4 == Approx(3.14169));
+
+	double param5 = getTypedParam<double>(params, "/test_ns/param5", XmlRpc::XmlRpcValue::TypeDouble);
+	CHECK(param5 == Approx(0.1 * M_PI / 180.0));
 }
 
 TEST_CASE("merge keys", "[rosparam]")
