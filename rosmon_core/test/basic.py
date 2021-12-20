@@ -106,6 +106,9 @@ class BasicTest(unittest.TestCase):
 	def test_arg_passing(self):
 		self.assertEqual(self.get_param("test_argument"), 123)
 
+	def test_global_nested_ns(self):
+		self.assertEqual(self.get_param("/foo/bar"), True)
+
 	def test_global_remapping(self):
 		pub = rospy.Publisher('/remapped_test_input', String, queue_size=5, latch=True)
 

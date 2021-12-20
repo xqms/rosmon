@@ -38,6 +38,13 @@ yaml:
 	<rosparam command="load" file="$(dirname)/empty.yaml" />
 	<rosparam></rosparam>
 
+	<!-- Test nested global group namespace -->
+	<group ns="nested">
+		<group ns="/foo">
+			<param name="bar" value="True" />
+		</group>
+	</group>
+
 	<node name="test1" pkg="rosmon_core" type="test_node.py">
 		<remap from="~input" to="/test_input" />
 		<remap from="~output" to="/test_output" />
