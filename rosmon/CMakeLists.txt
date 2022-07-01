@@ -6,7 +6,8 @@ find_package(catkin)
 
 catkin_package()
 
-catkin_install_python(
+install(
 	PROGRAMS src/rosmon
 	DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
