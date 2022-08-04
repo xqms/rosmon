@@ -1005,12 +1005,13 @@ void LaunchConfig::loadYAMLParams(const ParseContext& ctx, const YAML::Node& n, 
 	}
 }
 
-void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
+void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext& ctx)
 {
 	const char* file = element->Attribute("file");
 	const char* ns = element->Attribute("ns");
 	const char* passAllArgs = element->Attribute("pass_all_args");
 	const char* clearParams = element->Attribute("clear_params");
+	const char* importArgs = element->Attribute("rosmon-import-args");
 
 	if(!file)
 		throw ctx.error("<include> file attribute is mandatory");
@@ -1079,6 +1080,13 @@ void LaunchConfig::parseInclude(TiXmlElement* element, ParseContext ctx)
 	childCtx.setFilename(fullFile);
 
 	parse(document.RootElement(), &childCtx);
+
+	// Import args from child context if requested
+	if(importArgs && ctx.parseBool(importArgs, element->Row()))
+	{
+		for(auto& pair : childCtx.arguments())
+			ctx.setArg(pair.first, pair.second, true);
+	}
 }
 
 void LaunchConfig::parseArgument(TiXmlElement* element, ParseContext& ctx)
