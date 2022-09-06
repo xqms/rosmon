@@ -32,15 +32,18 @@ private:
 		{}
 
 		ChannelInfo(Terminal* term)
-		 : parser{term}
+		 : stdoutParser{term}
+		 , stderrParser{term}
 		{}
 
 		ChannelInfo(Terminal* term, uint32_t color)
-		 : parser{term}
+		 : stdoutParser{term}
+		 , stderrParser{term}
 		 , labelColor(color)
 		{}
 
-		Terminal::Parser parser;
+		Terminal::Parser stdoutParser;
+		Terminal::Parser stderrParser;
 		uint32_t labelColor;
 	};
 
