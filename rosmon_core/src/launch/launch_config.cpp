@@ -362,6 +362,7 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 	const char* cwd = element->Attribute("cwd");
 	const char* clearParams = element->Attribute("clear_params");
 	const char* output = element->Attribute("output");
+	const char* spawnDelay = element->Attribute("rosmon-spawn-delay");
 
 	if(!name || !pkg || !type)
 	{
@@ -442,6 +443,21 @@ void LaunchConfig::parseNode(TiXmlElement* element, ParseContext& attr_ctx)
 
 			node->setNumRespawnsAllowed(n_respawns);
 		}
+	}
+
+	if(spawnDelay)
+	{
+		double seconds;
+		try
+		{
+			seconds = boost::lexical_cast<double>(attr_ctx.evaluate(spawnDelay));
+		}
+		catch(boost::bad_lexical_cast&)
+		{
+			throw ctx.error("bad spawn_delay value '{}'", spawnDelay);
+		}
+
+		node->setSpawnDelay(ros::WallDuration(seconds));
 	}
 
 	if(required && attr_ctx.parseBool(required, element->Row()))

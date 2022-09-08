@@ -174,6 +174,14 @@ std::vector<std::string> NodeMonitor::composeCommand() const
 
 void NodeMonitor::start()
 {
+	if(m_firstStart && !m_restarting && m_launchNode->spawnDelay() != ros::WallDuration())
+	{
+		m_restartTimer.setPeriod(m_launchNode->spawnDelay());
+		m_restartTimer.start();
+		m_restarting = true;
+		return;
+	}
+
 	m_command = CMD_RUN;
 
 	m_stopCheckTimer.stop();

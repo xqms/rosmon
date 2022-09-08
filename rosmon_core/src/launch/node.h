@@ -34,6 +34,7 @@ public:
 	void setRespawn(bool respawn);
 	void setRespawnDelay(const ros::WallDuration& respawnDelay);
 	void setNumRespawnsAllowed(int numRespawnsAllowed);
+	void setSpawnDelay(const ros::WallDuration& spawnDelay);
 
 	void setLaunchPrefix(const std::string& launchPrefix);
 
@@ -83,6 +84,9 @@ public:
 	int numRespawnsAllowed() const
 	{ return m_numRespawnsAllowed; }
 
+	ros::WallDuration spawnDelay() const
+	{ return m_spawnDelay; }
+
 	void setRequired(bool required);
 
 	bool required() const
@@ -131,6 +135,7 @@ private:
 	bool m_respawn;
 	ros::WallDuration m_respawnDelay;
 	int m_numRespawnsAllowed = 0;  // Will warn on any respawn by default
+	ros::WallDuration m_spawnDelay;
 
 	bool m_required;
 
