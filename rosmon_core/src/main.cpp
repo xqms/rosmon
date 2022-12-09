@@ -105,6 +105,10 @@ void handleSignal(int)
 
 void logToStdout(const rosmon::LogEvent& event, const int max_width)
 {
+	// Are we supposed to show stdout?
+	if(event.channel == rosmon::LogEvent::Channel::Stdout && !event.showStdout)
+		return;
+
 	fmt::print("{:>{}}: {}", event.source, max_width, event.message);
 
 	if(!event.message.empty() && event.message.back() != '\n')
