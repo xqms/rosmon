@@ -13,13 +13,32 @@
 
 #include <fmt/format.h>
 
+#include <syslog.h>
+
 namespace rosmon
 {
 
-Logger::Logger(const std::string& path, bool flush)
- : m_flush(flush)
+namespace
 {
-	m_file = fopen(path.c_str(), "we");
+	int prioFromEventType(LogEvent::Type type)
+	{
+		switch(type)
+		{
+			case LogEvent::Type::Error: return 3;
+			case LogEvent::Type::Warning: return 4;
+			case LogEvent::Type::Info: return 6;
+			case LogEvent::Type::Raw: return 6;
+		}
+
+		return 6;
+	}
+}
+
+FileLogger::FileLogger(const std::string& path, bool flush)
+ : m_flush{flush}
+{
+	m_flush = flush;
+	m_file = fopen(path.c_str(), "ae");
 	if(!m_file)
 	{
 		throw std::runtime_error(fmt::format(
@@ -28,13 +47,13 @@ Logger::Logger(const std::string& path, bool flush)
 	}
 }
 
-Logger::~Logger()
+FileLogger::~FileLogger()
 {
 	if(m_file)
 		fclose(m_file);
 }
 
-void Logger::log(const LogEvent& event)
+void FileLogger::log(const LogEvent& event)
 {
 	struct timeval tv;
 	memset(&tv, 0, sizeof(tv));
@@ -60,6 +79,17 @@ void Logger::log(const LogEvent& event)
 
 	if(m_flush)
 		fflush(m_file);
+}
+
+
+SyslogLogger::SyslogLogger(const std::string& launchFileName)
+{
+	openlog(fmt::format("rosmon[{}]", launchFileName).c_str(), 0, LOG_USER);
+}
+
+void SyslogLogger::log(const LogEvent& event)
+{
+	syslog(prioFromEventType(event.type), "%20s: %s", event.source.c_str(), event.message.c_str());
 }
 
 }

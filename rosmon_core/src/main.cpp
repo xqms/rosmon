@@ -67,7 +67,7 @@ void usage()
 		"  --flush-log     Flush logfile after writing an entry\n"
 		"  --flush-stdout  Flush stdout after writing an entry\n"
 		"  --help          This help screen\n"
-		"  --log=FILE      Write log file to FILE\n"
+		"  --log=FILE      Write log file to FILE (use 'syslog' for syslog)\n"
 		"  --name=NAME     Use NAME as ROS node name. By default, an anonymous\n"
 		"                  name is chosen.\n"
 		"  --no-start      Don't automatically start the nodes in the beginning\n"
@@ -362,22 +362,27 @@ int main(int argc, char** argv)
 		ros::console::backend::function_print = nullptr;
 
 		// Open logger
-		if(logFile.empty())
+		if(logFile == "syslog")
+			logger.reset(new rosmon::SyslogLogger(fs::basename(launchFilePath)));
+		else
 		{
-			// Log to /tmp by default
+			if(logFile.empty())
+			{
+				// Log to /tmp by default
 
-			time_t t = time(nullptr);
-			tm currentTime;
-			memset(&currentTime, 0, sizeof(currentTime));
-			localtime_r(&t, &currentTime);
+				time_t t = time(nullptr);
+				tm currentTime;
+				memset(&currentTime, 0, sizeof(currentTime));
+				localtime_r(&t, &currentTime);
 
-			char buf[256];
-			strftime(buf, sizeof(buf), "/tmp/rosmon_%Y_%m_%d_%H_%M_%S.log", &currentTime);
+				char buf[256];
+				strftime(buf, sizeof(buf), "/tmp/rosmon_%Y_%m_%d_%H_%M_%S.log", &currentTime);
 
-			logFile = buf;
+				logFile = buf;
+			}
+
+			logger.reset(new rosmon::FileLogger(logFile, flushLog));
 		}
-
-		logger.reset(new rosmon::Logger(logFile, flushLog));
 	}
 
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
