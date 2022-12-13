@@ -84,7 +84,8 @@ void FileLogger::log(const LogEvent& event)
 
 SyslogLogger::SyslogLogger(const std::string& launchFileName)
 {
-	openlog(fmt::format("rosmon[{}]", launchFileName).c_str(), 0, LOG_USER);
+	m_tag = fmt::format("rosmon@{}", launchFileName);
+	openlog(m_tag.c_str(), 0, LOG_USER);
 }
 
 void SyslogLogger::log(const LogEvent& event)

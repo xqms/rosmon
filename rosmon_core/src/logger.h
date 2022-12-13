@@ -48,6 +48,9 @@ public:
 	~SyslogLogger();
 
 	void log(const LogEvent& event) override;
+
+private:
+	std::string m_tag;
 };
 
 }
