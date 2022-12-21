@@ -7,6 +7,7 @@
 #include "../launch/node.h"
 #include "../fd_watcher.h"
 #include "../log_event.h"
+#include "log_parser.h"
 
 #include <ros/node_handle.h>
 
@@ -224,8 +225,8 @@ private:
 
 	FDWatcher::Ptr m_fdWatcher;
 
-	boost::circular_buffer<char> m_rxBuffer;
-	boost::circular_buffer<char> m_stderrBuffer;
+	LogParser m_stdoutParser;
+	LogParser m_stderrParser;
 
 	int m_pid = -1;
 	int m_fd = -1;

@@ -34,7 +34,9 @@ public:
 	inline void processString(const std::string& str, const std::chrono::steady_clock::time_point& time = std::chrono::steady_clock::now())
 	{ process(str.c_str(), str.length(), time); }
 
-	void checkPending();
+	void checkPending(const std::chrono::steady_clock::time_point& time = std::chrono::steady_clock::now());
+
+	void flush();
 
 private:
 	class Private;

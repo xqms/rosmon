@@ -93,13 +93,30 @@ namespace monitor
 NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWatcher, ros::NodeHandle& nh)
  : m_launchNode(std::move(launchNode))
  , m_fdWatcher(std::move(fdWatcher))
- , m_rxBuffer(4096)
- , m_stderrBuffer(4096)
  , m_exitCode(0)
  , m_command(CMD_STOP) // we start in stopped state
  , m_restarting(false)
  , m_muted(m_launchNode->isMuted())
 {
+	m_stdoutParser.setCallback([&](const LogParser::Event&& src){
+		LogEvent event{fullName(), std::move(src.message)};
+		event.muted = isMuted();
+		event.type = src.severity;
+		event.channel = LogEvent::Channel::Stdout;
+		event.showStdout = m_launchNode->stdoutDisplayed();
+
+		logMessageSignal(std::move(event));
+	});
+	m_stderrParser.setCallback([&](const LogParser::Event&& src){
+		LogEvent event{fullName(), std::move(src.message)};
+		event.muted = isMuted();
+		event.type = src.severity;
+		event.channel = LogEvent::Channel::Stderr;
+
+		logMessageSignal(std::move(event));
+	});
+
+
 	m_restartTimer = nh.createWallTimer(ros::WallDuration(1.0), boost::bind(&NodeMonitor::start, this), false, false);
 	m_stopCheckTimer = nh.createWallTimer(ros::WallDuration(m_launchNode->stopTimeout()), boost::bind(&NodeMonitor::checkStop, this));
 
@@ -380,33 +397,13 @@ NodeMonitor::State NodeMonitor::state() const
 
 void NodeMonitor::communicateStderr()
 {
-	auto handleByte = [&](char c){
-		m_stderrBuffer.push_back(c);
-		if(c == '\n')
-		{
-			m_stderrBuffer.push_back(0);
-			m_stderrBuffer.linearize();
-
-			auto one = m_stderrBuffer.array_one();
-
-			LogEvent event{fullName(), one.first};
-			event.muted = isMuted();
-			event.channel = LogEvent::Channel::Stderr;
-
-			logMessageSignal(std::move(event));
-
-			m_stderrBuffer.clear();
-		}
-	};
-
 	char buf[1024];
 	int bytes = read(m_stderrFD, buf, sizeof(buf));
 
 	if(bytes == 0 || (bytes < 0 && errno == EIO))
 	{
 		// Flush out any remaining stderr
-		if(!m_stderrBuffer.empty())
-			handleByte('\n');
+		m_stderrParser.flush();
 
 		m_fdWatcher->removeFD(m_stderrFD);
         close(m_stderrFD);
@@ -417,34 +414,11 @@ void NodeMonitor::communicateStderr()
 	if(bytes < 0)
 		throw error("{}: Could not read: {}", fullName(), strerror(errno));
 
-	for(int i = 0; i < bytes; ++i)
-	{
-		handleByte(buf[i]);
-	}
+	m_stderrParser.process(buf, bytes);
 }
 
 void NodeMonitor::communicate()
 {
-	auto handleByte = [&](char c){
-		m_rxBuffer.push_back(c);
-		if(c == '\n')
-		{
-			m_rxBuffer.push_back(0);
-			m_rxBuffer.linearize();
-
-			auto one = m_rxBuffer.array_one();
-
-			LogEvent event{fullName(), one.first};
-			event.muted = isMuted();
-			event.channel = LogEvent::Channel::Stdout;
-			event.showStdout = m_launchNode->stdoutDisplayed();
-
-			logMessageSignal(std::move(event));
-
-			m_rxBuffer.clear();
-		}
-	};
-
 	char buf[1024];
 	int bytes = read(m_fd, buf, sizeof(buf));
 
@@ -464,8 +438,7 @@ void NodeMonitor::communicate()
 		}
 
 		// Flush out any remaining stdout
-		if(!m_rxBuffer.empty())
-			handleByte('\n');
+		m_stdoutParser.flush();
 
 		if(WIFEXITED(status))
 		{
@@ -559,10 +532,7 @@ void NodeMonitor::communicate()
 	if(bytes < 0)
 		throw error("{}: Could not read: {}", fullName(), strerror(errno));
 
-	for(int i = 0; i < bytes; ++i)
-	{
-		handleByte(buf[i]);
-	}
+	m_stdoutParser.process(buf, bytes);
 }
 
 template<typename... Args>

@@ -60,4 +60,42 @@ TEST_CASE("LogParser", "[log_parser]")
 		CHECK(lastEvent.severity == rosmon::LogEvent::Type::Raw);
 		CHECK(lastEvent.message == "This is a raw \e[31mred\e[0m message");
 	}
+
+	SECTION("timeout")
+	{
+		captures = 0;
+
+		auto t0 = std::chrono::steady_clock::time_point();
+		auto t1 = t0 + std::chrono::milliseconds(500);
+
+		parser.processString("\e[33mThis is a warning message without its end!\n", t0);
+		CHECK(captures == 0);
+
+		parser.checkPending(t0);
+		CHECK(captures == 0);
+
+		parser.checkPending(t1);
+		CHECK(captures == 1);
+		CHECK(lastEvent.severity == rosmon::LogEvent::Type::Raw);
+		CHECK(lastEvent.message == "\e[33mThis is a warning message without its end!");
+	}
+
+	SECTION("flush")
+	{
+		captures = 0;
+
+		auto t0 = std::chrono::steady_clock::time_point();
+
+		parser.processString("\e[33mThis is a warning message without its end!\n", t0);
+
+		CHECK(captures == 0);
+
+		parser.checkPending(t0);
+		CHECK(captures == 0);
+
+		parser.flush();
+		CHECK(captures == 1);
+		CHECK(lastEvent.severity == rosmon::LogEvent::Type::Raw);
+		CHECK(lastEvent.message == "\e[33mThis is a warning message without its end!");
+	}
 }

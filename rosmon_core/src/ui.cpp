@@ -428,7 +428,7 @@ void UI::log(const LogEvent& event)
 	if(event.channel == LogEvent::Channel::Stdout && (!event.showStdout || stderrOnly()))
 		return;
 
-	const std::string& clean = event.message;
+	std::string clean = event.coloredString();
 
 	auto it = m_nodeColorMap.find(event.source);
 
