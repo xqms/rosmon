@@ -491,6 +491,9 @@ void UI::log(const LogEvent& event)
 			case LogEvent::Type::Raw:
 			case LogEvent::Type::Info:
 				break;
+			case LogEvent::Type::Debug:
+				m_term.setSimpleForeground(Terminal::Green);
+				break;
 			case LogEvent::Type::Warning:
 				m_term.setSimpleForeground(Terminal::Yellow);
 				break;

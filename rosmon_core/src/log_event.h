@@ -19,6 +19,7 @@ public:
 		 * ANSI escape codes. */
 		Raw,
 
+		Debug,
 		Info,
 		Warning,
 		Error

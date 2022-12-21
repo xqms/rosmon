@@ -28,6 +28,7 @@ namespace
 			case LogEvent::Type::Warning: return 4;
 			case LogEvent::Type::Info: return 6;
 			case LogEvent::Type::Raw: return 6;
+			case LogEvent::Type::Debug: return 7;
 		}
 
 		return 6;
