@@ -362,27 +362,21 @@ int main(int argc, char** argv)
 		ros::console::backend::function_print = nullptr;
 
 		// Open logger
-		if(logFile == "syslog")
-			logger.reset(new rosmon::SyslogLogger(fs::basename(launchFilePath)));
-		else
+		if(logFile.empty())
 		{
-			if(logFile.empty())
+			// Try systemd journal first
+			try
 			{
-				// Log to /tmp by default
-
-				time_t t = time(nullptr);
-				tm currentTime;
-				memset(&currentTime, 0, sizeof(currentTime));
-				localtime_r(&t, &currentTime);
-
-				char buf[256];
-				strftime(buf, sizeof(buf), "/tmp/rosmon_%Y_%m_%d_%H_%M_%S.log", &currentTime);
-
-				logFile = buf;
+				logger.reset(new rosmon::SystemdLogger(fs::basename(launchFilePath)));
 			}
-
-			logger.reset(new rosmon::FileLogger(logFile, flushLog));
+			catch(rosmon::SystemdLogger::NotAvailable& e)
+			{
+				fmt::print(stderr, "Systemd Journal not available: {}\n", e.what());
+				logger.reset(new rosmon::SyslogLogger(fs::basename(launchFilePath)));
+			}
 		}
+		else
+			logger.reset(new rosmon::FileLogger(logFile, flushLog));
 	}
 
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);

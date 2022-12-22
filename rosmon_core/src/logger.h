@@ -4,6 +4,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <memory>
 #include <string>
 
 #include "log_event.h"
@@ -51,6 +52,30 @@ public:
 
 private:
 	std::string m_tag;
+};
+
+/**
+ * @brief Write log messages to systemd journal
+ **/
+class SystemdLogger : public Logger
+{
+public:
+	class NotAvailable : public std::runtime_error
+	{
+	public:
+		NotAvailable(const std::string& msg)
+		 : std::runtime_error{msg}
+		{}
+	};
+
+	explicit SystemdLogger(const std::string& launchFileName);
+	~SystemdLogger();
+
+	void log(const LogEvent& event) override;
+
+private:
+	std::string m_launchFileName;
+	int m_fd = -1;
 };
 
 }
