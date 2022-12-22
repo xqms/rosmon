@@ -108,6 +108,10 @@ SystemdLogger::SystemdLogger(const std::string& launchFileName)
 	if(m_fd < 0)
 		throw std::runtime_error{fmt::format("Could not create socket: {}", strerror(errno))};
 
+	int size = 8*1024*1024;
+	if(setsockopt(m_fd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) < 0)
+		perror("WARNING: Could not increase SO_SNDBUF size");
+
 	sockaddr_un addr{};
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, "/run/systemd/journal/socket", sizeof(addr.sun_path)-1);
