@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package()
 include_directories(${catkin_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 
 find_package(TinyXML REQUIRED)
 
