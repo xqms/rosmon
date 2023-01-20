@@ -173,7 +173,7 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 					return int(Qt::AlignRight | Qt::AlignVCenter);
 			}
 			break;
-		case Qt::BackgroundColorRole:
+		case Qt::BackgroundRole:
 			switch(entry.state)
 			{
 				case rosmon_msgs::NodeState::RUNNING:
