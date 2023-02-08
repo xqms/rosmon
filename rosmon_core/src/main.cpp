@@ -89,6 +89,10 @@ void usage()
 		"  --output-attr=obey|ignore\n"
 		"                  Obey or ignore output=\"*\" attributes on node tags.\n"
 		"                  Default is to ignore.\n"
+		"  --auto-increment-spawn-delay=SECONDS\n"
+		"                  Add SECONDS spawn delay to each process.\n"
+		"                  This is ignored for processes having 'rosmon-spawn-delay' set.\n"
+		"                  By default this is disabled.\n"
 		"\n"
 		"rosmon also obeys some environment variables:\n"
 		"  ROSMON_COLOR_MODE   Can be set to 'truecolor', '256colors', 'ansi'\n"
@@ -135,6 +139,7 @@ static const struct option OPTIONS[] = {
 	{"memory-limit", required_argument, nullptr, 'm'},
 	{"diagnostics-prefix", required_argument, nullptr, 'p'},
 	{"output-attr", required_argument, nullptr, 'o'},
+	{"auto-increment-spawn-delay", required_argument, nullptr, 'a'},
 	{nullptr, 0, nullptr, 0}
 };
 
@@ -171,6 +176,7 @@ int main(int argc, char** argv)
 	float cpuLimit = rosmon::launch::DEFAULT_CPU_LIMIT;
 	bool disableDiagnostics = false;
 	std::string diagnosticsPrefix;
+	double autoIncrementSpawnDelay = -1.;
 	rosmon::launch::LaunchConfig::OutputAttr outputAttrMode = rosmon::launch::LaunchConfig::OutputAttr::Ignore;
 
 	// Parse options
@@ -273,6 +279,24 @@ int main(int argc, char** argv)
 			case 'p':
 				fmt::print(stderr, "Prefix : {}", optarg);
 				diagnosticsPrefix = std::string(optarg);
+				break;
+			case 'a':
+				fmt::print(stderr, "Auto increment spawn delay of : {} seconds\n", optarg);
+				try
+				{
+					autoIncrementSpawnDelay = boost::lexical_cast<double>(optarg);
+				}
+				catch(boost::bad_lexical_cast&)
+				{
+					fmt::print(stderr, "Bad value for --auto-increment-spawn-delay: '{}'\n", optarg);
+					return 1;
+				}
+
+				if(autoIncrementSpawnDelay < 0)
+				{
+					fmt::print(stderr, "Auto increment spawn delay cannot be negative\n");
+					return 1;
+				}
 				break;
 		}
 	}
@@ -409,6 +433,9 @@ int main(int argc, char** argv)
 		case ACTION_LAUNCH:
 			break;
 	}
+
+	if(autoIncrementSpawnDelay > 0.)
+		config->applyAutoIncrementSpawnDelayToAll(ros::WallDuration{autoIncrementSpawnDelay});
 
 	if(config->disableUI())
 		enableUI = false;

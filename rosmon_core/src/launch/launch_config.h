@@ -201,6 +201,8 @@ public:
 	void parse(const std::string& filename, bool onlyArguments = false);
 	void parseString(const std::string& input, bool onlyArguments = false);
 
+	void applyAutoIncrementSpawnDelayToAll(const ros::WallDuration& autoIncrementSpawnDelay);
+
 	void evaluateParameters();
 
 	inline const std::map<std::string, XmlRpc::XmlRpcValue>& parameters() const
