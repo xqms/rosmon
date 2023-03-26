@@ -180,6 +180,9 @@ std::vector<std::string> NodeMonitor::composeCommand() const
 	// add parameter for node name
 	cmd.push_back("__name:=" + m_launchNode->name());
 
+	// disable internal logging
+	cmd.push_back("__log:=/dev/null");
+
 	// and finally add remappings.
 	for(auto map : m_launchNode->remappings())
 	{
