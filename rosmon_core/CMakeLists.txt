@@ -90,6 +90,7 @@ add_executable(rosmon
 	src/monitor/node_monitor.cpp
 	src/monitor/monitor.cpp
 	src/monitor/linux_process_info.cpp
+	src/monitor/log_parser.cpp
 	src/diagnostics_publisher.cpp
 	src/ui.cpp
 	src/husl/husl.c
@@ -158,6 +159,14 @@ if(CATKIN_ENABLE_TESTING)
 		)
 		target_link_libraries(test_xml_loading
 			rosmon_launch_config
+			${catch_ros_LIBRARIES}
+		)
+
+		catch_add_test(test_monitor
+			src/monitor/log_parser.cpp
+			test/monitor/test_log_parser.cpp
+		)
+		target_link_libraries(test_xml_loading
 			${catch_ros_LIBRARIES}
 		)
 	else()

@@ -428,7 +428,7 @@ void UI::log(const LogEvent& event)
 	if(event.channel == LogEvent::Channel::Stdout && (!event.showStdout || stderrOnly()))
 		return;
 
-	const std::string& clean = event.message;
+	std::string clean = event.coloredString();
 
 	auto it = m_nodeColorMap.find(event.source);
 
@@ -490,6 +490,9 @@ void UI::log(const LogEvent& event)
 		{
 			case LogEvent::Type::Raw:
 			case LogEvent::Type::Info:
+				break;
+			case LogEvent::Type::Debug:
+				m_term.setSimpleForeground(Terminal::Green);
 				break;
 			case LogEvent::Type::Warning:
 				m_term.setSimpleForeground(Terminal::Yellow);

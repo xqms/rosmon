@@ -5,6 +5,7 @@
 #define ROSMON_LOG_EVENT_H
 
 #include <string>
+#include <sstream>
 
 namespace rosmon
 {
@@ -19,6 +20,7 @@ public:
 		 * ANSI escape codes. */
 		Raw,
 
+		Debug,
 		Info,
 		Warning,
 		Error
@@ -34,6 +36,26 @@ public:
 	LogEvent(std::string source, std::string message, Type type = Type::Raw)
 	 : source{std::move(source)}, message{std::move(message)}, type{type}
 	{}
+
+	std::string coloredString() const
+	{
+		auto colorize = [](const char* prefix, const std::string& str){
+			std::stringstream ss;
+			ss << prefix << str << "\e[0m";
+			return ss.str();
+		};
+
+		switch(type)
+		{
+			case Type::Raw: return message;
+			case Type::Debug: return colorize("\e[32m", message);
+			case Type::Info: return colorize("\e[0m", message);
+			case Type::Warning: return colorize("\e[33m", message);
+			case Type::Error: return colorize("\e[31m", message);
+		}
+
+		return message;
+	}
 
 	std::string source;
 	std::string message;

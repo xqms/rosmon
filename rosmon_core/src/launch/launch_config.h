@@ -198,6 +198,10 @@ public:
 
 	void setOutputAttrMode(OutputAttr mode);
 
+	void setNodeLogDir(const std::string& logDir);
+	std::string nodeLogDir() const
+	{ return m_nodeLogDir; }
+
 	void parse(const std::string& filename, bool onlyArguments = false);
 	void parseString(const std::string& input, bool onlyArguments = false);
 
@@ -276,6 +280,8 @@ private:
 	bool m_disableUI = false;
 
 	std::ostream* m_warningOutput = &std::cerr;
+
+	std::string m_nodeLogDir;
 };
 
 template<typename... Args>

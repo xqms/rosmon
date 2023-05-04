@@ -1265,5 +1265,10 @@ void LaunchConfig::setWarningOutput(std::ostream* output)
 	m_warningOutput = output;
 }
 
+void LaunchConfig::setNodeLogDir(const std::string& dir)
+{
+	m_nodeLogDir = dir;
+}
+
 }
 }

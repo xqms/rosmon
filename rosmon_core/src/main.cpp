@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include <fmt/format.h>
+#include <fmt/chrono.h>
 
 #include "launch/launch_config.h"
 #include "launch/bytes_parser.h"
@@ -67,7 +68,7 @@ void usage()
 		"  --flush-log     Flush logfile after writing an entry\n"
 		"  --flush-stdout  Flush stdout after writing an entry\n"
 		"  --help          This help screen\n"
-		"  --log=FILE      Write log file to FILE\n"
+		"  --log=FILE      Write log file to FILE (use 'syslog' for syslog)\n"
 		"  --name=NAME     Use NAME as ROS node name. By default, an anonymous\n"
 		"                  name is chosen.\n"
 		"  --no-start      Don't automatically start the nodes in the beginning\n"
@@ -354,6 +355,7 @@ int main(int argc, char** argv)
 
 	// Setup logging
 	boost::scoped_ptr<rosmon::Logger> logger;
+	std::string nodeLogPath;
 	{
 		// Setup a sane ROSCONSOLE_FORMAT if the user did not already
 		setenv("ROSCONSOLE_FORMAT", "[${function}]: ${message}", 0);
@@ -362,22 +364,46 @@ int main(int argc, char** argv)
 		ros::console::backend::function_print = nullptr;
 
 		// Open logger
-		if(logFile.empty())
+		bool envSyslog = false;
+		if(auto env = getenv("ROSMON_SYSLOG"))
+			envSyslog = (strcmp(env, "1") == 0);
+
+		if(envSyslog || logFile == "syslog")
 		{
-			// Log to /tmp by default
-
-			time_t t = time(nullptr);
-			tm currentTime;
-			memset(&currentTime, 0, sizeof(currentTime));
-			localtime_r(&t, &currentTime);
-
-			char buf[256];
-			strftime(buf, sizeof(buf), "/tmp/rosmon_%Y_%m_%d_%H_%M_%S.log", &currentTime);
-
-			logFile = buf;
+			// Try systemd journal first
+			try
+			{
+				logger.reset(new rosmon::SystemdLogger(fs::basename(launchFilePath)));
+			}
+			catch(rosmon::SystemdLogger::NotAvailable& e)
+			{
+				fmt::print(stderr, "Systemd Journal not available: {}\n", e.what());
+				logger.reset(new rosmon::SyslogLogger(fs::basename(launchFilePath)));
+			}
 		}
+		else
+		{
+			if(logFile.empty())
+			{
+				fmt::print("Tip: use --log=syslog or set environment variable ROSMON_SYSLOG=1 to send log output to syslog instead of a log file in /tmp.\n");
 
-		logger.reset(new rosmon::Logger(logFile, flushLog));
+				// Create log file in /tmp
+				std::time_t t = std::time(nullptr);
+				std::tm currentTime = fmt::localtime(t);
+
+				logFile = fmt::format("/tmp/rosmon_{:%Y_%m_%d_%H_%M_%S}.log", currentTime);
+			}
+
+			logger.reset(new rosmon::FileLogger(logFile, flushLog));
+
+			// Old-style logging means we will enable per-node log files in ~/.ros as well.
+			if(auto val = getenv("ROS_LOG_DIR"))
+				nodeLogPath = val;
+			else if(auto val = getenv("ROS_HOME"))
+				nodeLogPath = fmt::format("{}/log", val);
+			else if(auto val = getenv("HOME"))
+				nodeLogPath = fmt::format("{}/.ros/log", val);
+		}
 	}
 
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
@@ -483,6 +509,18 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
 
 	fmt::print("Running as '{}'\n", ros::this_node::getName());
+
+	// Create node logging path
+	if(!nodeLogPath.empty())
+	{
+		std::string runID;
+		if(nh.getParam("/run_id", runID))
+			nodeLogPath = fmt::format("{}/{}", nodeLogPath, runID);
+
+		if(!fs::create_directories(nodeLogPath))
+			fmt::print(stderr, "Warning: Could not create log directory '{}'\n", nodeLogPath);
+	}
+	config->setNodeLogDir(nodeLogPath);
 
     rosmon::monitor::Monitor monitor(config, watcher);
 	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1));

@@ -5,8 +5,10 @@
 #define ROSMON_MONITOR_NODE_MONITOR_H
 
 #include "../launch/node.h"
+#include "../launch/launch_config.h"
 #include "../fd_watcher.h"
 #include "../log_event.h"
+#include "log_parser.h"
 
 #include <ros/node_handle.h>
 
@@ -45,7 +47,8 @@ public:
 	 * @param nh ros::NodeHandle to use for creating timers
 	 **/
 	NodeMonitor(
-		launch::Node::ConstPtr launchNode,
+		const launch::LaunchConfig::ConstPtr& config,
+		const launch::Node::ConstPtr& launchNode,
 		FDWatcher::Ptr fdWatcher, ros::NodeHandle& nh);
 	~NodeMonitor();
 
@@ -220,12 +223,13 @@ private:
 
 	std::pair<int,int> createPTY();
 
+	launch::LaunchConfig::ConstPtr m_launchConfig;
 	launch::Node::ConstPtr m_launchNode;
 
 	FDWatcher::Ptr m_fdWatcher;
 
-	boost::circular_buffer<char> m_rxBuffer;
-	boost::circular_buffer<char> m_stderrBuffer;
+	LogParser m_stdoutParser;
+	LogParser m_stderrParser;
 
 	int m_pid = -1;
 	int m_fd = -1;

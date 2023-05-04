@@ -39,7 +39,7 @@ Monitor::Monitor(launch::LaunchConfig::ConstPtr config, FDWatcher::Ptr watcher)
 {
 	for(auto& launchNode : m_config->nodes())
 	{
-		auto node = std::make_shared<NodeMonitor>(launchNode, m_fdWatcher, m_nh);
+		auto node = std::make_shared<NodeMonitor>(m_config, launchNode, m_fdWatcher, m_nh);
 
 		node->logMessageSignal.connect(logMessageSignal);
 
