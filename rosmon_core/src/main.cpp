@@ -362,7 +362,11 @@ int main(int argc, char** argv)
 		ros::console::backend::function_print = nullptr;
 
 		// Open logger
-		if(logFile.empty())
+		bool envSyslog = false;
+		if(auto env = getenv("ROSMON_SYSLOG"))
+			envSyslog = (strcmp(env, "1") == 0);
+
+		if(envSyslog || logFile == "syslog")
 		{
 			// Try systemd journal first
 			try
@@ -376,6 +380,18 @@ int main(int argc, char** argv)
 			}
 		}
 		else
+		{
+			if(logFile.empty())
+			{
+				fmt::print("Tip: use --log=syslog or set environment variable ROSMON_SYSLOG=1 to send log output to syslog instead of a log file in /tmp.\n");
+
+				// Create log file in /tmp
+				std::time_t t = std::time(nullptr);
+				std::tm currentTime = fmt::localtime(t);
+
+				logFile = fmt::format("/tmp/rosmon_{:%Y_%m_%d_%H_%M_%S}.log", currentTime);
+			}
+
 			logger.reset(new rosmon::FileLogger(logFile, flushLog));
 	}
 
