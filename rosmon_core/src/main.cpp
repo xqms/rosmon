@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include <fmt/format.h>
+#include <fmt/chrono.h>
 
 #include "launch/launch_config.h"
 #include "launch/bytes_parser.h"
@@ -354,6 +355,7 @@ int main(int argc, char** argv)
 
 	// Setup logging
 	boost::scoped_ptr<rosmon::Logger> logger;
+	std::string nodeLogPath;
 	{
 		// Setup a sane ROSCONSOLE_FORMAT if the user did not already
 		setenv("ROSCONSOLE_FORMAT", "[${function}]: ${message}", 0);
@@ -393,6 +395,15 @@ int main(int argc, char** argv)
 			}
 
 			logger.reset(new rosmon::FileLogger(logFile, flushLog));
+
+			// Old-style logging means we will enable per-node log files in ~/.ros as well.
+			if(auto val = getenv("ROS_LOG_DIR"))
+				nodeLogPath = val;
+			else if(auto val = getenv("ROS_HOME"))
+				nodeLogPath = fmt::format("{}/log", val);
+			else if(auto val = getenv("HOME"))
+				nodeLogPath = fmt::format("{}/.ros/log", val);
+		}
 	}
 
 	rosmon::FDWatcher::Ptr watcher(new rosmon::FDWatcher);
@@ -498,6 +509,18 @@ int main(int argc, char** argv)
 	ros::NodeHandle nh;
 
 	fmt::print("Running as '{}'\n", ros::this_node::getName());
+
+	// Create node logging path
+	if(!nodeLogPath.empty())
+	{
+		std::string runID;
+		if(nh.getParam("/run_id", runID))
+			nodeLogPath = fmt::format("{}/{}", nodeLogPath, runID);
+
+		if(!fs::create_directories(nodeLogPath))
+			fmt::print(stderr, "Warning: Could not create log directory '{}'\n", nodeLogPath);
+	}
+	config->setNodeLogDir(nodeLogPath);
 
     rosmon::monitor::Monitor monitor(config, watcher);
 	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1));

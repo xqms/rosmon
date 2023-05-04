@@ -90,8 +90,9 @@ namespace rosmon
 namespace monitor
 {
 
-NodeMonitor::NodeMonitor(launch::Node::ConstPtr launchNode, FDWatcher::Ptr fdWatcher, ros::NodeHandle& nh)
- : m_launchNode(std::move(launchNode))
+NodeMonitor::NodeMonitor(const launch::LaunchConfig::ConstPtr& config, const launch::Node::ConstPtr& launchNode, FDWatcher::Ptr fdWatcher, ros::NodeHandle& nh)
+ : m_launchConfig(config)
+ , m_launchNode(launchNode)
  , m_fdWatcher(std::move(fdWatcher))
  , m_exitCode(0)
  , m_command(CMD_STOP) // we start in stopped state
@@ -180,8 +181,29 @@ std::vector<std::string> NodeMonitor::composeCommand() const
 	// add parameter for node name
 	cmd.push_back("__name:=" + m_launchNode->name());
 
-	// disable internal logging
-	cmd.push_back("__log:=/dev/null");
+	std::string logDir = m_launchConfig->nodeLogDir();
+	if(!logDir.empty())
+	{
+		std::string logname;
+		if(m_launchNode->namespaceString().empty())
+			logname = m_launchNode->name();
+		else
+			logname = m_launchNode->namespaceString() + "/" + m_launchNode->name();
+
+		// Strip initial / if present
+		if(!logname.empty() && logname[0] == '/')
+			logname = logname.substr(1);
+
+		// Replace all remaining / with -
+		std::replace(logname.begin(), logname.end(), '/', '-');
+
+		cmd.push_back(fmt::format("__log:={}/{}.log", logDir, logname));
+	}
+	else
+	{
+		// disable internal logging
+		cmd.push_back("__log:=/dev/null");
+	}
 
 	// and finally add remappings.
 	for(auto map : m_launchNode->remappings())
