@@ -177,10 +177,11 @@ if(CATKIN_ENABLE_TESTING)
 endif()
 
 # Version 1.6 (increment this comment to trigger a CMake update)
-catkin_add_env_hooks(50-rosmon
-	SHELLS bash zsh
-	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks
-)
+# disabling for Ubuntu 22.04 and greater
+# catkin_add_env_hooks(50-rosmon
+# 	SHELLS bash zsh
+# 	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks
+# )
 
 install(TARGETS rosmon rosmon_launch_config _shim
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
