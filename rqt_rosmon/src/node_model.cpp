@@ -4,6 +4,7 @@
 #include "node_model.h"
 
 #include <QColor>
+#include <QBrush>
 
 #include <ros/node_handle.h>
 
@@ -179,11 +180,11 @@ QVariant NodeModel::data(const QModelIndex& index, int role) const
 				case rosmon_msgs::NodeState::RUNNING:
 					return QVariant();
 				case rosmon_msgs::NodeState::IDLE:
-					return QColor(200, 200, 200);
+					return QBrush(QColor(200, 200, 200));
 				case rosmon_msgs::NodeState::CRASHED:
-					return QColor(255, 100, 100);
+					return QBrush(QColor(255, 100, 100));
 				case rosmon_msgs::NodeState::WAITING:
-					return QColor(255, 255, 128);
+					return QBrush(QColor(255, 255, 128));
 			}
 			break;
 		case SortRole:
