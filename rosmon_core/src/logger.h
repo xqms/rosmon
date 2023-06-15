@@ -15,6 +15,7 @@ namespace rosmon
 class Logger
 {
 public:
+	virtual ~Logger() = default;
 	virtual void log(const LogEvent& event) = 0;
 };
 
@@ -30,7 +31,7 @@ public:
 	 * @param path Path to the output file
 	 **/
 	explicit FileLogger(const std::string& path, bool flush = false);
-	~FileLogger();
+	~FileLogger() override;
 
 	//! Log message
 	void log(const LogEvent& event) override;
@@ -46,7 +47,6 @@ class SyslogLogger : public Logger
 {
 public:
 	explicit SyslogLogger(const std::string& launchFileName);
-	~SyslogLogger();
 
 	void log(const LogEvent& event) override;
 
@@ -69,7 +69,7 @@ public:
 	};
 
 	explicit SystemdLogger(const std::string& launchFileName);
-	~SystemdLogger();
+	~SystemdLogger() override;
 
 	void log(const LogEvent& event) override;
 
