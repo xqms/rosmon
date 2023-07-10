@@ -2,6 +2,23 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix compilation with clang (Issue #176)
+* Systemd-journal & syslog support (PR #172, issue #172)
+  Ability to log to the system journal instead of custom log files.
+  For syslog/journald logging you now have to specify --log=syslog. This
+  keeps us from breaking any old installations where users depend on
+  the logs appearing in /tmp.
+  Users who want to switch permanently to syslog/journald can do so through
+  an environment variable.
+* Auto-increment-spawn-delay feature (PR #175)
+* Add missing include to #include <boost/mpl/vector.hpp> (PR #174)
+* Hide stdout log events if output=screen and UI is disabled (PR #171)
+* Support importing args from included files (PR #169)
+* rosparam: strip whitespace inside deg() and rad() expressions (Issue #163, PR #164)
+* Contributors: Dan Ambrosio, Max Schwarz, Ramon Wijnands, Robin Vanhove, Tobias Fischer
+
 2.4.0 (2021-08-02)
 ------------------
 * Support YAML merge keys inside arrays (Issue #150, PR #153)

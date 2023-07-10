@@ -2,6 +2,11 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* rosmon: fix installation of wrapper script in devel spaces
+* Contributors: Max Schwarz
+
 2.4.0 (2021-08-02)
 ------------------
 * Increase cmake minimum version to 3.4
