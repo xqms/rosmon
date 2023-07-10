@@ -2,8 +2,8 @@
 Changelog for package rosmon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.0 (2023-07-10)
+------------------
 * rosmon: fix installation of wrapper script in devel spaces
 * Contributors: Max Schwarz
 

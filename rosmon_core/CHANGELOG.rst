@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.0 (2023-07-10)
+------------------
 * Fix compilation with clang (Issue #176)
 * Systemd-journal & syslog support (PR #172, issue #172)
   Ability to log to the system journal instead of custom log files.
