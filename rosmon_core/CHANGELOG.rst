@@ -2,8 +2,8 @@
 Changelog for package rosmon_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.5.1 (2023-09-29)
+------------------
 * Fix state machine for multiple colored sections (Issue #178, PR #179)
   Something like "\e[33m First \e[0m and \e[32m second \e[0m" would
   lead to rosmon only outputting "First".
