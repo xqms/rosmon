@@ -59,6 +59,13 @@ TEST_CASE("LogParser", "[log_parser]")
 		CHECK(captures == 1);
 		CHECK(lastEvent.severity == rosmon::LogEvent::Type::Raw);
 		CHECK(lastEvent.message == "This is a raw \e[31mred\e[0m message");
+
+		captures = 0;
+
+		parser.processString("\e[33mThis is a warning message with an end\e[0m and another start \e[33m  and another end!\e[0m\n");
+		CHECK(captures == 1);
+		CHECK(lastEvent.severity == rosmon::LogEvent::Type::Raw);
+		CHECK(lastEvent.message == "\e[33mThis is a warning message with an end\e[0m and another start \e[33m  and another end!\e[0m");
 	}
 
 	SECTION("timeout")

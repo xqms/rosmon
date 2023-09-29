@@ -127,6 +127,8 @@ public:
 					m_state = State::ColorEscape1;
 					m_buffer.clear();
 				}
+				else
+					m_state = State::RawMsgContent;
 
 				break;
 
