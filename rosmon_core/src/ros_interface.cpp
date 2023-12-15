@@ -6,6 +6,7 @@
 #include <rosmon_msgs/State.h>
 
 #include <algorithm>
+#include <regex>
 
 namespace rosmon
 {
@@ -74,28 +75,61 @@ void ROSInterface::update()
 
 bool ROSInterface::handleStartStop(rosmon_msgs::StartStopRequest& req, rosmon_msgs::StartStopResponse&)
 {
-	auto it = std::find_if(
-		m_monitor->nodes().begin(), m_monitor->nodes().end(),
-		[&](const monitor::NodeMonitor::ConstPtr& n){ return (n->name() == req.node) && (n->namespaceString() == req.ns); }
-	);
+  const auto start_stop =
+      [&](decltype(m_monitor->nodes().begin())::value_type node) {
+        switch (req.action) {
+          case rosmon_msgs::StartStopRequest::START:
+            node->start();
+            break;
+          case rosmon_msgs::StartStopRequest::STOP:
+            node->stop();
+            break;
+          case rosmon_msgs::StartStopRequest::RESTART:
+            node->restart();
+            break;
+        }
+      };
 
-	if(it == m_monitor->nodes().end())
-		return false;
+  // remove all slashes from start and end of string
+  const auto trim = [](std::string& str) {
+    size_t start = str.find_first_not_of('/');
+    size_t end = str.find_last_not_of('/');
+    if (start == std::string::npos || end == std::string::npos || start > end) {
+      str = "";
+      return;
+    }
+    str = str.substr(start, end - start + 1);
+  };
 
-	switch(req.action)
-	{
-		case rosmon_msgs::StartStopRequest::START:
-			(*it)->start();
-			break;
-		case rosmon_msgs::StartStopRequest::STOP:
-			(*it)->stop();
-			break;
-		case rosmon_msgs::StartStopRequest::RESTART:
-			(*it)->restart();
-			break;
-	}
+  trim(req.ns);
+  trim(req.node);
+  const std::string str_pattern =
+      req.ns.empty() ? "/" + req.node : "/" + req.ns + "/" + req.node;
 
-	return true;
+  std::regex reg;
+  try {
+    reg = std::regex(str_pattern);
+  } catch (const std::regex_error& e) {
+    ROS_ERROR("Invalid regular expression: %s", e.what());
+    return false;
+  }
+
+  bool found = false;
+  for (auto it = m_monitor->nodes().begin(); it != m_monitor->nodes().end();
+       ++it) {
+    const std::string str_name = (*it)->namespaceString() + "/" + (*it)->name();
+    if (std::regex_match(str_name, reg)) {
+      found = true;
+      start_stop(*it);
+    }
+  }
+
+  if (!found) {
+    ROS_ERROR("No node matching '%s' found", str_pattern.c_str());
+    return false;
+  }
+
+  return true;
 }
 
 void ROSInterface::shutdown()
