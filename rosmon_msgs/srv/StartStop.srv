@@ -2,6 +2,13 @@ uint8 START = 1
 uint8 STOP = 2
 uint8 RESTART = 3
 
+# The "ns" field is provided for compatibility. To figure out the full path,
+# "ns" and "node" are joined together. So you can provide a full path
+# including namespaces in "node".
+
+# Supplying a regex in "node" is also supported. For example, setting
+# node=".*" will influence all nodes.
+
 string node     # ROS node name
 string ns       # ROS node namespace
 uint8 action
