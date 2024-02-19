@@ -18,6 +18,7 @@ import rospkg
 from std_msgs.msg import String
 
 from rosmon_msgs.msg import State, NodeState
+from rosmon_msgs.srv import StartStop, StartStopRequest
 
 rospack = rospkg.RosPack()
 
@@ -134,6 +135,65 @@ class BasicTest(unittest.TestCase):
 
 	def test_nested(self):
 		self.assertEqual(rospy.get_param("/nested/nested_param"), "hello")
+
+	def getNode(self, state, name):
+		lst = list(filter(lambda n: n.name == name, state.nodes))
+		self.assertEqual(len(lst), 1)
+		return lst[0]
+
+	def test_startstop_one(self):
+		srv = rospy.ServiceProxy('/rosmon_uut/start_stop', StartStop)
+
+		srv(node=r'test1', action=StartStopRequest.STOP)
+
+		time.sleep(2)
+
+		try:
+			state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
+		except rospy.ROSException:
+			self.fail('Did not get state msg on /rosmon_uut/state' + repr(rospy.client.get_published_topics()))
+
+		self.assertEqual(self.getNode(state, 'test1').state, NodeState.IDLE)
+		self.assertEqual(self.getNode(state, 'test2').state, NodeState.RUNNING)
+
+		srv(node=r'test1', action=StartStopRequest.START)
+
+		time.sleep(2)
+
+		try:
+			state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
+		except rospy.ROSException:
+			self.fail('Did not get state msg on /rosmon_uut/state' + repr(rospy.client.get_published_topics()))
+
+		self.assertEqual(self.getNode(state, 'test1').state, NodeState.RUNNING)
+		self.assertEqual(self.getNode(state, 'test2').state, NodeState.RUNNING)
+
+	def test_startstop_regex(self):
+		srv = rospy.ServiceProxy('/rosmon_uut/start_stop', StartStop)
+
+		srv(node=r'test\d+', action=StartStopRequest.STOP)
+
+		time.sleep(2)
+
+		try:
+			state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
+		except rospy.ROSException:
+			self.fail('Did not get state msg on /rosmon_uut/state' + repr(rospy.client.get_published_topics()))
+
+		self.assertEqual(self.getNode(state, 'test1').state, NodeState.IDLE)
+		self.assertEqual(self.getNode(state, 'test2').state, NodeState.IDLE)
+
+		srv(node=r'test\d+', action=StartStopRequest.START)
+
+		time.sleep(2)
+
+		try:
+			state = rospy.client.wait_for_message('/rosmon_uut/state', State, timeout=5.0)
+		except rospy.ROSException:
+			self.fail('Did not get state msg on /rosmon_uut/state' + repr(rospy.client.get_published_topics()))
+
+		self.assertEqual(self.getNode(state, 'test1').state, NodeState.RUNNING)
+		self.assertEqual(self.getNode(state, 'test2').state, NodeState.RUNNING)
 
 if __name__ == '__main__':
 	rospy.init_node('basic_test')
