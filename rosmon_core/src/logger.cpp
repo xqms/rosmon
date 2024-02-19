@@ -4,6 +4,7 @@
 #include "logger.h"
 #include "fmt/format.h"
 
+#include <array>
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
