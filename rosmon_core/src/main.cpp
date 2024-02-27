@@ -523,7 +523,7 @@ int main(int argc, char** argv)
 	config->setNodeLogDir(nodeLogPath);
 
     rosmon::monitor::Monitor monitor(config, watcher);
-	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), _1));
+	monitor.logMessageSignal.connect(boost::bind(&rosmon::Logger::log, logger.get(), boost::placeholders::_1));
 
 	fmt::print("\n\n");
 	monitor.setParameters();
@@ -549,7 +549,7 @@ int main(int argc, char** argv)
 		monitor.logMessageSignal.connect(
 			boost::bind(
 				logToStdout,
-				_1,
+				boost::placeholders::_1,
 				get_max_node_name(monitor)));
 	}
 
