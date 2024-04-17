@@ -13,7 +13,6 @@
 #include <boost/python/import.hpp>
 
 #include <boost/lexical_cast.hpp>
-	
 #include <boost/mpl/vector.hpp>
 
 namespace py = boost::python;
