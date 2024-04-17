@@ -45,7 +45,7 @@ static fs::path findFile(const fs::path& base, const std::string& name)
 			if(!p.empty())
 				return p;
 		}
-		else if(it->path().leaf() == name)
+		else if(it->path().filename() == name)
 			return *it;
 	}
 
