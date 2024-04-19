@@ -370,15 +370,16 @@ int main(int argc, char** argv)
 
 		if(envSyslog || logFile == "syslog")
 		{
+			const auto log_path = fs::path(launchFilePath).stem().string();
 			// Try systemd journal first
 			try
 			{
-				logger.reset(new rosmon::SystemdLogger(fs::basename(launchFilePath)));
+				logger.reset(new rosmon::SystemdLogger(log_path));
 			}
 			catch(rosmon::SystemdLogger::NotAvailable& e)
 			{
 				fmt::print(stderr, "Systemd Journal not available: {}\n", e.what());
-				logger.reset(new rosmon::SyslogLogger(fs::basename(launchFilePath)));
+				logger.reset(new rosmon::SyslogLogger(log_path));
 			}
 		}
 		else
