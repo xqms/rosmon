@@ -34,6 +34,7 @@ namespace fs = boost::filesystem;
 
 bool g_shouldStop = false;
 bool g_flushStdout = false;
+bool g_withColors = false;
 
 static fs::path findFile(const fs::path& base, const std::string& name)
 {
@@ -65,6 +66,8 @@ void usage()
 		"\n"
 		"Options:\n"
 		"  --disable-ui    Disable fancy terminal UI\n"
+		"  --disable-ui-with-colors\n"
+		"                  Disable fancy terminal UI but keep colors in logs\n"
 		"  --flush-log     Flush logfile after writing an entry\n"
 		"  --flush-stdout  Flush stdout after writing an entry\n"
 		"  --help          This help screen\n"
@@ -114,7 +117,10 @@ void logToStdout(const rosmon::LogEvent& event, const int max_width)
 	if(event.channel == rosmon::LogEvent::Channel::Stdout && !event.showStdout)
 		return;
 
-	fmt::print("{:>{}}: {}", event.source, max_width, event.message);
+	if(g_withColors)
+		fmt::print("{:>{}}: {}", event.source, max_width, event.coloredString());
+	else
+		fmt::print("{:>{}}: {}", event.source, max_width, event.message);
 
 	if(!event.message.empty() && event.message.back() != '\n')
 		std::cout << '\n';
@@ -126,6 +132,7 @@ void logToStdout(const rosmon::LogEvent& event, const int max_width)
 // Options
 static const struct option OPTIONS[] = {
 	{"disable-ui", no_argument, nullptr, 'd'},
+	{"disable-ui-with-colors", no_argument, nullptr, 'w'},
 	{"benchmark", no_argument, nullptr, 'b'},
 	{"flush-log", no_argument, nullptr, 'f'},
 	{"flush-stdout", no_argument, nullptr, 'F'},
@@ -208,6 +215,10 @@ int main(int argc, char** argv)
 				break;
 			case 'd':
 				enableUI = false;
+				break;
+			case 'w':
+				enableUI = false;
+				g_withColors = true;
 				break;
 			case 'f':
 				flushLog = true;
