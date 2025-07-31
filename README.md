@@ -9,6 +9,9 @@ Please see the [ROS wiki page](https://wiki.ros.org/rosmon) for further
 information, the rest of this README contains information for `rosmon`
 developers.
 
+Looking for a similar ROS2 solution? Take a look at
+[better_launch](https://github.com/dfki-ric/better_launch)!
+
 ## Installation & Quick start
 
 Official `rosmon` packages are available. On ROS Kinetic, Melodic, and Noetic (Ubuntu) simply do:
