@@ -1,28 +1,38 @@
 on: [push]
 
 jobs:
-  noetic:
+  build:
+    strategy:
+      matrix:
+        rosdistro: [melodic, noetic]
     runs-on: ubuntu-latest
-    name: "ROS Noetic"
-    container:
-      image: ros:noetic-ros-core
+    name: "ROS ${{ matrix.rosdistro }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           path: src/rosmon
+      - name: Start Docker container
+        run: |
+          docker run --name build-container -d -v ${{ github.workspace }}:/workspace ros:${{ matrix.rosdistro }}-ros-core tail -f /dev/null
       - name: "Install dependencies"
-        run: |
-          apt update
-          apt install -y python3-colcon-common-extensions python3-rosdep build-essential
-          rosdep init
-          rosdep update --rosdistro=noetic
-          rosdep install --rosdistro=noetic --ignore-src --from-paths src -y
+        env:
+          SCRIPT: |
+            apt update
+            apt install -y python3-colcon-common-extensions python3-rosdep build-essential
+            rosdep init
+            rosdep update --rosdistro=${{ matrix.rosdistro }}
+            rosdep install --rosdistro=${{ matrix.rosdistro }} --ignore-src --from-paths src -y
+        run: docker exec -w /workspace build-container bash -c "$SCRIPT"
       - name: Compile
-        run: |
-          . /opt/ros/noetic/setup.sh
-          colcon build --event-handlers console_cohesion+ desktop_notification- --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        env:
+          SCRIPT: |
+            . /opt/ros/${{ matrix.rosdistro }}/setup.sh
+            colcon build --event-handlers console_cohesion+ desktop_notification- --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        run: docker exec -w /workspace build-container bash -c "$SCRIPT"
       - name: Test
-        run: |
-          . install/setup.sh
-          colcon test --event-handlers console_cohesion+ desktop_notification- --return-code-on-test-failure
+        env:
+          SCRIPT: |
+            . install/setup.sh
+            colcon test --event-handlers console_cohesion+ desktop_notification- --return-code-on-test-failure
+        run: docker exec -w /workspace build-container bash -c "$SCRIPT"
