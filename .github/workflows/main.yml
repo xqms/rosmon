@@ -1,0 +1,28 @@
+on: [push]
+
+jobs:
+  noetic:
+    runs-on: ubuntu-latest
+    name: "ROS Noetic"
+    container:
+      image: ros:noetic-ros-core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          path: src/rosmon
+      - name: "Install dependencies"
+        run: |
+          apt update
+          apt install -y python3-colcon-common-extensions python3-rosdep build-essential
+          rosdep init
+          rosdep update --rosdistro=noetic
+          rosdep install --rosdistro=noetic --ignore-src --from-paths src -y
+      - name: Compile
+        run: |
+          . /opt/ros/noetic/setup.sh
+          colcon build --event-handlers console_cohesion+ desktop_notification- --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - name: Test
+        run: |
+          . install/setup.sh
+          colcon test --event-handlers console_cohesion+ desktop_notification- --return-code-on-test-failure
