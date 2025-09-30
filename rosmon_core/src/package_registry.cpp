@@ -61,9 +61,15 @@ struct CatkinWorkspace
 		fs::path catkinPath = path / ".catkin";
 		std::ifstream file{catkinPath.string()};
 
-		for(std::string line; std::getline(file, line);)
+		for(std::string path; std::getline(file, path, ';');)
 		{
-			for(fs::recursive_directory_iterator it(line); it != fs::recursive_directory_iterator(); ++it)
+			if(!fs::exists(path))
+			{
+				fmt::print(stderr, "Warning: source path '{}' found in '{}' does not exist.\n", path, catkinPath.string());
+				continue;
+			}
+
+			for(fs::recursive_directory_iterator it(path); it != fs::recursive_directory_iterator(); ++it)
 			{
 				if(it->path().filename() == "package.xml")
 					crawlSourcePackage(it->path());
