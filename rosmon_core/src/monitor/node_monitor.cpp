@@ -717,6 +717,10 @@ std::pair<int,int> NodeMonitor::createPTY()
 	if(openpty(&master, &slave, nullptr, nullptr, nullptr) == -1)
 		throw error("Could not open pseudo terminal for child process: {}", strerror(errno));
 
+	// Mark master as close-on-exec so it is not inherited by child processes
+	if(fcntl(master, F_SETFD, FD_CLOEXEC) == -1)
+		throw error("Could not set close-on-exec flag for PTY master: {}", strerror(errno));
+
 	// On Linux, a new unix98 pty is initialized with the output flag ONLCR set,
 	// which converts \n to \r\n
 	// Disable this bahavior by clearing the flag
