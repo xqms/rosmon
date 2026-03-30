@@ -155,7 +155,7 @@ static std::string _getExecutable(const std::string& package, const std::string&
 	if(!g_initialized)
 		init();
 
-	// Try catkin libexec & catkin share first
+	// Phase 1: Try installed paths (lib/ and share/) across all workspaces
 	for(auto& workspace : g_catkin_workspaces)
 	{
 		fs::path execPath = workspace.path / "lib" / package / name;
@@ -165,8 +165,11 @@ static std::string _getExecutable(const std::string& package, const std::string&
 		std::string sharePath = getExecutableInPath(workspace.path / "share" / package, name);
 		if(!sharePath.empty())
 			return sharePath;
+	}
 
-		// Look in associated source directories of the workspace
+	// Phase 2: Fallback to source package directories (expensive on first call)
+	for(auto& workspace : g_catkin_workspaces)
+	{
 		workspace.crawlSourcePackages();
 
 		auto it = workspace.packageSourcePaths.find(package);
@@ -174,7 +177,7 @@ static std::string _getExecutable(const std::string& package, const std::string&
 			return getExecutableInPath(it->second, name);
 	}
 
-	// Crawl package directory for an appropriate executable
+	// Phase 3: Crawl package directory for an appropriate executable
 	std::string packageDir = PackageRegistry::getPath(package);
 	if(!packageDir.empty())
 		return getExecutableInPath(packageDir, name);
@@ -202,35 +205,40 @@ std::string PackageRegistry::findPathToFile(const std::string& package, const st
 	if(!g_initialized)
 		init();
 
-	// Try catkin libexec & catkin share first
+	// Phase 1: Check installed paths (lib/ and share/) across all workspaces
+	// Note: No X_OK check — this function resolves $(find pkg)/... paths which
+	// include launch files, configs, etc. that are not executable.
 	for(auto& workspace : g_catkin_workspaces)
 	{
 		fs::path execPath = workspace.path / "lib" / package;
 		fs::path filePath = execPath / name;
-		if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+		if(fs::exists(filePath))
 			return execPath.string();
 
 		fs::path sharePath = workspace.path / "share" / package;
 		filePath = sharePath / name;
-		if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+		if(fs::exists(filePath))
 			return sharePath.string();
+	}
 
-		// Look in associated source directories of the workspace
+	// Phase 2: Fallback to source package directories (expensive on first call)
+	for(auto& workspace : g_catkin_workspaces)
+	{
 		workspace.crawlSourcePackages();
 
 		auto it = workspace.packageSourcePaths.find(package);
 		if(it != workspace.packageSourcePaths.end())
 		{
 			fs::path filePath = it->second / name;
-			if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+			if(fs::exists(filePath))
 				return it->second.string();
 		}
 	}
 
-	// Try package directory (src)
+	// Phase 3: Try package directory via rospack
 	fs::path packageDir = PackageRegistry::getPath(package);
 	fs::path filePath = packageDir / name;
-	if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+	if(fs::exists(filePath))
 		return packageDir.string();
 
 	// Nothing found :-(
