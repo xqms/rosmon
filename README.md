@@ -10,7 +10,8 @@ information, the rest of this README contains information for `rosmon`
 developers.
 
 Looking for a similar ROS2 solution? Take a look at
-[better_launch](https://github.com/dfki-ric/better_launch)!
+[rosmon2](https://github.com/GibsonHu/rosmon2) by GibsonHu
+and [better_launch](https://github.com/dfki-ric/better_launch) by DFKI!
 
 ## Installation & Quick start
 
