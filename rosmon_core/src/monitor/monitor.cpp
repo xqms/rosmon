@@ -46,7 +46,7 @@ Monitor::Monitor(launch::LaunchConfig::ConstPtr config, FDWatcher::Ptr watcher)
 		if(launchNode->required())
 		{
 			node->exitedSignal.connect(
-				boost::bind(&Monitor::handleRequiredNodeExit, this, _1)
+				boost::bind(&Monitor::handleRequiredNodeExit, this, boost::placeholders::_1)
 			);
 		}
 
@@ -59,7 +59,7 @@ Monitor::Monitor(launch::LaunchConfig::ConstPtr config, FDWatcher::Ptr watcher)
 	m_statTimer = m_nh.createWallTimer(
 #endif
 		ros::WallDuration(1.0),
-		boost::bind(&Monitor::updateStats, this, _1)
+		boost::bind(&Monitor::updateStats, this, boost::placeholders::_1)
 	);
 }
 
