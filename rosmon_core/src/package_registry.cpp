@@ -11,19 +11,78 @@
 #include <boost/filesystem.hpp>
 #include <boost/tokenizer.hpp>
 
+#include <tinyxml.h>
+
 #include <sys/types.h>
 #include <sys/wait.h>
+
+#include <fmt/format.h>
+
+namespace fs = boost::filesystem;
 
 namespace rosmon
 {
 
+struct CatkinWorkspace
+{
+	explicit CatkinWorkspace(const fs::path& path)
+	 : path{path}
+	{}
+
+	fs::path path;
+
+	bool sourcePackagesCrawled = false;
+	std::map<std::string, fs::path> packageSourcePaths;
+
+	void crawlSourcePackage(const fs::path& packageXMLPath)
+	{
+		TiXmlDocument document(packageXMLPath.string());
+
+		TiXmlBase::SetCondenseWhiteSpace(false);
+
+		if(!document.LoadFile())
+			return;
+
+		if(document.RootElement()->ValueStr() != "package")
+			return;
+
+		auto name = document.RootElement()->FirstChildElement("name");
+		if(!name)
+			return;
+
+		packageSourcePaths[name->GetText()] = packageXMLPath.parent_path();
+	}
+
+	void crawlSourcePackages()
+	{
+		if(sourcePackagesCrawled)
+			return;
+
+		fs::path catkinPath = path / ".catkin";
+		std::ifstream file{catkinPath.string()};
+
+		for(std::string path; std::getline(file, path, ';');)
+		{
+			if(!fs::exists(path))
+			{
+				fmt::print(stderr, "Warning: source path '{}' found in '{}' does not exist.\n", path, catkinPath.string());
+				continue;
+			}
+
+			for(fs::recursive_directory_iterator it(path); it != fs::recursive_directory_iterator(); ++it)
+			{
+				if(it->path().filename() == "package.xml")
+					crawlSourcePackage(it->path());
+			}
+		}
+	}
+};
+
 static std::map<std::string, std::string> g_cache;
 static rospack::Rospack g_pack;
-static std::vector<std::string> g_catkin_workspaces;
+static std::vector<CatkinWorkspace> g_catkin_workspaces;
 static std::map<std::pair<std::string, std::string>, std::string> g_executableCache;
 static bool g_initialized = false;
-
-namespace fs = boost::filesystem;
 
 static void init()
 {
@@ -49,7 +108,7 @@ static void init()
 				continue;
 
 // 			printf("Found catkin workspace: '%s'\n", path.string().c_str());
-			g_catkin_workspaces.push_back(path.string());
+			g_catkin_workspaces.emplace_back(path);
 		}
 	}
 }
@@ -96,21 +155,29 @@ static std::string _getExecutable(const std::string& package, const std::string&
 	if(!g_initialized)
 		init();
 
-	// Try catkin libexec & catkin share first
-	for(const auto& workspace : g_catkin_workspaces)
+	// Phase 1: Try installed paths (lib/ and share/) across all workspaces
+	for(auto& workspace : g_catkin_workspaces)
 	{
-		fs::path workspacePath(workspace);
-
-		fs::path execPath = workspacePath / "lib" / package / name;
+		fs::path execPath = workspace.path / "lib" / package / name;
 		if(fs::exists(execPath) && access(execPath.c_str(), X_OK) == 0)
 			return execPath.string();
 
-		std::string sharePath = getExecutableInPath(workspacePath / "share" / package, name);
+		std::string sharePath = getExecutableInPath(workspace.path / "share" / package, name);
 		if(!sharePath.empty())
 			return sharePath;
 	}
 
-	// Crawl package directory for an appropriate executable
+	// Phase 2: Fallback to source package directories (expensive on first call)
+	for(auto& workspace : g_catkin_workspaces)
+	{
+		workspace.crawlSourcePackages();
+
+		auto it = workspace.packageSourcePaths.find(package);
+		if(it != workspace.packageSourcePaths.end())
+			return getExecutableInPath(it->second, name);
+	}
+
+	// Phase 3: Crawl package directory for an appropriate executable
 	std::string packageDir = PackageRegistry::getPath(package);
 	if(!packageDir.empty())
 		return getExecutableInPath(packageDir, name);
@@ -138,26 +205,40 @@ std::string PackageRegistry::findPathToFile(const std::string& package, const st
 	if(!g_initialized)
 		init();
 
-	// Try catkin libexec & catkin share first
-	for(const auto& workspace : g_catkin_workspaces)
+	// Phase 1: Check installed paths (lib/ and share/) across all workspaces
+	// Note: No X_OK check — this function resolves $(find pkg)/... paths which
+	// include launch files, configs, etc. that are not executable.
+	for(auto& workspace : g_catkin_workspaces)
 	{
-		fs::path workspacePath(workspace);
-
-		fs::path execPath = workspacePath / "lib" / package;
+		fs::path execPath = workspace.path / "lib" / package;
 		fs::path filePath = execPath / name;
-		if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+		if(fs::exists(filePath))
 			return execPath.string();
 
-		fs::path sharePath = workspacePath / "share" / package;
+		fs::path sharePath = workspace.path / "share" / package;
 		filePath = sharePath / name;
-		if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+		if(fs::exists(filePath))
 			return sharePath.string();
 	}
 
-	// Try package directory (src)
+	// Phase 2: Fallback to source package directories (expensive on first call)
+	for(auto& workspace : g_catkin_workspaces)
+	{
+		workspace.crawlSourcePackages();
+
+		auto it = workspace.packageSourcePaths.find(package);
+		if(it != workspace.packageSourcePaths.end())
+		{
+			fs::path filePath = it->second / name;
+			if(fs::exists(filePath))
+				return it->second.string();
+		}
+	}
+
+	// Phase 3: Try package directory via rospack
 	fs::path packageDir = PackageRegistry::getPath(package);
 	fs::path filePath = packageDir / name;
-	if(fs::exists(filePath) && access(filePath.c_str(), X_OK) == 0)
+	if(fs::exists(filePath))
 		return packageDir.string();
 
 	// Nothing found :-(
